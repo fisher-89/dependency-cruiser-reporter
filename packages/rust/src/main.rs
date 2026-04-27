@@ -26,16 +26,23 @@ struct Args {
     layout: bool,
 }
 
+fn parse_level(s: &str) -> Result<AggregationLevel, String> {
+    match s {
+        "file" => Ok(AggregationLevel::File),
+        "directory" => Ok(AggregationLevel::Directory),
+        "package" => Ok(AggregationLevel::Package),
+        "root" => Ok(AggregationLevel::Root),
+        _ => Err(format!("Invalid aggregation level: {}", s)),
+    }
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
 
-    let level = args.level.as_deref().map(|s| match s {
-        "file" => AggregationLevel::File,
-        "directory" => AggregationLevel::Directory,
-        "package" => AggregationLevel::Package,
-        "root" => AggregationLevel::Root,
-        _ => return Err(format!("Invalid aggregation level: {}", s).into()),
-    });
+    let level = match args.level {
+        Some(ref s) => Some(parse_level(s)?),
+        None => None,
+    };
 
     let graph = parse_and_aggregate(&args.input, args.max_nodes, level, args.layout)?;
 

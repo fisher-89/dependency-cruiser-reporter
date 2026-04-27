@@ -1,11 +1,8 @@
 {
-  "name": "dependency-cruiser-reporter",
+  "name": "@dcr-reporter/frontend",
   "version": "0.1.0",
   "type": "module",
   "description": "dependency-cruiser result visualizer - dependency graph, error report & metrics viewer",
-  "bin": {
-    "dep-report": "./bin/cli.js"
-  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && biome check --write src/ && vite build",

@@ -240,7 +240,7 @@ pub fn parse_and_aggregate(
 
     let meta = GraphMeta {
         original_node_count: module_count,
-        aggregated_node_count:.nodes.len(),
+        aggregated_node_count: nodes.len(),
         aggregation_level: agg_level,
         total_violations: violation_count,
     };
