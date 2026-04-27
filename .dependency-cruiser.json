@@ -1,0 +1,42 @@
+{
+  "prefix": "src/",
+  "baseDir": ".",
+  "include": {
+    "src": true,
+    "scripts": true,
+    "config": true
+  },
+  "exclude": {
+    "node_modules": true,
+    "dist": true,
+    "build": true,
+    "target": true,
+    "coverage": true
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE"
+  },
+  "rules": {
+    "no-orphans": "warn",
+    "no-unassigned-discoverables": "warn",
+    "no-unused-type-level-sequelize-sqlize-associations": "off",
+    "no-deprecated-cycle": "error",
+    "no-circular": "warn",
+    "no-relative-parent-imports": "off",
+    "no-missing-dep": "warn",
+    "no-unlisted-dep": "error",
+    "no-unauthorized-authored-files": "error"
+  },
+  "validate": true,
+  "mergeHooks": false,
+  "outputType": "json",
+  "tsConfig": {
+    "fileName": "tsconfig.json"
+  },
+  "webpack": {
+    "resolve": {
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"]
+    }
+  }
+}
