@@ -9,22 +9,15 @@
 - 任何变更 **必须** 更新 docs
 - 不要猜测设计意图 → 查看 docs
 
-### 渐进式披露
-
-docs 采用渐进式披露原则：
-- **先阅读 docs/** 了解顶层设计
-- 遇到具体问题时再深入相关章节
-- 避免一次性阅读全部 → 按需获取
-
 ## 项目结构
 
 ```
 dependency-cruiser-reporter/
 ├── docs/
 │   └── SPEC.md              # 项目设计文档（必须阅读）
-├── src/                     # 源代码
+├── packages/                # 源代码
 │   ├── rust/                # Rust 预处理引擎
-│   └── frontend/             # 前端展示
+│   └── frontend/            # 前端展示
 └── AGENTS.md               # 本文件
 ```
 
@@ -70,36 +63,6 @@ dependency-cruiser-reporter/
 - 组件文件使用 `.tsx` 扩展名
 - 样式使用 CSS Modules 或内联样式
 
-## Git 提交规范
-
-### 提交信息格式
-
-```
-<type>(<scope>): <subject>
-
-<body>
-
-<footer>
-```
-
-### Type 说明
-
-| Type | 描述 |
-|------|------|
-| feat | 新功能 |
-| fix | Bug 修复 |
-| docs | 文档更新 |
-| style | 格式化（不影响功能）|
-| refactor | 重构 |
-| test | 测试 |
-| chore | 构建/工具链更新 |
-
-### 提交时机
-
-- 每个功能完成后立即提交
-- 保持提交原子性（一个提交一个功能）
-- 提交信息描述 **why** 而非 **what**
-
 ## 开发环境
 
 ### 前置依赖
@@ -112,13 +75,13 @@ dependency-cruiser-reporter/
 
 ```bash
 # 安装前端依赖
-cd src/frontend && pnpm install
+cd packages/frontend && pnpm install
 
 # 启动前端开发服务器
 pnpm dev
 
 # 构建 Rust
-cd src/rust && cargo build
+cd packages/rust && cargo build
 
 # 运行完整测试
 pnpm build && cargo run --release
