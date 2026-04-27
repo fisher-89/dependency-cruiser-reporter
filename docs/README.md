@@ -10,10 +10,9 @@ Welcome to the dependency-cruiser-reporter documentation.
 | Architecture | [Architecture Overview](architecture/overview.md) | System design and data flow |
 | | [Data Flow](architecture/data-flow.md) | Processing pipeline details |
 | | [Aggregation Strategy](architecture/aggregation.md) | Node aggregation logic |
-| Backend | [Rust Engine](backend/rust-engine.md) | Rust preprocessing engine design |
-| | [Data Structures](backend/data-structures.md) | Type definitions and contracts |
-| Frontend | [Components](frontend/components.md) | UI component design |
-| | [Views](frontend/views.md) | Three main views (Graph/Report/Metrics) |
+| Packages | [CLI Package](packages/cli.md) | CLI tool and HTTP server |
+| | [WASM Package](packages/wasm.md) | Rust WASM module |
+| | [Frontend Package](packages/frontend.md) | React visualization |
 | Usage | [CLI Reference](usage/cli.md) | Command-line interface |
 | | [Web UI](usage/web-ui.md) | Web interface guide |
 | | [Scenarios](usage/scenarios.md) | Common use cases |
@@ -26,19 +25,16 @@ Welcome to the dependency-cruiser-reporter documentation.
 ```
 docs/
 ├── README.md                           # This file
-├── SPEC.md                            # Full specification (single source of truth)
 ├── overview/
 │   └── project-overview.md             # Project overview
 ├── architecture/
 │   ├── overview.md                     # Architecture overview
 │   ├── data-flow.md                    # Data flow diagram
 │   └── aggregation.md                  # Aggregation strategy
-├── backend/
-│   ├── rust-engine.md                  # Rust engine design
-│   └── data-structures.md              # Data structures
-├── frontend/
-│   ├── components.md                   # Component design
-│   └── views.md                        # View design
+├── packages/
+│   ├── cli.md                          # CLI package design
+│   ├── wasm.md                         # WASM package design
+│   └── frontend.md                     # Frontend package design
 ├── usage/
 │   ├── cli.md                          # CLI usage
 │   ├── web-ui.md                       # Web UI guide

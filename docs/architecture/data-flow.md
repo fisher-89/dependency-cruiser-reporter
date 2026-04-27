@@ -4,15 +4,34 @@
 
 ```mermaid
 flowchart TB
-    Input[dependency-cruiser JSON] --> Parse[Parse & Validate]
+    Input[dependency-cruiser JSON] --> Upload[File Upload / CLI Input]
+    Upload --> WASM[WASM Module]
+    WASM --> Parse[Parse & Validate]
     Parse --> Agg[Aggregate Nodes]
     Agg --> Compress[Compress Edges]
-    Compress --> Layout[Precompute Layout]
-    Layout --> Output[Output JSON]
+    Compress --> Output[Output ProcessedGraph]
     Output --> Render[Frontend Render]
 
     style Input fill:#e0f2fe,stroke:#0284c7
+    style WASM fill:#fef3c7,stroke:#d97706
     style Render fill:#dcfce7,stroke:#16a34a
+```
+
+## Processing Modes
+
+```mermaid
+flowchart LR
+    subgraph Browser["Browser Mode"]
+        Upload[File Upload] --> WASM1[WASM Module]
+        WASM1 --> React[React Visualization]
+    end
+
+    subgraph CLI["CLI Mode"]
+        File[Input JSON] --> WASM2[Node.js WASM]
+        WASM2 --> Output[graph.json]
+        Output --> Server[HTTP Server]
+        Server --> Browser2[Browser]
+    end
 ```
 
 ## Input Format
@@ -137,6 +156,50 @@ Example:
   "meta": { "original_node_count": 150, "aggregated_node_count": 25, "aggregation_level": "directory", "total_violations": 3 },
   "violations": []
 }
+```
+
+## Browser Mode Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant WASM
+    participant React
+
+    Browser->>React: Load page
+    React->>WASM: init()
+    WASM-->>React: Ready
+    User->>Browser: Upload JSON file
+    Browser->>WASM: parse_and_aggregate(json)
+    WASM-->>Browser: ProcessedGraph JSON
+    Browser->>React: setState(graph)
+    React->>User: Render visualization
+```
+
+## CLI Mode Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant WASM
+    participant Server
+    participant Browser
+
+    User->>CLI: dep-report analyze -i input.json
+    CLI->>WASM: init()
+    WASM-->>CLI: Ready
+    CLI->>WASM: parse_and_aggregate(json)
+    WASM-->>CLI: ProcessedGraph
+    CLI->>CLI: Write graph.json
+
+    User->>CLI: dep-report open -f graph.json
+    CLI->>Server: Start HTTP server
+    Server->>Browser: Serve frontend
+    Browser->>Server: GET /api/graph
+    Server-->>Browser: graph.json content
+    Browser->>Browser: Render visualization
 ```
 
 ## Frontend Interaction Flow

@@ -5,7 +5,8 @@
 | Package | Framework | Location |
 |---------|-----------|----------|
 | Frontend | Playwright (E2E) | `packages/frontend/e2e/` |
-| Rust | Built-in | `packages/rust/src/lib.rs` |
+| WASM | wasm-pack test | `packages/wasm/tests/` |
+| CLI | Node.js test runner | `packages/e2e/` |
 
 ## Frontend E2E Tests
 
@@ -90,21 +91,21 @@ Use `data-testid` for selectors:
 
 ---
 
-## Rust Unit Tests
+## WASM Tests
 
 ### Running Tests
 
 ```bash
-cd packages/rust
+cd packages/wasm
 
-# Run all tests
-cargo test
+# Run all tests (headless)
+wasm-pack test --headless --firefox
 
-# Run with output
-cargo test -- --nocapture
+# Run with Chrome
+wasm-pack test --headless --chrome
 
 # Run specific test
-cargo test test_aggregation_level
+wasm-pack test --headless --firefox -- test_aggregation
 ```
 
 ### Test Cases
@@ -138,6 +139,58 @@ mod tests {
 
 ---
 
+## CLI Integration Tests
+
+### Running Tests
+
+```bash
+cd packages/e2e
+
+# Run all tests
+pnpm test
+
+# Run with verbose output
+pnpm test --verbose
+```
+
+### Test Structure
+
+```
+packages/e2e/
+├── package.json        # Test runner config
+├── cli.test.js         # CLI integration tests
+└── fixtures/
+    └── sample-cruise.json
+```
+
+### Test Cases
+
+| Test | Description |
+|------|-------------|
+| `dep-report --help` | Show help message |
+| `dep-report analyze` | Process JSON and output graph |
+| `dep-report open` | Start HTTP server |
+
+### Writing Tests
+
+```javascript
+const { test } = require('node:test');
+const assert = require('node:assert');
+const { spawnSync } = require('child_process');
+
+test('analyze command', async () => {
+  const result = spawnSync('dep-report', [
+    'analyze',
+    '--input', 'fixtures/sample-cruise.json',
+    '--output', '/tmp/output.json'
+  ]);
+
+  assert.strictEqual(result.status, 0);
+});
+```
+
+---
+
 ## Test Coverage
 
 ### Frontend
@@ -149,7 +202,7 @@ Future improvements:
 - [ ] Visual regression tests
 - [ ] Accessibility tests
 
-### Backend
+### WASM
 
 Current coverage: Core logic
 
@@ -158,7 +211,17 @@ Current coverage: Core logic
 | `select_aggregation_level` | ✅ Covered |
 | `detect_edge_type` | ✅ Covered |
 | `extract_package_name` | ✅ Covered |
-| `parse_and_aggregate` | ❌ Integration test needed |
+| `parse_and_aggregate` | ✅ Covered |
+
+### CLI
+
+Current coverage: Basic integration
+
+| Command | Coverage |
+|---------|----------|
+| `analyze` | ✅ Integration test |
+| `open` | ✅ Server startup test |
+| `--help` | ✅ Help output test |
 
 ---
 
@@ -180,16 +243,31 @@ jobs:
         with:
           node-version: 18
           cache: 'pnpm'
-      - run: pnpm install --dir packages/frontend
-      - run: pnpm test:e2e --dir packages/frontend
+      - run: pnpm install
+      - run: pnpm test:e2e --filter frontend
 
-  test-rust:
+  test-wasm:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --manifest-path packages/rust/Cargo.toml
-      - run: cargo clippy --manifest-path packages/rust/Cargo.toml
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo install wasm-pack
+      - run: wasm-pack test --headless --firefox
+        working-directory: packages/wasm
+
+  test-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm build --filter cli
+      - run: pnpm test --filter e2e
 ```
 
 ---
@@ -207,12 +285,22 @@ pnpx playwright test --debug
 trace: 'on-first-retry'
 ```
 
-### Rust
+### WASM
 
 ```bash
 # Print debug output
-cargo test -- --nocapture
+wasm-pack test --headless --firefox -- --nocapture
 
-# Run ignored tests
-cargo test -- --ignored
+# Run specific test
+wasm-pack test --headless --firefox -- test_name
+```
+
+### CLI
+
+```bash
+# Debug with verbose output
+pnpm test --verbose
+
+# Run single test file
+node --test cli.test.js
 ```

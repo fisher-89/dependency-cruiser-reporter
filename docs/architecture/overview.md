@@ -4,67 +4,70 @@
 
 ```mermaid
 flowchart LR
-    DC[dependency-cruiser] -->|JSON output| Rust[Rust Preprocessing Engine]
-    Rust -->|Lightweight Graph JSON| JSON[Lightweight Graph JSON]
-    JSON -->|HTTP / File| React[React Visualization Engine]
+    DC[dependency-cruiser] -->|JSON output| Browser[Browser]
+    Browser -->|File upload| WASM[Rust WASM Module]
+    WASM -->|ProcessedGraph| React[React Visualization]
 ```
+
+**Key Design Decision**: Rust preprocessing engine runs as **WebAssembly directly in the browser**, eliminating the need for a separate CLI process.
 
 ## Component Breakdown
 
 ```mermaid
 flowchart TB
-    subgraph Backend["Rust Backend (packages/rust/)"]
+    subgraph Browser["Browser Environment"]
         direction TB
-        Parse[JSON Parse & Validate]
-        Agg[Node Aggregation]
-        Edge[Edge Compression]
-        Layout[Layout Pre-computation]
-        Index[Index Construction]
 
-        Parse --> Agg --> Edge --> Layout --> Index
+        subgraph Frontend["React Frontend (packages/frontend/)"]
+            Upload[File Upload]
+            Graph[Graph View]
+            Report[Report View]
+            Metrics[Metrics View]
+
+            Upload --> Graph
+            Upload --> Report
+            Upload --> Metrics
+        end
+
+        subgraph WASM["Rust WASM Module (packages/rust/)"]
+            Parse[JSON Parse & Validate]
+            Agg[Node Aggregation]
+            Edge[Edge Compression]
+            Output[Output ProcessedGraph]
+        end
+
+        Upload -->|JSON string| Parse
+        Agg --> Edge --> Output
+        Output -->|JsValue| Graph
+        Output -->|JsValue| Report
+        Output -->|JsValue| Metrics
     end
-
-    subgraph Frontend["React Frontend (packages/frontend/)"]
-        direction TB
-        Upload[File Upload]
-        Graph[Graph View]
-        Report[Report View]
-        Metrics[Metrics View]
-
-        Upload --> Graph
-        Upload --> Report
-        Upload --> Metrics
-    end
-
-    DC2[dependency-cruiser JSON] --> Parse
-    Index -->|ProcessedGraph JSON| Upload
 ```
 
-### Rust Backend (`packages/rust/`)
+### Rust WASM Module (`packages/wasm/`)
 
 **Responsibilities:**
 
 1. JSON parsing and validation
 2. Node aggregation by directory/package level
 3. Edge compression and deduplication
-4. Layout coordinate pre-computation
-5. Index construction for fast lookups
+4. Output to JavaScript-compatible types
 
 **Key Files:**
 
 | File | Purpose |
 |------|---------|
-| `src/lib.rs` | Core library with data structures and processing logic |
-| `src/main.rs` | CLI entry point |
+| `src/lib.rs` | Core library with wasm-bindgen exports |
+| `src/wasm.rs` | WASM-specific wrappers |
 
 ### React Frontend (`packages/frontend/`)
 
 **Responsibilities:**
 
-1. Graph rendering with D3.js
-2. User interaction handling
-3. View switching (Graph/Report/Metrics)
-4. File upload and parsing
+1. WASM module loading and initialization
+2. Graph rendering with D3.js
+3. User interaction handling
+4. View switching (Graph/Report/Metrics)
 
 **Key Files:**
 
@@ -72,15 +75,20 @@ flowchart TB
 |------|---------|
 | `src/App.tsx` | Main application component |
 | `src/types.ts` | TypeScript type definitions |
+| `src/hooks/useWasm.ts` | WASM loading hook |
 | `src/main.tsx` | React entry point |
 
 ## Design Decisions
 
-### Why Rust for Preprocessing?
+### Why WASM instead of CLI?
 
-- **Performance**: Handle 100k+ nodes without blocking
-- **Memory efficiency**: Lower memory footprint than Node.js
-- **Type safety**: Strong typing with serde JSON parsing
+| Aspect | CLI Approach | WASM Approach |
+|--------|--------------|---------------|
+| Deployment | Requires binary installation | Ships with frontend bundle |
+| User Experience | Two-step process | One-step, in-browser |
+| Cross-platform | Platform-specific binaries | Universal browser support |
+| Performance | Native speed | Near-native (WASM) |
+| Distribution | npm + separate binary | Single npm package |
 
 ### Why React + D3.js?
 
@@ -89,8 +97,6 @@ flowchart TB
 - **Bundle size**: Lighter than alternatives (Cytoscape.js)
 
 ## Data Contract
-
-TypeScript (`src/types.ts`) and Rust (`src/lib.rs`) share the same data structure:
 
 ```mermaid
 classDiagram
@@ -105,6 +111,10 @@ classDiagram
     ProcessedGraph --> GraphEdge
     ProcessedGraph --> GraphMeta
     ProcessedGraph --> ViolationInfo
+
+    note for ProcessedGraph "Serialized via serde-wasm-bindgen\nReturns JsValue to JavaScript"
 ```
+
+TypeScript (`src/types.ts`) and Rust (`src/lib.rs`) share the same data structure via serde serialization.
 
 See [Data Structures](../backend/data-structures.md) for detailed definitions.
