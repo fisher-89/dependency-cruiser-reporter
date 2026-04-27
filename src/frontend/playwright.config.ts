@@ -10,11 +10,12 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
+    channel: "chrome",
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "chrome",
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
   ],
   webServer: {

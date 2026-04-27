@@ -1,4 +1,6 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import { writeFileSync, unlinkSync, mkdirSync, existsSync } from "fs";
+import { join } from "path";
 
 const sampleGraphData = {
   nodes: [
@@ -21,20 +23,6 @@ const sampleGraphData = {
   ],
 };
 
-function uploadTestData(page: Page, data: object) {
-  return page.evaluate(({ data }) => {
-    const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-    const file = new File([blob], "test.json", { type: "application/json" });
-    const dt = new DataTransfer();
-    dt.files.add(file);
-    const input = document.querySelector("[data-testid='file-input']") as HTMLInputElement;
-    if (input) {
-      input.files = dt.files;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  }, { data });
-}
-
 test.describe("App", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -46,32 +34,47 @@ test.describe("App", () => {
   });
 
   test("displays error for invalid JSON", async ({ page }) => {
-    await page.evaluate(() => {
-      const data = "invalid json";
-      const blob = new Blob([data], { type: "application/json" });
-      const file = new File([blob], "test.json", { type: "application/json" });
-      const dt = new DataTransfer();
-      dt.files.add(file);
-      const input = document.querySelector("[data-testid='file-input']") as HTMLInputElement;
-      if (input) {
-        input.files = dt.files;
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    });
+    // Create a temp file with invalid JSON
+    const tmpDir = join(process.cwd(), "e2e");
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir, { recursive: true });
+    }
+    const tempFile = join(tmpDir, "invalid.json");
+    writeFileSync(tempFile, "invalid json content");
 
+    await page.setInputFiles("[data-testid='file-input']", tempFile);
     await expect(page.locator("[data-testid='error-message']")).toBeVisible();
+
+    unlinkSync(tempFile);
   });
 
   test("shows graph view with nodes and edges", async ({ page }) => {
-    await uploadTestData(page, sampleGraphData);
+    // Create a temp file with test data
+    const tmpDir = join(process.cwd(), "e2e");
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir, { recursive: true });
+    }
+    const tempFile = join(tmpDir, "test-graph.json");
+    writeFileSync(tempFile, JSON.stringify(sampleGraphData));
 
+    await page.setInputFiles("[data-testid='file-input']", tempFile);
     await page.waitForSelector("[data-testid='graph-view']");
     await expect(page.locator("[data-testid='node-count']")).toContainText("3 nodes");
     await expect(page.locator("[data-testid='edge-count']")).toContainText("2 edges");
+
+    unlinkSync(tempFile);
   });
 
   test("can switch between views", async ({ page }) => {
-    await uploadTestData(page, sampleGraphData);
+    // Upload file
+    const tmpDir = join(process.cwd(), "e2e");
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir, { recursive: true });
+    }
+    const tempFile = join(tmpDir, "test-switch.json");
+    writeFileSync(tempFile, JSON.stringify(sampleGraphData));
+
+    await page.setInputFiles("[data-testid='file-input']", tempFile);
     await page.waitForSelector("[data-testid='graph-view']");
 
     // Navigate to Report
@@ -85,20 +88,40 @@ test.describe("App", () => {
     // Navigate back to Graph
     await page.click("[data-testid='nav-graph']");
     await expect(page.locator("[data-testid='graph-view']")).toBeVisible();
+
+    unlinkSync(tempFile);
   });
 
   test("shows report view with violations", async ({ page }) => {
-    await uploadTestData(page, sampleGraphData);
+    const tmpDir = join(process.cwd(), "e2e");
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir, { recursive: true });
+    }
+    const tempFile = join(tmpDir, "test-report.json");
+    writeFileSync(tempFile, JSON.stringify(sampleGraphData));
+
+    await page.setInputFiles("[data-testid='file-input']", tempFile);
     await page.waitForSelector("[data-testid='graph-view']");
     await page.click("[data-testid='nav-report']");
     await expect(page.locator("[data-testid='violation-list']")).toBeVisible();
+
+    unlinkSync(tempFile);
   });
 
   test("shows metrics view with statistics", async ({ page }) => {
-    await uploadTestData(page, sampleGraphData);
+    const tmpDir = join(process.cwd(), "e2e");
+    if (!existsSync(tmpDir)) {
+      mkdirSync(tmpDir, { recursive: true });
+    }
+    const tempFile = join(tmpDir, "test-metrics.json");
+    writeFileSync(tempFile, JSON.stringify(sampleGraphData));
+
+    await page.setInputFiles("[data-testid='file-input']", tempFile);
     await page.waitForSelector("[data-testid='graph-view']");
     await page.click("[data-testid='nav-metrics']");
     await expect(page.locator("[data-testid='metrics-view']")).toBeVisible();
     await expect(page.locator("[data-testid='edge-type-local']")).toContainText("2");
+
+    unlinkSync(tempFile);
   });
 });
