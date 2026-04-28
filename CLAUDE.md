@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Core Principle
 
 **`docs/README.md` is the single source of truth.** Read it before implementing anything. Update it after making changes.
