@@ -4,13 +4,43 @@
 
 ```bash
 # Global install
-npm install -g dcr-reporter
+npm install -g @dcr-reporter/cli
 
 # Or use with npx
-npx dcr-reporter --help
+npx @dcr-reporter/cli --help
 ```
 
 ## Commands
+
+### `scan`
+
+Run dependency-cruiser on a project directory and generate a visualization-ready graph.
+
+```bash
+dep-report scan --path <dir> [options]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-p, --path <dir>` | (required) | Project directory to scan |
+| `-o, --output <path>` | `<dirname>-graph.json` | Output graph JSON file |
+| `-c, --config <path>` | auto-detect | dependency-cruiser config file |
+
+**Examples:**
+
+```bash
+# Scan a project
+dep-report scan --path ./my-project
+
+# Specify output and config
+dep-report scan -p ./my-project -o output/graph.json -c .dependency-cruiser.json
+```
+
+The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the scan directory or CWD. It also detects `tsconfig.json` for TypeScript support.
+
+---
 
 ### `analyze`
 
@@ -24,12 +54,10 @@ dep-report analyze [options]
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-i, --input <path>` | (required) | Input JSON file or directory |
-| `-o, --output <path>` | `graph.json` | Output JSON file path |
+| `-i, --input <path>` | (required) | Input dependency-cruiser JSON file |
+| `-o, --output <path>` | `graph.json` | Output graph JSON file |
 | `-m, --max-nodes <n>` | `5000` | Maximum nodes in output |
 | `-l, --level <level>` | auto | Aggregation level: `file` \| `directory` \| `package` \| `root` |
-| `-L, --layout` | false | Pre-compute layout coordinates |
-| `-c, --config <path>` | - | Configuration file |
 
 **Examples:**
 
@@ -42,10 +70,9 @@ dep-report analyze -i cruise.json -o output/graph.json
 
 # Force directory-level aggregation
 dep-report analyze -i cruise.json -l directory
-
-# Include layout pre-computation
-dep-report analyze -i cruise.json -L
 ```
+
+The `analyze` command tries the Rust `dcr-aggregate` binary first. If unavailable, it falls back to a Node.js converter.
 
 ---
 
@@ -61,8 +88,7 @@ dep-report open [options]
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-f, --file <path>` | - | Pre-processed JSON file |
-| `-i, --input <path>` | - | Raw dependency-cruiser JSON (auto-preprocess) |
+| `-f, --file <path>` | - | Pre-processed graph JSON file |
 | `-p, --port <port>` | `3000` | Server port |
 | `--host <host>` | `localhost` | Server host |
 
@@ -71,9 +97,6 @@ dep-report open [options]
 ```bash
 # Open pre-processed file
 dep-report open -f graph.json
-
-# Open raw dependency-cruiser output
-dep-report open -i cruise.json
 
 # Custom port
 dep-report open -f graph.json -p 8080
@@ -85,7 +108,7 @@ dep-report open -f graph.json -p 8080
 
 | Level | Description | When to Use |
 |-------|-------------|-------------|
-| `file` | No aggregation | Small projects (<1000 files) |
+| `file` | No aggregation | Small projects (<=1000 files) |
 | `directory` | By directory | Medium projects |
 | `package` | By npm package | Large monorepos |
 | `root` | Single node | Very large projects |
@@ -109,14 +132,28 @@ The output JSON follows the [`ProcessedGraph`](../backend/data-structures.md) st
 
 ---
 
-## Exit Codes
+## Typical Workflow
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Input file not found |
-| 2 | Invalid JSON format |
-| 3 | Processing error |
+```bash
+# 1. Scan a project (runs dependency-cruiser internally)
+dep-report scan --path ./my-project
+
+# 2. Open the result
+dep-report open -f my-project-graph.json
+```
+
+Or separately:
+
+```bash
+# 1. Run dependency-cruiser yourself
+npx dependency-cruiser --output-type json src/ > cruise.json
+
+# 2. Process the output
+dep-report analyze -i cruise.json -o graph.json
+
+# 3. View the result
+dep-report open -f graph.json
+```
 
 ---
 
@@ -127,6 +164,7 @@ The output JSON follows the [`ProcessedGraph`](../backend/data-structures.md) st
 ```json
 {
   "scripts": {
+    "scan": "dep-report scan --path src",
     "analyze": "dep-report analyze -i cruise.json -o graph.json",
     "view": "dep-report open -f graph.json"
   }
@@ -139,7 +177,7 @@ The output JSON follows the [`ProcessedGraph`](../backend/data-structures.md) st
 # GitHub Actions
 - name: Analyze dependencies
   run: |
-    npx dependency-cruiser --output-type json > cruise.json
+    npx dependency-cruiser --output-type json src/ > cruise.json
     dep-report analyze -i cruise.json -o artifacts/graph.json
 
 - name: Upload artifact

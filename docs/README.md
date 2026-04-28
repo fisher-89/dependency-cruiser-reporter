@@ -10,8 +10,10 @@ Welcome to the dependency-cruiser-reporter documentation.
 | Architecture | [Architecture Overview](architecture/overview.md) | System design and data flow |
 | | [Data Flow](architecture/data-flow.md) | Processing pipeline details |
 | | [Aggregation Strategy](architecture/aggregation.md) | Node aggregation logic |
+| Backend | [Rust Engine](backend/rust-engine.md) | Native binary design |
+| | [Data Structures](backend/data-structures.md) | Input/output type contracts |
 | Packages | [CLI Package](packages/cli.md) | CLI tool and HTTP server |
-| | [WASM Package](packages/wasm.md) | Rust WASM module |
+| | [Rust Package](packages/rust.md) | Rust native binary |
 | | [Frontend Package](packages/frontend.md) | React visualization |
 | Usage | [CLI Reference](usage/cli.md) | Command-line interface |
 | | [Web UI](usage/web-ui.md) | Web interface guide |
@@ -31,10 +33,16 @@ docs/
 │   ├── overview.md                     # Architecture overview
 │   ├── data-flow.md                    # Data flow diagram
 │   └── aggregation.md                  # Aggregation strategy
+├── backend/
+│   ├── rust-engine.md                  # Rust engine design
+│   └── data-structures.md              # Input/output types
 ├── packages/
 │   ├── cli.md                          # CLI package design
-│   ├── wasm.md                         # WASM package design
+│   ├── rust.md                         # Rust package design
 │   └── frontend.md                     # Frontend package design
+├── frontend/
+│   ├── components.md                   # Component architecture
+│   └── views.md                        # View specifications
 ├── usage/
 │   ├── cli.md                          # CLI usage
 │   ├── web-ui.md                       # Web UI guide
@@ -48,4 +56,3 @@ docs/
 ## Related Files
 
 - [`CLAUDE.md`](../CLAUDE.md) — Claude Code instructions
-- [`AGENTS.md`](../AGENTS.md) — AI agent configuration

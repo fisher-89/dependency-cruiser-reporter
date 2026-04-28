@@ -9,23 +9,20 @@
 | Vite 5 | Build tool |
 | TypeScript 5 | Type safety |
 | Biome | Linting/formatting |
-| Playwright | E2E testing |
 
 ## Project Structure
 
 ```
 packages/frontend/
 ├── src/
-│   ├── App.tsx        # Main application
+│   ├── App.tsx        # Main application (all views inline)
 │   ├── main.tsx       # React entry point
 │   └── types.ts       # Type definitions
-├── e2e/
-│   └── app.spec.ts    # E2E tests
 ├── index.html         # HTML template
 ├── vite.config.ts     # Vite configuration
 ├── tsconfig.json      # TypeScript config
 ├── biome.json         # Biome config
-└── playwright.config.ts # Playwright config
+└── package.json
 ```
 
 ## Component Architecture
@@ -48,10 +45,13 @@ flowchart TB
     MetricsView --> EdgeTypes["Edge Types\nDistribution"]
 ```
 
+All view components (GraphView, ReportView, MetricsView) are defined inline in `App.tsx`, not in separate files.
+
 ### App (Root)
 
 Main application component managing:
 
+- Server-side data loading (via `/api/config` + `/api/graph`)
 - File upload state
 - View mode switching
 - Data loading
@@ -60,8 +60,26 @@ Main application component managing:
 function App() {
   const [data, setData] = useState<ProcessedGraph | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   // ...
 }
+```
+
+On mount, the App checks if a graph file is available from the server:
+
+```tsx
+useEffect(() => {
+  const loadGraphFromServer = async () => {
+    const configRes = await fetch('/api/config');
+    const config = await configRes.json();
+    if (config.hasGraphFile) {
+      const graphRes = await fetch('/api/graph');
+      // ...
+    }
+  };
+  loadGraphFromServer();
+}, []);
 ```
 
 ### UploadArea
@@ -69,13 +87,12 @@ function App() {
 File upload with drag-and-drop:
 
 ```tsx
-<div
-  onDrop={handleDrop}
-  onDragOver={handleDragOver}
->
+<div onDrop={handleDrop} onDragOver={handleDragOver}>
   <input type="file" accept=".json" />
 </div>
 ```
+
+When a file is selected, it is read as text and parsed with `JSON.parse` (no WASM processing).
 
 ### GraphView
 
@@ -84,6 +101,8 @@ Dependency graph visualization:
 ```tsx
 function GraphView({ data }: { data: ProcessedGraph }) {
   // SVG-based node/edge rendering
+  // 5-column grid layout
+  // Max 20 edges displayed
 }
 ```
 
@@ -114,7 +133,7 @@ function MetricsView({ data }: { data: ProcessedGraph }) {
 ```mermaid
 stateDiagram-v2
     [*] --> Idle: App initialized
-    Idle --> Loading: File selected
+    Idle --> Loading: File selected / server load
     Loading --> Loaded: Parse success
     Loading --> Error: Parse failed
     Error --> Loading: Retry upload
@@ -142,7 +161,7 @@ Current implementation uses React `useState`. No external state management libra
 
 ## Styling
 
-Inline styles defined in `styles` object:
+Inline styles defined in `styles` object within `App.tsx`:
 
 ```tsx
 const styles: Record<string, React.CSSProperties> = {
@@ -165,9 +184,7 @@ Color palette:
 ## Commands
 
 ```bash
-pnpm dev           # Start dev server
+pnpm dev           # Start dev server (http://localhost:5173)
 pnpm build         # Production build
-pnpm typecheck     # TypeScript check
 pnpm lint          # Biome linting
-pnpm test:e2e      # Playwright tests
 ```

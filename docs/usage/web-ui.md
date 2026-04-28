@@ -6,9 +6,6 @@
 # From pre-processed file
 dep-report open -f graph.json
 
-# From raw dependency-cruiser output
-dep-report open -i cruise.json
-
 # Custom port
 dep-report open -f graph.json -p 8080
 ```
@@ -21,7 +18,7 @@ dep-report open -f graph.json -p 8080
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │                    ┌───────────────────┐                     │
-│                    │  📁               │                     │
+│                    │                   │                     │
 │                    │  Drop JSON file   │                     │
 │                    │  here or click    │                     │
 │                    │  to upload        │                     │
@@ -29,6 +26,8 @@ dep-report open -f graph.json -p 8080
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+When started with `-f graph.json`, the server loads the file automatically via the `/api/graph` endpoint. The frontend checks `/api/config` on mount to determine if a graph file is available.
 
 ## Upload Area
 
@@ -42,7 +41,9 @@ Click the upload area to open file picker, select a `.json` file.
 
 ### File Format
 
-Expected format: [`ProcessedGraph`](../backend/data-structures.md) JSON output from `dep-report analyze`.
+Expected format: [`ProcessedGraph`](../backend/data-structures.md) JSON output from `dep-report analyze` or `dep-report scan`.
+
+Uploaded files are parsed directly with `JSON.parse` — no server-side processing occurs.
 
 ## Views
 
@@ -54,7 +55,8 @@ Default view showing dependency graph.
 
 - Nodes positioned in 5-column grid
 - Edges rendered as lines
-- Weight determines line thickness
+- Weight determines line thickness (max 3px)
+- Max 20 edges displayed
 
 **Info Bar:**
 
@@ -105,26 +107,3 @@ Statistics dashboard.
 | Action | Elements | Behavior |
 |--------|----------|----------|
 | Upload New File | Button | Reset and show upload area |
-
-## Keyboard Shortcuts
-
-Currently not implemented. Future additions:
-
-| Key | Action |
-|-----|--------|
-| `G` | Switch to Graph view |
-| `R` | Switch to Report view |
-| `M` | Switch to Metrics view |
-| `Esc` | Clear selection |
-| `?` | Show help |
-
-## Browser Support
-
-| Browser | Minimum Version |
-|---------|-----------------|
-| Chrome | 90+ |
-| Firefox | 88+ |
-| Safari | 14+ |
-| Edge | 90+ |
-
-Node.js 18+ required for development.

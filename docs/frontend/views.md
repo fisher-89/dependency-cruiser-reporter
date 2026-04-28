@@ -19,10 +19,11 @@ Interactive dependency graph visualization.
 
 - SVG-based rendering
 - Node grid layout (5 columns)
-- Edge rendering with weight-based stroke width
+- Edge rendering with weight-based stroke width (max 3px)
 - Node/edge counts display
+- Max 20 edges displayed
 
-### Layout Algorithm (Current)
+### Layout Algorithm
 
 ```tsx
 const x = 100 + (i % 5) * 150;  // 5-column grid
@@ -34,16 +35,9 @@ const y = 100 + Math.floor(i / 5) * 100;
 ```mermaid
 flowchart LR
     Data["ProcessedGraph"] --> Nodes["data.nodes\n→ SVG circles"]
-    Data --> Edges["data.edges\n→ SVG lines"]
+    Data --> Edges["data.edges (max 20)\n→ SVG lines"]
     Data --> Meta["data.meta\n→ Info bar"]
 ```
-
-### Future Enhancements
-
-- [ ] Force-directed layout (D3)
-- [ ] Zoom/pan controls
-- [ ] Node selection and drill-down
-- [ ] Edge type coloring
 
 ### Data Displayed
 
@@ -93,7 +87,6 @@ flowchart LR
 ### Filtering
 
 Current: No filtering
-Future: Filter by rule, search by path
 
 ---
 

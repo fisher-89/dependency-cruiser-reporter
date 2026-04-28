@@ -157,7 +157,7 @@ struct ViolationInfo {
     from: String,
     to: String,
     rule: String,
-    severity: String,
+    severity: String,  // "error", "warn", or "info"
     message: Option<String>,
 }
 ```
@@ -215,64 +215,61 @@ classDiagram
 
 | Value | Threshold |
 |-------|-----------|
-| `file` | ≤1000 nodes |
+| `file` | <=1000 nodes |
 | `directory` | 1001-5000 nodes |
 | `package` | 5001-20000 nodes |
 | `root` | >20000 nodes |
 
-## Input Types (dependency-cruiser)
+## Input Types
 
-```mermaid
-classDiagram
-    class CruiseResult {
-        +Module[] modules
-        +Dependency[] dependencies
-        +Violation[] violations
-        +Summary summary
-    }
+The CLI handles two input structures:
 
-    class Module {
-        +string source
-        +string[] dependencies
-        +string[] dependency_types
-        +number size
-    }
+### TypeScript Input (used by `scan` command via dependency-cruiser API)
 
-    class Dependency {
-        +string resolved
-        +string core_module
-        +string[] dependency_types
-        +string from
-        +string to
-    }
+```typescript
+// From packages/cli/src/commands/convert.ts
+interface DcModule {
+  source: string;
+  dependencies: DcDependency[];
+  valid: boolean;
+}
 
-    class RawViolation {
-        +string from
-        +string to
-        +Rule rule
-        +string message
-    }
+interface DcDependency {
+  resolved: string;
+  moduleSystem: string;
+  coreModule: boolean;
+  couldNotResolve: boolean;
+  dependencyTypes: string[];
+  followable: boolean;
+  rules?: { name: string; severity: string }[];
+}
 
-    class Rule {
-        +string severity
-        +string name
-    }
-
-    class Summary {
-        +number violations
-        +number error
-        +number warn
-        +number info
-    }
-
-    CruiseResult --> Module
-    CruiseResult --> Dependency
-    CruiseResult --> RawViolation
-    CruiseResult --> Summary
-    RawViolation --> Rule
+interface DcOutput {
+  modules: DcModule[];
+  summary?: {
+    violations: number;
+    error: number;
+    warn: number;
+    info: number;
+    totalCruised: number;
+    totalDependenciesCruised: number;
+  };
+}
 ```
 
+Edge classification in TypeScript (`classifyEdge`):
+
+| Condition | Edge Type |
+|-----------|-----------|
+| `dep.coreModule === true` | `core` |
+| `dep.couldNotResolve === true` | `dynamic` |
+| `dep.dependencyTypes` includes `npm`/`npm-dev`/`npm-optional`/`npm-peer` | `npm` |
+| Otherwise | `local` |
+
+### Rust Input (used by `analyze` command)
+
 ```rust
+// From packages/rust/src/lib.rs
 struct CruiseResult {
     modules: Option<Vec<Module>>,
     dependencies: Option<Vec<Dependency>>,
@@ -282,26 +279,65 @@ struct CruiseResult {
 
 struct Module {
     source: String,
+    #[serde(default)]
     dependencies: Vec<String>,
+    #[serde(default)]
     dependency_types: Option<Vec<String>>,
+    #[serde(default)]
     size: Option<usize>,
 }
 
 struct Dependency {
+    #[serde(rename = "resolved")]
     resolved: Option<String>,
+    #[serde(rename = "coreModule")]
     core_module: Option<String>,
+    #[serde(rename = "dependencyTypes", default)]
     dependency_types: Vec<String>,
+    #[serde(rename = "from", default)]
     from: Option<String>,
+    #[serde(rename = "to", default)]
     to: Option<String>,
 }
 
 struct RawViolation {
+    #[serde(rename = "from", default)]
     from: Option<String>,
+    #[serde(rename = "to", default)]
     to: Option<String>,
+    #[serde(rename = "rule", default)]
     rule: Option<Rule>,
+    #[serde(rename = "message", default)]
     message: Option<String>,
 }
+
+struct Rule {
+    #[serde(rename = "severity", default)]
+    severity: Option<String>,
+    #[serde(rename = "name", default)]
+    name: Option<String>,
+}
+
+struct Summary {
+    #[serde(rename = "violations", default)]
+    violations: Option<usize>,
+    #[serde(rename = "error", default)]
+    error: Option<usize>,
+    #[serde(rename = "warn", default)]
+    warn: Option<usize>,
+    #[serde(rename = "info", default)]
+    info: Option<usize>,
+}
 ```
+
+Edge detection in Rust (`detect_edge_type`):
+
+| Condition | Edge Type |
+|-----------|-----------|
+| `dependencyTypes` contains `"npm"` or `"node_modules"` | `Npm` |
+| `dependencyTypes` contains `"core"` | `Core` |
+| `dependencyTypes` contains `"dynamic"` | `Dynamic` |
+| Otherwise | `Local` |
 
 ## Serialization Notes
 
@@ -310,11 +346,12 @@ struct RawViolation {
 ```rust
 #[serde(rename_all = "lowercase")]  // NodeType, EdgeType, AggregationLevel
 #[serde(skip_serializing_if = "Option::is_none")]  // Optional fields
+#[serde(default)]  // Missing fields use default values
 ```
 
 ### TypeScript
 
-Use camelCase to match JSON output:
+Use snake_case to match JSON output:
 
 ```typescript
 node_type  // NOT nodeType

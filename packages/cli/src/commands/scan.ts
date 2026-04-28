@@ -1,7 +1,9 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, basename, dirname } from "node:path";
 import { cwd } from "node:process";
+import { cruise } from "dependency-cruiser";
+import extractDepcruiseOptions from "dependency-cruiser/config-utl/extract-depcruise-options";
+import extractTSConfig from "dependency-cruiser/config-utl/extract-ts-config";
 
 export interface ScanOptions {
   path: string;
@@ -15,7 +17,6 @@ export async function scan(options: ScanOptions): Promise<string> {
   // Resolve absolute path
   const absScanPath = resolve(cwd(), scanPath);
   const outputPath = output || resolve(cwd(), `${basename(absScanPath)}-graph.json`);
-  const dcRawOutput = resolve(cwd(), `${basename(absScanPath)}-deps.json`);
 
   // Ensure output directory exists
   const parentDir = dirname(outputPath);
@@ -35,57 +36,65 @@ export async function scan(options: ScanOptions): Promise<string> {
     if (!existsSync(configPath)) {
       configPath = resolve(cwd(), ".dependency-cruiser.json");
     }
+    if (!existsSync(configPath)) {
+      configPath = resolve(cwd(), ".dependency-cruiser.js");
+    }
   }
 
-  const configArg = configPath && existsSync(configPath) ? ["-c", configPath] : [];
+  // Extract cruise options from config
+  let cruiseOptions: Record<string, unknown> = {
+    outputType: "json",
+  };
 
-  // Step 1: Run dependency-cruiser and write raw output to file via --output-to
-  // -T json: output type json
-  // --output-to: write output to file instead of stdout
-  const dcArgs = [
-    "dependency-cruiser",
-    ...configArg,
-    "-T", "json",
-    "--output-to", dcRawOutput,
-    absScanPath,
-  ];
+  if (configPath && existsSync(configPath)) {
+    console.log(`Using config: ${configPath}`);
+    try {
+      const extractedOptions = await extractDepcruiseOptions(configPath);
+      cruiseOptions = { ...extractedOptions, ...cruiseOptions };
+    } catch (e) {
+      console.warn(`Failed to extract config from ${configPath}:`, e);
+    }
+  }
 
-  console.log(`Running: npx ${dcArgs.join(" ")}`);
+  // Find and extract tsconfig.json for TypeScript support
+  const tsConfigPath = resolve(absScanPath, "tsconfig.json");
+  let transpilerOptions: { tsConfig?: object } = {};
 
-  const dcResult = spawnSync("npx", dcArgs, {
-    cwd: cwd(),
-    shell: true,
-    stdio: "inherit",
-  });
+  if (existsSync(tsConfigPath)) {
+    console.log(`Using tsconfig: ${tsConfigPath}`);
+    try {
+      transpilerOptions.tsConfig = extractTSConfig(tsConfigPath);
+    } catch (e) {
+      console.warn(`Failed to extract tsconfig from ${tsConfigPath}:`, e);
+    }
+  }
 
-  if (dcResult.error) {
-    console.error(`Error running dependency-cruiser: ${dcResult.error.message}`);
+  console.log(`Scanning: ${absScanPath}`);
+
+  // Run dependency-cruiser via API
+  const cruiseResult = await cruise(
+    [absScanPath],
+    cruiseOptions,
+    undefined, // resolveOptions (webpack)
+    transpilerOptions
+  );
+
+  if (!cruiseResult.output) {
+    console.error("dependency-cruiser did not produce output");
     process.exit(1);
   }
 
-  if (dcResult.status !== 0) {
-    console.error(`dependency-cruiser exited with code ${dcResult.status}`);
-    process.exit(dcResult.status ?? 1);
-  }
-
-  if (!existsSync(dcRawOutput)) {
-    console.error("dependency-cruiser did not produce output file");
-    process.exit(1);
-  }
-
-  // Step 2: Read raw output and convert to ProcessedGraph
-  const dcOutput = readFileSync(dcRawOutput, "utf-8");
-  if (!dcOutput.trim()) {
-    console.error("dependency-cruiser output is empty");
-    process.exit(1);
-  }
-
+  // Convert to ProcessedGraph
   const { convertDcOutput } = await import("./convert.js");
   let graph;
   try {
-    graph = convertDcOutput(dcOutput);
+    // cruiseResult.output is already the parsed JSON object
+    const dcJson = typeof cruiseResult.output === "string"
+      ? cruiseResult.output
+      : JSON.stringify(cruiseResult.output);
+    graph = convertDcOutput(dcJson);
   } catch (e) {
-    console.error("Failed to parse dependency-cruiser output:", e);
+    console.error("Failed to convert dependency-cruiser output:", e);
     process.exit(1);
   }
 

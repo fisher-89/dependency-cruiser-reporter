@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Rust preprocessing engine is the core of dependency-cruiser-reporter, responsible for parsing, aggregating, and transforming dependency-cruiser JSON output.
+The Rust preprocessing engine is the core of dependency-cruiser-reporter, responsible for parsing, aggregating, and transforming dependency-cruiser JSON output. It compiles to a native binary (`dcr-aggregate`) invoked by the CLI.
 
 ## Dependencies
 
@@ -18,7 +18,7 @@ clap = { version = "4.5", features = ["derive"] }
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
 | `thiserror` | Error handling |
-| `clap` | CLI argument parsing |
+| `clap` | CLI argument parsing (binary only) |
 
 ## Module Structure
 
@@ -26,9 +26,11 @@ clap = { version = "4.5", features = ["derive"] }
 packages/rust/
 ├── Cargo.toml
 ├── src/
-│   ├── lib.rs      # Core library (data structures + processing)
-│   └── main.rs     # CLI entry point
+│   ├── lib.rs      # Core library (data structures + processing + tests)
+│   └── main.rs     # CLI entry point (dcr-aggregate binary)
 ```
+
+All data structures, processing logic, and tests are in `lib.rs`. The binary in `main.rs` is a thin CLI wrapper.
 
 ## Processing Flow
 
@@ -64,15 +66,19 @@ pub fn parse_and_aggregate(
     input: &Path,
     max_nodes: usize,
     level: Option<AggregationLevel>,
-    layout: bool,
+    _layout: bool,
 ) -> Result<ProcessedGraph, DcrError>
 ```
+
+Reads the input file, parses the JSON, determines aggregation level, builds nodes and edges, and returns the processed graph.
 
 ### CLI (`main.rs`)
 
 ```bash
 dcr-aggregate --input <path> --output <path> [options]
 ```
+
+Uses clap derive API. Parses arguments, calls `parse_and_aggregate`, and writes the output JSON.
 
 ## Error Handling
 
@@ -81,10 +87,8 @@ dcr-aggregate --input <path> --output <path> [options]
 pub enum DcrError {
     #[error("Failed to read file: {0}")]
     IoError(#[from] std::io::Error),
-
     #[error("Failed to parse JSON: {0}")]
     JsonError(#[from] serde_json::Error),
-
     #[error("Invalid input: {0}")]
     InvalidInput(String),
 }
@@ -93,17 +97,6 @@ pub enum DcrError {
 ## Core Functions
 
 ### Aggregation Builders
-
-```mermaid
-flowchart LR
-    subgraph Builders["Aggregation Builders"]
-        direction TB
-        F[build_file_nodes\nNo transformation]
-        D[build_directory_nodes\nGroup by directory]
-        P[build_package_nodes\nGroup by npm package]
-        R[build_root_nodes\nSingle root node]
-    end
-```
 
 | Function | Level | Behavior |
 |----------|-------|----------|
@@ -116,17 +109,28 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    EdgeMap[Edge Map\nHashMap&lt;(src, tgt), Vec&lt;String&gt;&gt;] --> Convert[Convert to Vec]
-    Convert --> Sort[Sort by weight\ndescending]
-    Sort --> Truncate[Truncate to max_nodes\ncapped at 10000]
-    Truncate --> Result[Vec&lt;GraphEdge&gt;]
+    EdgeMap["Edge Map\nHashMap<(src, tgt), Vec<String>>"] --> Convert[Convert to Vec]
+    Convert --> Sort["Sort by weight\ndescending"]
+    Sort --> Truncate["Truncate to max_nodes\ncapped at 10000"]
+    Truncate --> Result["Vec<GraphEdge>"]
 ```
 
 1. Convert edge map to vector
 2. Sort by weight (descending)
 3. Truncate to `max_nodes` (capped at 10000)
 
+### Helper Functions
+
+| Function | Purpose |
+|----------|---------|
+| `select_aggregation_level` | Determine level from node count thresholds |
+| `detect_edge_type` | Classify edge from `dependencyTypes` |
+| `get_parent_directory` | Extract parent directory from path |
+| `extract_package_name` | Extract npm package name from `node_modules/` path |
+
 ## Testing
+
+Tests are inline in `lib.rs` under `#[cfg(test)] mod tests`:
 
 ```bash
 cargo test        # Run unit tests

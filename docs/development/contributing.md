@@ -17,10 +17,15 @@ git clone https://github.com/YOUR_USERNAME/dependency-cruiser-reporter.git
 cd dependency-cruiser-reporter
 
 # 2. Install dependencies
-cd packages/frontend && pnpm install
-cd ../rust && cargo build
+pnpm install
 
-# 3. Create a branch
+# 3. Build Rust binary
+cd packages/rust && cargo build --release && cd ../..
+
+# 4. Build TypeScript packages
+pnpm build:ts
+
+# 5. Create a branch
 git checkout -b feature/my-feature
 ```
 
@@ -29,7 +34,6 @@ git checkout -b feature/my-feature
 ### 1. Before Starting
 
 - Check existing issues
-- Read [`docs/SPEC.md`](../SPEC.md) for context
 - Discuss approach in issue comments
 
 ### 2. Make Changes
@@ -42,17 +46,26 @@ git checkout -b feature/my-feature
 ### 3. Before Submitting
 
 ```bash
+# TypeScript packages
+pnpm build:ts
+
 # Frontend
 cd packages/frontend
 pnpm typecheck
 pnpm lint
-pnpm test:e2e
+cd ../..
 
 # Rust
 cd packages/rust
 cargo test
 cargo clippy
 cargo fmt --check
+cd ../..
+
+# Integration tests
+cd packages/e2e
+pnpm test
+cd ../..
 ```
 
 ### 4. Submit PR
@@ -70,8 +83,10 @@ cargo fmt --check
 - Use TypeScript strict mode
 
 ```bash
-pnpm lint        # Check
-pnpm format      # Auto-fix
+# Frontend lint
+cd packages/frontend
+pnpm lint          # Check
+pnpm format        # Auto-fix (biome format --write)
 ```
 
 ### Rust
@@ -81,8 +96,9 @@ pnpm format      # Auto-fix
 - Run `cargo clippy` and fix warnings
 
 ```bash
-cargo fmt        # Format
-cargo clippy     # Lint
+cd packages/rust
+cargo fmt          # Format
+cargo clippy       # Lint
 ```
 
 ## Commit Messages
@@ -100,7 +116,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 Examples:
 
 ```
-feat: add force-directed layout for graph
+feat: add scan command for running dependency-cruiser
 fix: correct edge type detection for dynamic imports
 docs: update API reference with new options
 ```

@@ -4,20 +4,25 @@
 
 The `packages/cli` package provides the command-line interface for dependency-cruiser-reporter. It handles:
 
-1. **`analyze`** — Process dependency-cruiser JSON output
-2. **`open`** — Start HTTP server to view results
+1. **`scan`** — Run dependency-cruiser on a project directory and generate graph
+2. **`analyze`** — Process dependency-cruiser JSON output into aggregated graph
+3. **`open`** — Start HTTP server to view results
+
+Also exports a programmatic Express server via `createServer`.
 
 ## Package Structure
 
 ```
 packages/cli/
 ├── bin/
-│   └── cli.js           # CLI entry point
+│   └── cli.js           # CLI entry point (commander program)
 ├── src/
 │   ├── commands/
-│   │   ├── analyze.ts   # Analyze command implementation
-│   │   └── open.ts      # Open command implementation
-│   ├── server.ts        # HTTP server for 'open' command
+│   │   ├── analyze.ts   # Analyze command (Rust binary + Node.js fallback)
+│   │   ├── convert.ts   # Node.js dependency-cruiser JSON converter
+│   │   ├── scan.ts      # Scan command (runs dependency-cruiser API)
+│   │   └── open.ts      # Open command (starts HTTP server)
+│   ├── server.ts        # Express HTTP server
 │   └── index.ts         # Main exports
 ├── package.json
 └── tsconfig.json
@@ -25,17 +30,57 @@ packages/cli/
 
 ## Commands
 
+### `dep-report scan`
+
+Run dependency-cruiser on a project and generate a visualization-ready graph.
+
+```mermaid
+flowchart LR
+    CLI["dep-report scan"] --> Find["Find .dependency-cruiser config"]
+    Find --> DC["dependency-cruiser API\ncruise()"]
+    DC --> Convert["convertDcOutput()"]
+    Convert --> Write["Write graph.json"]
+```
+
+**Usage:**
+
+```bash
+dep-report scan --path <dir> [options]
+```
+
+**Options:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-p, --path <dir>` | (required) | Project directory to scan |
+| `-o, --output <path>` | `<dirname>-graph.json` | Output graph JSON file |
+| `-c, --config <path>` | auto-detect | dependency-cruiser config file |
+
+The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the scan directory or current working directory. It also detects `tsconfig.json` for TypeScript support.
+
+**Example:**
+
+```bash
+# Scan current project
+dep-report scan --path ./my-project
+
+# Specify output and config
+dep-report scan -p ./my-project -o output/graph.json -c .dependency-cruiser.json
+```
+
+---
+
 ### `dep-report analyze`
 
 Process dependency-cruiser JSON and generate aggregated graph.
 
 ```mermaid
-flowchart LR
-    CLI[dep-report analyze] --> Read[Read input JSON]
-    Read --> Load[Load WASM module]
-    Load --> Process[WASM: parse_and_aggregate]
-    Process --> Write[Write output JSON]
-    Write --> Done[Output path printed]
+flowchart TB
+    CLI["dep-report analyze"] --> Find["Find dcr-aggregate binary"]
+    Find -->|Found| Rust["Rust binary:\nparse_and_aggregate"]
+    Find -->|Not found| Node["Node.js fallback:\nconvertDcOutput"]
+    Rust --> Write["Write graph.json"]
+    Node --> Write
 ```
 
 **Usage:**
@@ -71,12 +116,11 @@ Start HTTP server to view processed graph.
 
 ```mermaid
 flowchart TB
-    CLI[dep-report open] --> Server[Start HTTP server]
-    Server --> Static[Serve static files]
-    Server --> API[/api/graph endpoint]
-    Static --> Index[index.html]
-    Index --> WASM[Initialize WASM]
-    WASM --> Render[Render visualization]
+    CLI["dep-report open"] --> Server["Start Express server"]
+    Server --> Static["Serve frontend static files"]
+    Server --> API["GET /api/config\nGET /api/graph"]
+    Static --> Browser["Browser loads app"]
+    API --> Browser
 ```
 
 **Usage:**
@@ -103,9 +147,30 @@ dep-report open --file graph.json
 dep-report open -f graph.json -p 8080
 ```
 
+## Node.js Converter (`convert.ts`)
+
+When the Rust binary is unavailable, `convertDcOutput` provides a pure Node.js fallback:
+
+```typescript
+export function convertDcOutput(dcJson: string): ProcessedGraph
+```
+
+It parses dependency-cruiser JSON (with `DcModule`, `DcDependency` types), classifies edges (`local` | `npm` | `core` | `dynamic`), extracts violations, and determines the aggregation level based on node count thresholds.
+
+Edge classification logic:
+
+| Condition | Edge Type |
+|-----------|-----------|
+| `dep.coreModule === true` | `core` |
+| `dep.couldNotResolve === true` | `dynamic` |
+| `dep.dependencyTypes` includes `npm`/`npm-dev`/`npm-optional`/`npm-peer` | `npm` |
+| Otherwise | `local` |
+
+The `analyzeWithFallback` function (also in `convert.ts`) provides the same analyze flow as `analyze.ts` but with an alternative binary search path. Both `analyze.ts` and `convert.ts` contain `findDcrAggregateBinary()`.
+
 ## HTTP Server
 
-The `open` command starts a simple HTTP server:
+The `open` command starts an Express server (`server.ts`) with these routes:
 
 ```mermaid
 sequenceDiagram
@@ -115,12 +180,11 @@ sequenceDiagram
     participant Browser
 
     CLI->>Server: start(port, host)
-    Server->>Browser: Serve index.html
+    Browser->>Server: GET / (index.html)
     Browser->>Server: GET /api/config
-    Server-->>Browser: { wasmUrl, graphFile }
-    Browser->>Browser: Load WASM module
-    Browser->>Server: GET /api/graph (if file specified)
-    Server-->>Browser: graph.json content
+    Server-->>Browser: { hasGraphFile: boolean }
+    Browser->>Server: GET /api/graph (if hasGraphFile)
+    Server-->>Browser: ProcessedGraph JSON
     Browser->>Browser: Render visualization
 ```
 
@@ -128,68 +192,63 @@ sequenceDiagram
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Serve frontend index.html |
-| `/assets/*` | GET | Static assets (JS, CSS) |
-| `/api/config` | GET | Return WASM config |
+| `/` | GET | Serve frontend index.html (SPA) |
+| `/api/config` | GET | Return `{ hasGraphFile: boolean }` |
 | `/api/graph` | GET | Return graph JSON (if `--file` specified) |
+| `/assets/*` | GET | Static assets (JS, CSS) |
+
+### Programmatic API
+
+```typescript
+import { createServer } from '@dcr-reporter/cli';
+
+const server = createServer({ port: 3000, host: 'localhost', graphFile: 'graph.json' });
+await server.start();
+server.stop();
+```
 
 ## npm Package Configuration
 
 ```json
 {
-  "name": "dependency-cruiser-reporter",
+  "name": "@dcr-reporter/cli",
   "version": "0.1.0",
+  "type": "module",
   "bin": {
     "dep-report": "./bin/cli.js"
   },
-  "files": [
-    "bin/",
-    "dist/"
-  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "dependencies": {
-    "@dcr-reporter/wasm": "workspace:*",
+    "commander": "^12.0.0",
+    "express": "^4.18.2",
+    "dependency-cruiser": "^17.3.0",
     "@dcr-reporter/frontend": "workspace:*"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
 ```
 
-## Integration with WASM
+## Integration with Rust Binary
 
-The CLI loads the WASM module via dynamic import:
+The `analyze` command locates the `dcr-aggregate` binary by checking:
 
-```typescript
-import init, { parse_and_aggregate } from '@dcr-reporter/wasm';
+1. `packages/rust/target/release/dcr-aggregate[.exe]`
+2. `packages/rust/target/debug/dcr-aggregate[.exe]`
 
-async function analyze(input: string, options: AnalyzeOptions) {
-  await init(); // Initialize WASM
-  const graphJson = await readFile(input, 'utf-8');
-  const result = parse_and_aggregate(graphJson, options.maxNodes, options.level);
-  await writeFile(options.output, JSON.stringify(result, null, 2));
-}
-```
+Paths are resolved relative to the CLI dist directory. If the binary exists, it is spawned with the appropriate arguments. On failure, it falls back to the Node.js converter.
 
 ## Build Process
 
 ```bash
-# Build WASM module
-cd packages/wasm && wasm-pack build
+# Build Rust binary
+cd packages/rust && cargo build --release
 
-# Build frontend
+# Build frontend (served by open command)
 cd packages/frontend && pnpm build
 
-# Build CLI
+# Build CLI TypeScript
 cd packages/cli && pnpm build
-
-# Package for npm
-pnpm pack
 ```
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Input file not found |
-| 2 | Invalid JSON format |
-| 3 | Server port already in use |
-| 4 | Unknown command |

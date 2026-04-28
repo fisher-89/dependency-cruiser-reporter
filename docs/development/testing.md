@@ -4,117 +4,29 @@
 
 | Package | Framework | Location |
 |---------|-----------|----------|
-| Frontend | Playwright (E2E) | `packages/frontend/e2e/` |
-| WASM | wasm-pack test | `packages/wasm/tests/` |
-| CLI | Node.js test runner | `packages/e2e/` |
-
-## Frontend E2E Tests
-
-### Running Tests
-
-```bash
-cd packages/frontend
-
-# Run all tests
-pnpm test:e2e
-
-# Run with UI
-pnpm test:e2e:ui
-
-# Run with browser visible
-pnpm test:e2e:headed
-```
-
-### Test Structure
-
-```
-packages/frontend/
-├── e2e/
-│   ├── app.spec.ts      # Main test suite
-│   └── sample-data.json # Test data
-└── playwright.config.ts # Playwright configuration
-```
-
-### Test Cases
-
-| Test | Description |
-|------|-------------|
-| File upload | Upload JSON file via input |
-| Drag and drop | Upload via drag-drop |
-| View switching | Navigate between Graph/Report/Metrics |
-| Data display | Verify stats are rendered correctly |
-
-### Sample Data
-
-`e2e/sample-data.json` contains a minimal valid `ProcessedGraph`:
-
-```json
-{
-  "nodes": [
-    { "id": "src", "label": "src", "node_type": "directory", "violation_count": 0 }
-  ],
-  "edges": [],
-  "meta": {
-    "original_node_count": 1,
-    "aggregated_node_count": 1,
-    "aggregation_level": "directory",
-    "total_violations": 0
-  },
-  "violations": []
-}
-```
-
-### Writing Tests
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test('my test', async ({ page }) => {
-  await page.goto('/');
-
-  // Upload file
-  await page.setInputFiles('input[type="file"]', 'e2e/sample-data.json');
-
-  // Verify
-  await expect(page.getByTestId('graph-view')).toBeVisible();
-});
-```
-
-### Test IDs
-
-Use `data-testid` for selectors:
-
-```tsx
-<div data-testid="upload-area">...</div>
-<span data-testid="node-count">...</span>
-```
+| Rust | cargo test | `packages/rust/src/lib.rs` |
+| CLI/E2E | Node.js test runner | `packages/e2e/cli.test.js` |
 
 ---
 
-## WASM Tests
+## Rust Tests
+
+Unit tests are written inline in `packages/rust/src/lib.rs` using `#[cfg(test)]` modules.
 
 ### Running Tests
 
 ```bash
-cd packages/wasm
+cd packages/rust
 
-# Run all tests (headless)
-wasm-pack test --headless --firefox
+# Run all tests
+cargo test
 
-# Run with Chrome
-wasm-pack test --headless --chrome
+# Run with output
+cargo test -- --nocapture
 
 # Run specific test
-wasm-pack test --headless --firefox -- test_aggregation
+cargo test test_name
 ```
-
-### Test Cases
-
-| Test | Function |
-|------|----------|
-| `test_aggregation_level_selection` | Verify threshold logic |
-| `test_edge_type_detection` | Verify edge type classification |
-| `test_package_name_extraction` | Verify npm package parsing |
 
 ### Writing Tests
 
@@ -141,6 +53,8 @@ mod tests {
 
 ## CLI Integration Tests
 
+Integration tests for the CLI binary and Rust binary using Node.js built-in test runner.
+
 ### Running Tests
 
 ```bash
@@ -150,14 +64,14 @@ cd packages/e2e
 pnpm test
 
 # Run with verbose output
-pnpm test --verbose
+node --test cli.test.js
 ```
 
 ### Test Structure
 
 ```
 packages/e2e/
-├── package.json        # Test runner config
+├── package.json
 ├── cli.test.js         # CLI integration tests
 └── fixtures/
     └── sample-cruise.json
@@ -165,25 +79,35 @@ packages/e2e/
 
 ### Test Cases
 
+#### CLI Command Tests
+
 | Test | Description |
 |------|-------------|
-| `dep-report --help` | Show help message |
-| `dep-report analyze` | Process JSON and output graph |
-| `dep-report open` | Start HTTP server |
+| `--help shows usage` | Verify help output includes command names |
+| `analyze --help shows options` | Verify analyze options listed |
+| `open --help shows options` | Verify open options listed |
+| `analyze requires --input` | Verify missing input exits with error |
+| `analyze fails with missing input file` | Verify nonexistent file exits with error |
+
+#### Rust Binary Tests
+
+| Test | Description |
+|------|-------------|
+| `dcr-aggregate processes sample input` | Run Rust binary on fixture data, verify output structure |
+
+The Rust binary test is skipped if `dcr-aggregate` is not found (needs `cargo build --release` first).
 
 ### Writing Tests
 
 ```javascript
-const { test } = require('node:test');
-const assert = require('node:assert');
-const { spawnSync } = require('child_process');
+import { test, describe, before, after } from "node:test";
+import assert from "node:assert";
+import { spawnSync } from "node:child_process";
 
-test('analyze command', async () => {
-  const result = spawnSync('dep-report', [
-    'analyze',
-    '--input', 'fixtures/sample-cruise.json',
-    '--output', '/tmp/output.json'
-  ]);
+test("my test", async () => {
+  const result = spawnSync("node", [cliBinary, "analyze", "--input", "fixtures/data.json"], {
+    encoding: "utf-8",
+  });
 
   assert.strictEqual(result.status, 0);
 });
@@ -193,35 +117,20 @@ test('analyze command', async () => {
 
 ## Test Coverage
 
-### Frontend
+### Rust
 
-Current coverage: Basic E2E tests
-
-Future improvements:
-- [ ] Component unit tests (Vitest)
-- [ ] Visual regression tests
-- [ ] Accessibility tests
-
-### WASM
-
-Current coverage: Core logic
-
-| Function | Coverage |
-|----------|----------|
-| `select_aggregation_level` | ✅ Covered |
-| `detect_edge_type` | ✅ Covered |
-| `extract_package_name` | ✅ Covered |
-| `parse_and_aggregate` | ✅ Covered |
+Unit tests cover core logic in `lib.rs`. No separate test files.
 
 ### CLI
 
-Current coverage: Basic integration
+Integration tests cover CLI commands and Rust binary output validation.
 
 | Command | Coverage |
 |---------|----------|
-| `analyze` | ✅ Integration test |
-| `open` | ✅ Server startup test |
-| `--help` | ✅ Help output test |
+| `analyze` | Help output, missing input, missing file |
+| `open` | Help output |
+| `--help` | Help output |
+| Rust binary | Process sample input, output structure |
 
 ---
 
@@ -234,27 +143,13 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm test:e2e --filter frontend
-
-  test-wasm:
+  test-rust:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: rustup target add wasm32-unknown-unknown
-      - run: cargo install wasm-pack
-      - run: wasm-pack test --headless --firefox
-        working-directory: packages/wasm
+      - run: cargo test
+        working-directory: packages/rust
 
   test-cli:
     runs-on: ubuntu-latest
@@ -266,7 +161,7 @@ jobs:
           node-version: 18
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm build --filter cli
+      - run: pnpm build:ts
       - run: pnpm test --filter e2e
 ```
 
@@ -274,33 +169,22 @@ jobs:
 
 ## Debugging Tests
 
-### Playwright
-
-```bash
-# Debug mode
-pnpx playwright test --debug
-
-# Generate trace on failure
-# In playwright.config.ts:
-trace: 'on-first-retry'
-```
-
-### WASM
+### Rust
 
 ```bash
 # Print debug output
-wasm-pack test --headless --firefox -- --nocapture
+cargo test -- --nocapture
 
 # Run specific test
-wasm-pack test --headless --firefox -- test_name
+cargo test test_name
 ```
 
 ### CLI
 
 ```bash
 # Debug with verbose output
-pnpm test --verbose
-
-# Run single test file
 node --test cli.test.js
+
+# Run single test by name
+node --test --test-name-pattern "analyze" cli.test.js
 ```

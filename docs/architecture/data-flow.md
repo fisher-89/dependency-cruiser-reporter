@@ -4,16 +4,15 @@
 
 ```mermaid
 flowchart TB
-    Input[dependency-cruiser JSON] --> Upload[File Upload / CLI Input]
-    Upload --> WASM[WASM Module]
-    WASM --> Parse[Parse & Validate]
-    Parse --> Agg[Aggregate Nodes]
-    Agg --> Compress[Compress Edges]
-    Compress --> Output[Output ProcessedGraph]
+    Input[dependency-cruiser JSON] --> CLI[dep-report CLI]
+    CLI --> Rust{Rust binary\navailable?}
+    Rust -->|Yes| Native[Native Rust\nparse_and_aggregate]
+    Rust -->|No| Node[Node.js\nconvertDcOutput]
+    Native --> Output[ProcessedGraph JSON]
+    Node --> Output
     Output --> Render[Frontend Render]
 
     style Input fill:#e0f2fe,stroke:#0284c7
-    style WASM fill:#fef3c7,stroke:#d97706
     style Render fill:#dcfce7,stroke:#16a34a
 ```
 
@@ -21,184 +20,162 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph Browser["Browser Mode"]
-        Upload[File Upload] --> WASM1[WASM Module]
-        WASM1 --> React[React Visualization]
+    subgraph Scan["Scan Mode (dep-report scan)"]
+        Path["Project directory"] --> DC["dependency-cruiser\nAPI (cruise)"]
+        DC --> Convert["convertDcOutput()\nNode.js"]
+        Convert --> File1["graph.json"]
     end
 
-    subgraph CLI["CLI Mode"]
-        File[Input JSON] --> WASM2[Node.js WASM]
-        WASM2 --> Output[graph.json]
-        Output --> Server[HTTP Server]
-        Server --> Browser2[Browser]
+    subgraph Analyze["Analyze Mode (dep-report analyze)"]
+        Input["Input JSON"] --> Check{"dcr-aggregate\nbinary?"}
+        Check -->|Found| Rust["Rust binary"]
+        Check -->|Not found| Fallback["convertDcOutput()\nNode.js fallback"]
+        Rust --> File2["graph.json"]
+        Fallback --> File2
+    end
+
+    subgraph Open["Open Mode (dep-report open)"]
+        File3["graph.json"] --> Server["Express server"]
+        Server --> Browser["Browser"]
     end
 ```
 
 ## Input Format
 
-dependency-cruiser outputs JSON with this structure:
+dependency-cruiser outputs JSON. The CLI supports two input structures:
 
-```mermaid
-classDiagram
-    class CruiseResult {
-        +Module[] modules
-        +Dependency[] dependencies
-        +Violation[] violations
-        +Summary summary
-    }
+### Structure with nested dependencies (used by `scan` command)
 
-    class Module {
-        +string source
-        +string[] dependencies
-        +number size
-    }
+The `scan` command uses the dependency-cruiser API, which returns modules with nested dependencies:
 
-    class Dependency {
-        +string from
-        +string to
-        +string resolved
-        +string[] dependencyTypes
-    }
+```typescript
+interface DcOutput {
+  modules: DcModule[];
+  summary?: {
+    violations: number;
+    error: number;
+    warn: number;
+    info: number;
+    totalCruised: number;
+    totalDependenciesCruised: number;
+  };
+}
 
-    class Violation {
-        +string from
-        +string to
-        +Rule rule
-        +string message
-    }
+interface DcModule {
+  source: string;
+  dependencies: DcDependency[];
+  valid: boolean;
+}
 
-    class Rule {
-        +string name
-        +string severity
-    }
-
-    class Summary {
-        +number violations
-        +number error
-        +number warn
-        +number info
-    }
-
-    CruiseResult --> Module
-    CruiseResult --> Dependency
-    CruiseResult --> Violation
-    CruiseResult --> Summary
-    Violation --> Rule
+interface DcDependency {
+  resolved: string;
+  moduleSystem: string;
+  coreModule: boolean;
+  couldNotResolve: boolean;
+  dependencyTypes: string[];
+  followable: boolean;
+  rules?: { name: string; severity: string }[];
+}
 ```
 
-Example:
+### Structure with top-level dependencies (used by Rust engine)
 
-```json
-{
-  "modules": [{ "source": "src/index.ts", "dependencies": ["src/app.ts"], "size": 42 }],
-  "dependencies": [{ "from": "src/index.ts", "to": "src/app.ts", "resolved": "src/app.ts", "dependencyTypes": ["local"] }],
-  "violations": [{ "from": "src/index.ts", "to": "src/app.ts", "rule": { "name": "no-circular", "severity": "error" }, "message": "Circular dependency detected" }],
-  "summary": { "violations": 1, "error": 1, "warn": 0, "info": 0 }
+The Rust engine expects a flat structure with separate top-level arrays:
+
+```rust
+struct CruiseResult {
+    modules: Option<Vec<Module>>,
+    dependencies: Option<Vec<Dependency>>,
+    violations: Option<Vec<RawViolation>>,
+    summary: Option<Summary>,
+}
+
+struct Module {
+    source: String,
+    dependencies: Vec<String>,
+    dependency_types: Option<Vec<String>>,
+    size: Option<usize>,
+}
+
+struct Dependency {
+    resolved: Option<String>,
+    core_module: Option<String>,
+    dependency_types: Vec<String>,
+    from: Option<String>,
+    to: Option<String>,
 }
 ```
 
 ## Output Format
 
-Rust preprocessing outputs lightweight JSON:
+Both Rust and Node.js paths output the same `ProcessedGraph` JSON:
 
-```mermaid
-classDiagram
-    class ProcessedGraph {
-        +GraphNode[] nodes
-        +GraphEdge[] edges
-        +GraphMeta meta
-        +ViolationInfo[] violations
-    }
-
-    class GraphNode {
-        +string id
-        +string label
-        +NodeType node_type
-        +string path
-        +number violation_count
-        +string[] children
-    }
-
-    class GraphEdge {
-        +string source
-        +string target
-        +EdgeType edge_type
-        +number weight
-    }
-
-    class GraphMeta {
-        +number original_node_count
-        +number aggregated_node_count
-        +AggregationLevel aggregation_level
-        +number total_violations
-    }
-
-    class ViolationInfo {
-        +string from
-        +string to
-        +string rule
-        +string severity
-        +string message
-    }
-
-    ProcessedGraph --> GraphNode
-    ProcessedGraph --> GraphEdge
-    ProcessedGraph --> GraphMeta
-    ProcessedGraph --> ViolationInfo
-```
-
-Example:
-
-```json
-{
-  "nodes": [{ "id": "src/components", "label": "components", "node_type": "directory", "path": "src/components", "violation_count": 0, "children": ["src/components/Button.tsx", "src/components/Input.tsx"] }],
-  "edges": [{ "source": "src/components", "target": "src/utils", "edge_type": "local", "weight": 5 }],
-  "meta": { "original_node_count": 150, "aggregated_node_count": 25, "aggregation_level": "directory", "total_violations": 3 },
-  "violations": []
+```typescript
+interface ProcessedGraph {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  meta: GraphMeta;
+  violations: ViolationInfo[];
 }
 ```
 
-## Browser Mode Flow
+See [Data Structures](../backend/data-structures.md) for full type definitions.
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Browser
-    participant WASM
-    participant React
-
-    Browser->>React: Load page
-    React->>WASM: init()
-    WASM-->>React: Ready
-    User->>Browser: Upload JSON file
-    Browser->>WASM: parse_and_aggregate(json)
-    WASM-->>Browser: ProcessedGraph JSON
-    Browser->>React: setState(graph)
-    React->>User: Render visualization
-```
-
-## CLI Mode Flow
+## Scan Mode Flow
 
 ```mermaid
 sequenceDiagram
     participant User
     participant CLI
-    participant WASM
-    participant Server
+    participant DC as dependency-cruiser
+    participant Convert as convertDcOutput
+
+    User->>CLI: dep-report scan --path ./project
+    CLI->>CLI: Find .dependency-cruiser config
+    CLI->>DC: cruise([path], options)
+    DC-->>CLI: CruiseResult
+    CLI->>Convert: convertDcOutput(json)
+    Convert-->>CLI: ProcessedGraph
+    CLI->>CLI: Write graph.json
+```
+
+## Analyze Mode Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Rust as dcr-aggregate
+    participant Fallback as convertDcOutput
+
+    User->>CLI: dep-report analyze --input cruise.json
+    CLI->>CLI: Find dcr-aggregate binary
+    alt Binary found
+        CLI->>Rust: spawn dcr-aggregate --input --output
+        Rust-->>CLI: exit 0
+    else Binary not found
+        CLI->>Fallback: convertDcOutput(json)
+        Fallback-->>CLI: ProcessedGraph
+        CLI->>CLI: Write graph.json
+    end
+```
+
+## Open Mode Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant CLI
+    participant Server as Express Server
     participant Browser
 
-    User->>CLI: dep-report analyze -i input.json
-    CLI->>WASM: init()
-    WASM-->>CLI: Ready
-    CLI->>WASM: parse_and_aggregate(json)
-    WASM-->>CLI: ProcessedGraph
-    CLI->>CLI: Write graph.json
-
-    User->>CLI: dep-report open -f graph.json
+    User->>CLI: dep-report open --file graph.json
     CLI->>Server: Start HTTP server
-    Server->>Browser: Serve frontend
+    Browser->>Server: GET / (index.html)
+    Browser->>Server: GET /api/config
+    Server-->>Browser: { hasGraphFile: true }
     Browser->>Server: GET /api/graph
-    Server-->>Browser: graph.json content
+    Server-->>Browser: ProcessedGraph JSON
     Browser->>Browser: Render visualization
 ```
 
@@ -214,35 +191,4 @@ stateDiagram-v2
     ReportView --> MetricsView: Click Metrics tab
     MetricsView --> GraphView: Click Graph tab
     MetricsView --> ReportView: Click Report tab
-    GraphView --> Upload: Click Upload New File
-    ReportView --> Upload: Click Upload New File
-    MetricsView --> Upload: Click Upload New File
 ```
-
-### Interaction Details
-
-```mermaid
-flowchart LR
-    subgraph GraphInteraction["Graph Interaction Loop"]
-        direction TB
-        Browse[Browse nodes]
-        Drill[Drill-down: click aggregated node]
-        Rollup[Roll-up: click back button]
-        Zoom[Zoom / Pan]
-        Search[Search: filter by path]
-
-        Browse --> Drill
-        Drill --> Browse
-        Browse --> Rollup
-        Rollup --> Browse
-        Browse --> Zoom
-        Browse --> Search
-    end
-```
-
-| Action | Behavior |
-|--------|----------|
-| Click aggregated node | Expand to show children |
-| Click "back" button | Return to parent level |
-| Zoom/Pan | Navigate large graphs |
-| Search | Filter nodes by path |
