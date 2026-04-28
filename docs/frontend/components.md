@@ -5,7 +5,7 @@
 | Technology | Purpose |
 |------------|---------|
 | React 18 | UI framework |
-| D3.js 7 | Graph visualization |
+| AntV G6 5 | Graph visualization |
 | Vite 5 | Build tool |
 | TypeScript 5 | Type safety |
 | Biome | Linting/formatting |
@@ -38,7 +38,7 @@ flowchart TB
     Nav --> ReportView["ReportView\n(props: violations)"]
     Nav --> MetricsView["MetricsView\n(props: data)"]
 
-    GraphView --> SVG["SVG Rendering\n(nodes + edges)"]
+    GraphView --> SVG["AntV G6 Rendering\n(nodes + edges)"]
     ReportView --> Summary["Summary Cards\n(error / warn / info)"]
     ReportView --> ViolationList["Violation List"]
     MetricsView --> MetricCards["Metric Cards\n(4 key stats)"]
@@ -56,77 +56,23 @@ Main application component managing:
 - View mode switching
 - Data loading
 
-```tsx
-function App() {
-  const [data, setData] = useState<ProcessedGraph | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('graph');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // ...
-}
-```
-
-On mount, the App checks if a graph file is available from the server:
-
-```tsx
-useEffect(() => {
-  const loadGraphFromServer = async () => {
-    const configRes = await fetch('/api/config');
-    const config = await configRes.json();
-    if (config.hasGraphFile) {
-      const graphRes = await fetch('/api/graph');
-      // ...
-    }
-  };
-  loadGraphFromServer();
-}, []);
-```
+On mount, the App fetches graph data from the Express server via `/api/config` and `/api/graph` endpoints. If no server data is available, it falls back to file upload.
 
 ### UploadArea
 
-File upload with drag-and-drop:
-
-```tsx
-<div onDrop={handleDrop} onDragOver={handleDragOver}>
-  <input type="file" accept=".json" />
-</div>
-```
-
-When a file is selected, it is read as text and parsed with `JSON.parse` (no WASM processing).
+File upload with drag-and-drop. When a file is selected, it is read as text and parsed with `JSON.parse`.
 
 ### GraphView
 
-Dependency graph visualization:
-
-```tsx
-function GraphView({ data }: { data: ProcessedGraph }) {
-  // SVG-based node/edge rendering
-  // 5-column grid layout
-  // Max 20 edges displayed
-}
-```
+Dependency graph visualization using the `DependencyGraph` component (AntV G6 comboCombined layout). See [views.md](./views.md#graph-view) for details.
 
 ### ReportView
 
-Violation list with severity grouping:
-
-```tsx
-function ReportView({ violations }: { violations: ViolationInfo[] }) {
-  const errors = violations.filter(v => v.severity === 'error');
-  const warnings = violations.filter(v => v.severity === 'warn');
-  // ...
-}
-```
+Groups violations by severity (error/warn/info) and renders summary cards with counts.
 
 ### MetricsView
 
-Summary statistics dashboard:
-
-```tsx
-function MetricsView({ data }: { data: ProcessedGraph }) {
-  // Display counts, edge type distribution
-}
-```
+Displays summary statistics: original node count, aggregated node count, dependency count, and edge type distribution.
 
 ## State Management
 
@@ -161,17 +107,7 @@ Current implementation uses React `useState`. No external state management libra
 
 ## Styling
 
-Inline styles defined in `styles` object within `App.tsx`:
-
-```tsx
-const styles: Record<string, React.CSSProperties> = {
-  container: { minHeight: '100vh', ... },
-  header: { background: '#fff', ... },
-  // ...
-};
-```
-
-Color palette:
+Inline styles defined in `styles` object within `App.tsx`. Color palette:
 
 | Token | Hex | Usage |
 |-------|-----|-------|

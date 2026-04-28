@@ -113,31 +113,7 @@ Color palette:
 
 ## npm Package Configuration
 
-```json
-{
-  "name": "@dcr-reporter/frontend",
-  "version": "0.1.0",
-  "type": "module",
-  "dependencies": {
-    "@antv/g6": "^5.0.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
-    "@playwright/test": "^1.45.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "dependency-cruiser": "^17.3.0",
-    "typescript": "^5.5.0",
-    "vite": "^5.4.0"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
-```
+> See [packages/frontend/package.json](../../packages/frontend/package.json) for current package configuration.
 
 ## Commands
 

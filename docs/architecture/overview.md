@@ -91,7 +91,7 @@ flowchart TB
 **Responsibilities:**
 
 1. Load graph data from server API or file upload
-2. Graph rendering with SVG
+2. Graph rendering with AntV G6
 3. User interaction handling
 4. View switching (Graph/Report/Metrics)
 
@@ -121,11 +121,11 @@ flowchart TB
 - Provides graceful degradation
 - Core logic (edge classification, aggregation level) is duplicated in `convert.ts`
 
-### Why React + D3.js?
+### Why React + AntV G6?
 
 - **Declarative UI**: React for component management
-- **D3 ecosystem**: Rich graph visualization capabilities
-- **Bundle size**: Lighter than alternatives (Cytoscape.js)
+- **AntV G6**: Purpose-built graph visualization with built-in layout algorithms, combo support for aggregated nodes, and canvas/SVG rendering
+- **Integration**: G6's data-driven API maps naturally to the ProcessedGraph structure
 
 ## Data Contract
 

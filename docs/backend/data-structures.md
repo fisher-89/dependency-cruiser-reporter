@@ -54,113 +54,53 @@ classDiagram
 
 ### ProcessedGraph (Root)
 
-```typescript
-// TypeScript (src/types.ts)
-interface ProcessedGraph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  meta: GraphMeta;
-  violations: ViolationInfo[];
-}
-```
-
-```rust
-// Rust (src/lib.rs)
-struct ProcessedGraph {
-    nodes: Vec<GraphNode>,
-    edges: Vec<GraphEdge>,
-    meta: GraphMeta,
-    violations: Vec<ViolationInfo>,
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `nodes` | `GraphNode[]` | All nodes in the graph |
+| `edges` | `GraphEdge[]` | All edges (dependencies) in the graph |
+| `meta` | `GraphMeta` | Aggregation metadata and statistics |
+| `violations` | `ViolationInfo[]` | Dependency rule violations |
 
 ### GraphNode
 
-```typescript
-interface GraphNode {
-  id: string;              // Unique identifier
-  label: string;           // Display name
-  node_type: NodeType;     // 'file' | 'directory' | 'package'
-  path?: string;           // Original path (for drill-down)
-  violation_count: number; // Number of violations
-  children?: string[];     // Child node IDs (when aggregated)
-}
-```
-
-```rust
-struct GraphNode {
-    id: String,
-    label: String,
-    node_type: NodeType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-    violation_count: u32,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    children: Option<Vec<String>>,
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier |
+| `label` | `string` | Display name |
+| `node_type` | `NodeType` | Determines rendering style and whether node can be expanded |
+| `path` | `string?` | Original file path for drill-down navigation; omitted when node represents an aggregated group |
+| `violation_count` | `number` | Number of violations involving this node |
+| `children` | `string[]?` | IDs of child nodes; only present when node is aggregated (directory/package level) |
 
 ### GraphEdge
 
-```typescript
-interface GraphEdge {
-  source: string;      // Source node ID
-  target: string;      // Target node ID
-  edge_type: EdgeType; // 'local' | 'npm' | 'core' | 'dynamic'
-  weight: number;      // Aggregated edge weight
-}
-```
-
-```rust
-struct GraphEdge {
-    source: String,
-    target: String,
-    edge_type: EdgeType,
-    weight: u32,
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `source` | `string` | Source node ID |
+| `target` | `string` | Target node ID |
+| `edge_type` | `EdgeType` | Determines edge color and styling |
+| `weight` | `number` | Count of dependencies merged into this edge during aggregation |
 
 ### GraphMeta
 
-```typescript
-interface GraphMeta {
-  original_node_count: number;      // Nodes before aggregation
-  aggregated_node_count: number;    // Nodes after aggregation
-  aggregation_level: AggregationLevel;
-  total_violations: number;
-}
-```
-
-```rust
-struct GraphMeta {
-    original_node_count: usize,
-    aggregated_node_count: usize,
-    aggregation_level: AggregationLevel,
-    total_violations: usize,
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `original_node_count` | `number` | Nodes before aggregation |
+| `aggregated_node_count` | `number` | Nodes after aggregation |
+| `aggregation_level` | `AggregationLevel` | Controls the granularity of the entire graph |
+| `total_violations` | `number` | Total violation count |
 
 ### ViolationInfo
 
-```typescript
-interface ViolationInfo {
-  from: string;       // Source module path
-  to: string;         // Target module path
-  rule: string;       // Rule name
-  severity: 'error' | 'warn' | 'info';
-  message?: string;   // Violation message
-}
-```
+| Field | Type | Description |
+|-------|------|-------------|
+| `from` | `string` | Source module path |
+| `to` | `string` | Target module path |
+| `rule` | `string` | Rule name that was violated |
+| `severity` | `'error' \| 'warn' \| 'info'` | Violation severity level |
+| `message` | `string?` | Optional violation message |
 
-```rust
-struct ViolationInfo {
-    from: String,
-    to: String,
-    rule: String,
-    severity: String,  // "error", "warn", or "info"
-    message: Option<String>,
-}
-```
+> TypeScript: [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) | Rust: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
 
 ## Enums
 
@@ -226,36 +166,7 @@ The CLI handles two input structures:
 
 ### TypeScript Input (used by `scan` command via dependency-cruiser API)
 
-```typescript
-// From packages/cli/src/commands/convert.ts
-interface DcModule {
-  source: string;
-  dependencies: DcDependency[];
-  valid: boolean;
-}
-
-interface DcDependency {
-  resolved: string;
-  moduleSystem: string;
-  coreModule: boolean;
-  couldNotResolve: boolean;
-  dependencyTypes: string[];
-  followable: boolean;
-  rules?: { name: string; severity: string }[];
-}
-
-interface DcOutput {
-  modules: DcModule[];
-  summary?: {
-    violations: number;
-    error: number;
-    warn: number;
-    info: number;
-    totalCruised: number;
-    totalDependenciesCruised: number;
-  };
-}
-```
+The `scan` command receives a nested structure: a `modules` array where each module has a `source` path and nested `dependencies` array. Each dependency includes `resolved` path, `coreModule` flag, `dependencyTypes`, and optional `rules` violations.
 
 Edge classification in TypeScript (`classifyEdge`):
 
@@ -268,67 +179,7 @@ Edge classification in TypeScript (`classifyEdge`):
 
 ### Rust Input (used by `analyze` command)
 
-```rust
-// From packages/rust/src/lib.rs
-struct CruiseResult {
-    modules: Option<Vec<Module>>,
-    dependencies: Option<Vec<Dependency>>,
-    violations: Option<Vec<RawViolation>>,
-    summary: Option<Summary>,
-}
-
-struct Module {
-    source: String,
-    #[serde(default)]
-    dependencies: Vec<String>,
-    #[serde(default)]
-    dependency_types: Option<Vec<String>>,
-    #[serde(default)]
-    size: Option<usize>,
-}
-
-struct Dependency {
-    #[serde(rename = "resolved")]
-    resolved: Option<String>,
-    #[serde(rename = "coreModule")]
-    core_module: Option<String>,
-    #[serde(rename = "dependencyTypes", default)]
-    dependency_types: Vec<String>,
-    #[serde(rename = "from", default)]
-    from: Option<String>,
-    #[serde(rename = "to", default)]
-    to: Option<String>,
-}
-
-struct RawViolation {
-    #[serde(rename = "from", default)]
-    from: Option<String>,
-    #[serde(rename = "to", default)]
-    to: Option<String>,
-    #[serde(rename = "rule", default)]
-    rule: Option<Rule>,
-    #[serde(rename = "message", default)]
-    message: Option<String>,
-}
-
-struct Rule {
-    #[serde(rename = "severity", default)]
-    severity: Option<String>,
-    #[serde(rename = "name", default)]
-    name: Option<String>,
-}
-
-struct Summary {
-    #[serde(rename = "violations", default)]
-    violations: Option<usize>,
-    #[serde(rename = "error", default)]
-    error: Option<usize>,
-    #[serde(rename = "warn", default)]
-    warn: Option<usize>,
-    #[serde(rename = "info", default)]
-    info: Option<usize>,
-}
-```
+The Rust engine expects a flat structure with separate top-level arrays for `modules`, `dependencies`, `violations`, and `summary`. Each dependency is a standalone object with `from`/`to` fields rather than being nested inside a module.
 
 Edge detection in Rust (`detect_edge_type`):
 
@@ -339,7 +190,11 @@ Edge detection in Rust (`detect_edge_type`):
 | `dependencyTypes` contains `"dynamic"` | `Dynamic` |
 | Otherwise | `Local` |
 
+> TypeScript input: [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) | Rust input: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
+
 ## Serialization Notes
+
+The snake_case convention is critical because it defines the JSON contract between the Rust serializer and the TypeScript deserializer — both sides must agree on field names.
 
 ### Rust
 

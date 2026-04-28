@@ -46,80 +46,19 @@ dependency-cruiser outputs JSON. The CLI supports two input structures:
 
 ### Structure with nested dependencies (used by `scan` command)
 
-The `scan` command uses the dependency-cruiser API, which returns modules with nested dependencies:
+The `scan` command uses the dependency-cruiser API, which returns modules with a `source` path and nested `dependencies` array. Each module also has a `valid` flag and optional `rules` violations.
 
-```typescript
-interface DcOutput {
-  modules: DcModule[];
-  summary?: {
-    violations: number;
-    error: number;
-    warn: number;
-    info: number;
-    totalCruised: number;
-    totalDependenciesCruised: number;
-  };
-}
-
-interface DcModule {
-  source: string;
-  dependencies: DcDependency[];
-  valid: boolean;
-}
-
-interface DcDependency {
-  resolved: string;
-  moduleSystem: string;
-  coreModule: boolean;
-  couldNotResolve: boolean;
-  dependencyTypes: string[];
-  followable: boolean;
-  rules?: { name: string; severity: string }[];
-}
-```
+> See [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) for full TypeScript input type definitions.
 
 ### Structure with top-level dependencies (used by Rust engine)
 
-The Rust engine expects a flat structure with separate top-level arrays:
+The Rust engine expects a flat structure with separate top-level arrays for `modules`, `dependencies`, `violations`, and `summary`. Each dependency is a separate object with `from`/`to` fields rather than being nested inside a module.
 
-```rust
-struct CruiseResult {
-    modules: Option<Vec<Module>>,
-    dependencies: Option<Vec<Dependency>>,
-    violations: Option<Vec<RawViolation>>,
-    summary: Option<Summary>,
-}
-
-struct Module {
-    source: String,
-    dependencies: Vec<String>,
-    dependency_types: Option<Vec<String>>,
-    size: Option<usize>,
-}
-
-struct Dependency {
-    resolved: Option<String>,
-    core_module: Option<String>,
-    dependency_types: Vec<String>,
-    from: Option<String>,
-    to: Option<String>,
-}
-```
+> See [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs) for full Rust input type definitions.
 
 ## Output Format
 
-Both Rust and Node.js paths output the same `ProcessedGraph` JSON:
-
-```typescript
-interface ProcessedGraph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-  meta: GraphMeta;
-  violations: ViolationInfo[];
-}
-```
-
-See [Data Structures](../backend/data-structures.md) for full type definitions.
+Both Rust and Node.js paths output the same `ProcessedGraph` JSON format. See [Data Structures](../backend/data-structures.md) for full type definitions.
 
 ## Scan Mode Flow
 

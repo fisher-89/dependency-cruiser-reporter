@@ -6,14 +6,6 @@ The Rust preprocessing engine is the core of dependency-cruiser-reporter, respon
 
 ## Dependencies
 
-```toml
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-thiserror = "1.0"
-clap = { version = "4.5", features = ["derive"] }
-```
-
 | Crate | Purpose |
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
@@ -82,17 +74,7 @@ Uses clap derive API. Parses arguments, calls `parse_and_aggregate`, and writes 
 
 ## Error Handling
 
-```rust
-#[derive(Error, Debug)]
-pub enum DcrError {
-    #[error("Failed to read file: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("Failed to parse JSON: {0}")]
-    JsonError(#[from] serde_json::Error),
-    #[error("Invalid input: {0}")]
-    InvalidInput(String),
-}
-```
+> Error handling is defined in the [Rust package docs](../packages/rust.md#error-handling).
 
 ## Core Functions
 
@@ -147,13 +129,6 @@ cargo fmt         # Format
 | `test_package_name_extraction` | Verify npm package parsing |
 
 ## Build Profiles
-
-```toml
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-```
 
 Release builds are optimized for:
 - Maximum optimization level (`opt-level = 3`)

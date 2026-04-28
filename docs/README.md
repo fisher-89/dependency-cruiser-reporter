@@ -34,7 +34,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 - [Frontend Package](packages/frontend.md) — React app, tech stack, component architecture
   - `@dcr-reporter/frontend` `React 18` `AntV G6 5` `Vite 5` `DependencyGraph` `comboCombined layout` `force layout` `ViewMode` `pnpm dev`
 - [Components](frontend/components.md) — Component hierarchy, props, behavior, styling
-  - `App` `UploadArea` `GraphView` `ReportView` `MetricsView` `SVG rendering` `5-column grid` `severity filtering` `color palette`
+  - `App` `UploadArea` `DependencyGraph` `ReportView` `MetricsView` `AntV G6 rendering` `comboCombined layout` `severity filtering` `color palette`
 - [Views](frontend/views.md) — Graph/Report/Metrics view features, switching
   - `Graph View` `Report View: summary cards/violation list` `Metrics View: original_node_count/aggregated_node_count/edges.length/total_violations`
 

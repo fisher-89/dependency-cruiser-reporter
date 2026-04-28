@@ -31,16 +31,7 @@ flowchart TD
 
 ## Selection Logic
 
-```rust
-fn select_aggregation_level(node_count: usize) -> AggregationLevel {
-    match node_count {
-        0..=1000    => AggregationLevel::File,
-        1001..=5000  => AggregationLevel::Directory,
-        5001..=20000 => AggregationLevel::Package,
-        _           => AggregationLevel::Root,
-    }
-}
-```
+The aggregation level is determined by node count thresholds (see table above). The logic is implemented in `select_aggregation_level` in `packages/rust/src/lib.rs`.
 
 ## Aggregation Rules
 

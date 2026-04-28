@@ -17,25 +17,22 @@ Interactive dependency graph visualization.
 
 ### Features
 
-- SVG-based rendering
-- Node grid layout (5 columns)
+- AntV G6 canvas/SVG rendering
+- comboCombined layout with automatic node positioning
 - Edge rendering with weight-based stroke width (max 3px)
 - Node/edge counts display
 - Max 20 edges displayed
 
 ### Layout Algorithm
 
-```tsx
-const x = 100 + (i % 5) * 150;  // 5-column grid
-const y = 100 + Math.floor(i / 5) * 100;
-```
+Layout uses AntV G6's `comboCombined` layout algorithm, which automatically positions nodes in a force-directed arrangement with combo (group) support for aggregated nodes.
 
 ### Data Rendering
 
 ```mermaid
 flowchart LR
-    Data["ProcessedGraph"] --> Nodes["data.nodes\n→ SVG circles"]
-    Data --> Edges["data.edges (max 20)\n→ SVG lines"]
+    Data["ProcessedGraph"] --> Nodes["data.nodes\n→ G6 nodes"]
+    Data --> Edges["data.edges (max 20)\n→ G6 edges"]
     Data --> Meta["data.meta\n→ Info bar"]
 ```
 
@@ -139,16 +136,4 @@ stateDiagram-v2
     MetricsView --> ReportView: Click Report
 ```
 
-```tsx
-const [viewMode, setViewMode] = useState<ViewMode>('graph');
-
-// Navigation buttons
-<button onClick={() => setViewMode('graph')}>Graph</button>
-<button onClick={() => setViewMode('report')}>Report</button>
-<button onClick={() => setViewMode('metrics')}>Metrics</button>
-
-// Conditional rendering
-{viewMode === 'graph' && <GraphView data={data} />}
-{viewMode === 'report' && <ReportView violations={data.violations} />}
-{viewMode === 'metrics' && <MetricsView data={data} />}
-```
+View switching uses React `useState` with a `ViewMode` union type (`'graph' | 'report' | 'metrics'`). The active view is rendered conditionally based on the current state.

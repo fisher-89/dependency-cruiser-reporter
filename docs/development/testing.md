@@ -136,34 +136,9 @@ Integration tests cover CLI commands and Rust binary output validation.
 
 ## CI Integration
 
-```yaml
-# .github/workflows/test.yml
-name: Test
-
-on: [push, pull_request]
-
-jobs:
-  test-rust:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test
-        working-directory: packages/rust
-
-  test-cli:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: 'pnpm'
-      - run: pnpm install
-      - run: pnpm build:ts
-      - run: pnpm test --filter e2e
-```
+> CI is not yet configured. The expected workflow would run:
+> 1. Rust tests (`cargo test` in `packages/rust`)
+> 2. E2E tests (`pnpm test --filter e2e`)
 
 ---
 

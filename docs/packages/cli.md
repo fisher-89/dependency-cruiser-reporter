@@ -209,27 +209,7 @@ server.stop();
 
 ## npm Package Configuration
 
-```json
-{
-  "name": "@dcr-reporter/cli",
-  "version": "0.1.0",
-  "type": "module",
-  "bin": {
-    "dep-report": "./bin/cli.js"
-  },
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "dependencies": {
-    "commander": "^12.0.0",
-    "express": "^4.18.2",
-    "dependency-cruiser": "^17.3.0",
-    "@dcr-reporter/frontend": "workspace:*"
-  },
-  "engines": {
-    "node": ">=18"
-  }
-}
-```
+> See [packages/cli/package.json](../../packages/cli/package.json) for current package configuration.
 
 ## Integration with Rust Binary
 

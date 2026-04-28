@@ -60,17 +60,10 @@ pub fn parse_and_aggregate(
 
 ### Error Handling
 
-```rust
-#[derive(Error, Debug)]
-pub enum DcrError {
-    #[error("Failed to read file: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("Failed to parse JSON: {0}")]
-    JsonError(#[from] serde_json::Error),
-    #[error("Invalid input: {0}")]
-    InvalidInput(String),
-}
-```
+`DcrError` has three variants:
+- **IoError** — file I/O failures (auto-converted from `std::io::Error`)
+- **JsonError** — JSON parse failures (auto-converted from `serde_json::Error`)
+- **InvalidInput** — malformed input data (with descriptive message)
 
 ## CLI Binary (`main.rs`)
 
@@ -94,31 +87,7 @@ Built with [clap](https://docs.rs/clap) derive API.
 
 ## Cargo Configuration
 
-```toml
-[package]
-name = "dcr-reporter"
-version = "0.1.0"
-edition = "2021"
-
-[lib]
-name = "dcr_reporter"
-path = "src/lib.rs"
-
-[[bin]]
-name = "dcr-aggregate"
-path = "src/main.rs"
-
-[dependencies]
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-thiserror = "1.0"
-clap = { version = "4.5", features = ["derive"] }
-
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-```
+> See [packages/rust/Cargo.toml](../../packages/rust/Cargo.toml) for current crate configuration.
 
 | Crate | Purpose |
 |-------|---------|
