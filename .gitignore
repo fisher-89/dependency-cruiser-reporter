@@ -16,3 +16,5 @@ test-results/
 *.swo
 *~
 /demo-*
+/common-*
+.wps_claude/
