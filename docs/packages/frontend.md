@@ -9,9 +9,11 @@ The `packages/frontend` package provides the React-based visualization interface
 ```
 packages/frontend/
 ├── src/
-│   ├── App.tsx           # Main application (all views inline)
+│   ├── App.tsx           # Main application (upload + view switching)
 │   ├── main.tsx          # React entry point
-│   └── types.ts          # TypeScript type definitions
+│   ├── types.ts          # TypeScript type definitions
+│   └── components/
+│       └── DependencyGraph.tsx  # G6 graph visualization component
 ├── index.html            # HTML template
 ├── vite.config.ts        # Vite configuration
 ├── tsconfig.json         # TypeScript config
@@ -24,7 +26,7 @@ packages/frontend/
 | Technology | Purpose |
 |------------|---------|
 | React 18 | UI framework |
-| D3.js 7 | Graph visualization |
+| AntV G6 5 | Graph visualization (combo tree + force layout) |
 | Vite 5 | Build tool |
 | TypeScript 5 | Type safety |
 | Biome | Linting/formatting |
@@ -38,12 +40,12 @@ flowchart TB
     App --> UploadArea["UploadArea\n(drag-and-drop + file input)"]
     App --> Nav["Navigation\n(Graph / Report / Metrics)"]
 
-    Nav --> GraphView["GraphView\n(props: data)"]
+    Nav --> DependencyGraph["DependencyGraph\n(G6 comboCombined layout)"]
     Nav --> ReportView["ReportView\n(props: violations)"]
     Nav --> MetricsView["MetricsView\n(props: data)"]
 ```
 
-All view components (GraphView, ReportView, MetricsView) are defined inline in `App.tsx`.
+The GraphView is now implemented as `DependencyGraph` component using AntV G6 v5 with `comboCombined` layout (directory nesting + force layout).
 
 ## Data Loading
 
@@ -117,14 +119,13 @@ Color palette:
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
-    "d3": "^7.9.0",
+    "@antv/g6": "^5.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
     "@playwright/test": "^1.45.0",
-    "@types/d3": "^7.4.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",

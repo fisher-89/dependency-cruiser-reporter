@@ -52,7 +52,3 @@ docs/
     ├── testing.md                      # Testing guide
     └── contributing.md                 # Contributing guide
 ```
-
-## Related Files
-
-- [`CLAUDE.md`](../CLAUDE.md) — Claude Code instructions

@@ -49,7 +49,7 @@ After each meaningful change, commit the code to ensure every commit is complete
 
 ## Stack
 
-- Frontend: Vite, React, TypeScript, D3, Biome (linting)
+- Frontend: Vite, React, TypeScript, AntV G6 (graph viz), Biome (linting)
 - CLI: TypeScript, Commander.js, Express, dependency-cruiser
 - Backend: Rust, serde, clap, thiserror
 - E2E: Node.js built-in test runner (node:test)

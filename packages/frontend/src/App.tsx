@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { DependencyGraph } from './components/DependencyGraph';
 import type { ProcessedGraph, ViewMode, ViolationInfo } from './types';
 
 function App() {
@@ -121,7 +122,7 @@ function App() {
           </div>
         ) : (
           <>
-            {viewMode === 'graph' && <GraphView data={data} />}
+            {viewMode === 'graph' && <DependencyGraph data={data} />}
             {viewMode === 'report' && <ReportView violations={data.violations} />}
             {viewMode === 'metrics' && <MetricsView data={data} />}
             <button
@@ -135,54 +136,6 @@ function App() {
           </>
         )}
       </main>
-    </div>
-  );
-}
-
-function GraphView({ data }: { data: ProcessedGraph }) {
-  return (
-    <div style={styles.graphContainer} data-testid="graph-view">
-      <div style={styles.graphInfo}>
-        <span data-testid="node-count">{data.meta.aggregated_node_count} nodes</span>
-        <span data-testid="edge-count">{data.edges.length} edges</span>
-        <span data-testid="agg-level">{data.meta.aggregation_level}</span>
-      </div>
-      <svg width="800" height="500" style={styles.graph} aria-label="Dependency graph">
-        <title>Dependency Graph</title>
-        {data.nodes.map((node, i) => {
-          const x = 100 + (i % 5) * 150;
-          const y = 100 + Math.floor(i / 5) * 100;
-          return (
-            <g key={node.id} transform={`translate(${x},${y})`}>
-              <circle r="20" fill="#4a90d9" data-testid={`node-${node.id}`} />
-              <text y="35" textAnchor="middle" fontSize="10">
-                {node.label}
-              </text>
-            </g>
-          );
-        })}
-        {data.edges.slice(0, 20).map((edge, i) => {
-          const srcIdx = data.nodes.findIndex((n) => n.id === edge.source);
-          const tgtIdx = data.nodes.findIndex((n) => n.id === edge.target);
-          if (srcIdx < 0 || tgtIdx < 0) return null;
-          const x1 = 100 + (srcIdx % 5) * 150;
-          const y1 = 100 + Math.floor(srcIdx / 5) * 100;
-          const x2 = 100 + (tgtIdx % 5) * 150;
-          const y2 = 100 + Math.floor(tgtIdx / 5) * 100;
-          return (
-            <line
-              key={`${edge.source}-${edge.target}-${i}`}
-              x1={x1}
-              y1={y1}
-              x2={x2}
-              y2={y2}
-              stroke="#999"
-              strokeWidth={Math.min(edge.weight, 3)}
-              data-testid={`edge-${edge.source}-${edge.target}`}
-            />
-          );
-        })}
-      </svg>
     </div>
   );
 }
