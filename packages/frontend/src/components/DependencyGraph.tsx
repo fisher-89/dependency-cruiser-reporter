@@ -42,9 +42,20 @@ export function DependencyGraph({ data }: Props) {
       behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
       layout: {
         type: 'comboCombined',
-        outerLayout: { type: 'dagre', rankdir: 'LR' },
-        innerLayout: { type: 'force', preventOverlap: true },
-        comboPadding: 15,
+        outerLayout: {
+          type: 'force',
+          preventOverlap: true,
+          nodeSize: 100,
+          linkDistance: 200,
+        },
+        innerLayout: {
+          type: 'force',
+          preventOverlap: true,
+          nodeSize: 50,
+          linkDistance: 80,
+          nodeStrength: -200,
+        },
+        comboPadding: 20,
         sortByCombo: true,
       },
       node: {

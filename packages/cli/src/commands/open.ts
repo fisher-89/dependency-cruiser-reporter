@@ -76,7 +76,7 @@ export async function open(options: OpenOptions): Promise<void> {
 
 	await server.start();
 
-	console.log(`Server running at http://${host}:${port}`);
+	console.log(`Server running at http://${host}:${server.port}`);
 	if (file) {
 		console.log(`Graph file: ${file}`);
 	}

@@ -11,13 +11,18 @@ export interface ServerOptions {
 
 export class DcrServer {
   private app: Express;
-  private port: number;
+  private _port: number;
   private host: string;
   private graphFile?: string;
   private server?: ReturnType<typeof this.app.listen>;
 
+  /** Get the actual port the server is listening on */
+  get port(): number {
+    return this._port;
+  }
+
   constructor(options: ServerOptions) {
-    this.port = options.port;
+    this._port = options.port;
     this.host = options.host;
     this.graphFile = options.graphFile;
 
@@ -73,13 +78,25 @@ export class DcrServer {
 
   async start(): Promise<void> {
     return new Promise((resolve, reject) => {
-      try {
-        this.server = this.app.listen(this.port, this.host, () => {
+      const tryListen = (port: number) => {
+        const server = this.app.listen(port, this.host, () => {
+          this._port = port;
+          this.server = server;
           resolve();
         });
-      } catch (error) {
-        reject(error);
-      }
+
+        server.on("error", (err: NodeJS.ErrnoException) => {
+          if (err.code === "EADDRINUSE" && port < 65535) {
+            console.log(`Port ${port} is in use, trying ${port + 1}...`);
+            server.close();
+            tryListen(port + 1);
+          } else {
+            reject(err);
+          }
+        });
+      };
+
+      tryListen(this.port);
     });
   }
 

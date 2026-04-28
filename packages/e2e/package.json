@@ -1,1 +1,13 @@
-{"name":"@dcr-reporter/e2e","version":"0.1.0","private":true,"type":"module","scripts":{"test":"node --test","test:verbose":"node --test --test-name-pattern"},"devDependencies":{"@types/node":"^20.14.0"}}
+{
+  "name": "@dcr-reporter/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test && npx tsx --test buildGraphData.test.ts",
+    "test:verbose": "node --test --test-name-pattern"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0"
+  }
+}
