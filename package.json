@@ -1,1 +1,31 @@
-{"name": "dependency-cruiser-reporter-monorepo", "private": true, "version": "0.1.0", "scripts": {"build": "pnpm -r build", "test": "pnpm -r test", "lint": "pnpm -r lint"}, "devDependencies": {"typescript": "^5.5.0"}}
+{
+  "name": "dependency-cruiser-reporter-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "exports": {
+    ".": {
+      "types": "./packages/cli/dist/index.d.ts",
+      "import": "./packages/cli/dist/index.js"
+    },
+    "./cli": {
+      "types": "./packages/cli/dist/index.d.ts",
+      "import": "./packages/cli/dist/index.js"
+    },
+    "./frontend": {
+      "types": "./packages/frontend/src/main.tsx",
+      "default": "./packages/frontend/src/main.tsx"
+    }
+  },
+  "scripts": {
+    "build": "pnpm -r build && pnpm run build:rust",
+    "build:ts": "pnpm -r build",
+    "build:rust": "node scripts/build-rust.js",
+    "demo": "node packages/cli/bin/cli.js scan -p demo && node packages/cli/bin/cli.js open -f demo-graph.json",
+    "demo:build": "pnpm run build:ts && pnpm run demo",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}

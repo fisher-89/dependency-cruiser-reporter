@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::path::Path;
 use thiserror::Error;
 
@@ -257,7 +257,7 @@ fn build_file_nodes(
     modules: &[Module],
     _dependencies: &[Dependency],
 ) -> (Vec<GraphNode>, HashMap<(String, String), Vec<String>>) {
-    let mut nodes: Vec<GraphNode> = modules
+    let nodes: Vec<GraphNode> = modules
         .iter()
         .map(|m| GraphNode {
             id: m.source.clone(),

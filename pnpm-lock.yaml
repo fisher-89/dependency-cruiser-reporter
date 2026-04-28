@@ -20,6 +20,9 @@ importers:
       commander:
         specifier: ^12.0.0
         version: 12.1.0
+      dependency-cruiser:
+        specifier: ^17.3.0
+        version: 17.3.10
       express:
         specifier: ^4.18.2
         version: 4.22.1

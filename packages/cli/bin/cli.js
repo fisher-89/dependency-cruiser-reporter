@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { program } from "commander";
 import { analyze } from "../dist/commands/analyze.js";
+import { scan } from "../dist/commands/scan.js";
 import { open } from "../dist/commands/open.js";
 
 program
@@ -22,6 +23,21 @@ program
 			level: options.level,
 			maxNodes: parseInt(options.maxNodes, 10),
 		});
+	});
+
+program
+	.command("scan")
+	.description("Scan a project directory and generate visualization")
+	.requiredOption("-p, --path <dir>", "Project directory to scan")
+	.option("-o, --output <path>", "Output graph JSON file")
+	.option("-c, --config <path>", "dependency-cruiser config file")
+	.action(async (options) => {
+		const graphFile = await scan({
+			path: options.path,
+			output: options.output,
+			config: options.config,
+		});
+		console.log(`\nTo view the result, run:\n  dep-report open -f ${graphFile}`);
 	});
 
 program

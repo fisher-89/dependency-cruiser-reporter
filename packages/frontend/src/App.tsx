@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ProcessedGraph, ViewMode, ViolationInfo } from './types';
 
 function App() {
@@ -6,6 +6,29 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-load graph from server if available
+  useEffect(() => {
+    const loadGraphFromServer = async () => {
+      try {
+        const configRes = await fetch('/api/config');
+        const config = await configRes.json();
+        if (config.hasGraphFile) {
+          setLoading(true);
+          const graphRes = await fetch('/api/graph');
+          if (graphRes.ok) {
+            const graphData = await graphRes.json();
+            setData(graphData);
+          }
+        }
+      } catch {
+        // Ignore errors - server may not be running or no graph file
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadGraphFromServer();
+  }, []);
 
   const handleFileUpload = useCallback(async (file: File) => {
     setLoading(true);
