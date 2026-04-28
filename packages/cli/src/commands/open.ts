@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { writeFileSync, unlinkSync } from "node:fs";
-import { reAggregateProcessedGraph } from "./convert.js";
+import { convertDcOutput, reAggregateProcessedGraph } from "./convert.js";
 
 export interface OpenOptions {
 	file?: string;
@@ -27,7 +27,19 @@ export async function open(options: OpenOptions): Promise<void> {
 	if (file && existsSync(file)) {
 		try {
 			const content = readFileSync(file, "utf-8");
-			const graph = JSON.parse(content);
+			let graph = JSON.parse(content);
+
+			// Check if it's raw dependency-cruiser output (has 'modules' array)
+			if (graph.modules && Array.isArray(graph.modules)) {
+				console.log("Converting dependency-cruiser output to ProcessedGraph...");
+				graph = convertDcOutput(content);
+
+				// Write to temp file
+				const tempFile = join(tmpdir(), `graph-${Date.now()}.json`);
+				writeFileSync(tempFile, JSON.stringify(graph, null, 2));
+				graphFile = tempFile;
+				console.log(`Converted graph: ${tempFile}`);
+			}
 
 			// Check if it's a ProcessedGraph (has nodes/edges/meta)
 			if (graph.nodes && graph.edges && graph.meta) {

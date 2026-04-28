@@ -249,4 +249,29 @@ describe("Aggregation Tests", () => {
 	});
 });
 
+describe("Open Command Tests", () => {
+	test("open command converts raw DC JSON to ProcessedGraph", async () => {
+		const port = 3001 + Math.floor(Math.random() * 1000);
+		const proc = spawn("node", [cliBinary, "open", "-f", sampleCruise, "-p", String(port)], {
+			cwd: __dirname,
+			stdio: ["ignore", "pipe", "pipe"],
+		});
+
+		// Wait for server start
+		await new Promise(resolve => setTimeout(resolve, 2000));
+
+		try {
+			const res = await fetch(`http://localhost:${port}/api/graph`);
+			const graph = await res.json();
+
+			assert.ok(graph.nodes, "should have nodes array");
+			assert.ok(graph.edges, "should have edges array");
+			assert.ok(graph.meta, "should have meta object");
+			assert.ok(graph.meta.aggregation_level, "should have aggregation_level");
+		} finally {
+			proc.kill();
+		}
+	});
+});
+
 console.log("Run with: node --test packages/e2e/cli.test.js");

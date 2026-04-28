@@ -1,6 +1,7 @@
 import { Graph } from '@antv/g6';
 import { useEffect, useMemo, useRef } from 'react';
 import type { EdgeType, NodeType, ProcessedGraph } from '../types';
+import { buildGraphData } from './buildGraphData';
 
 interface Props {
   data: ProcessedGraph;
@@ -18,66 +19,6 @@ const EDGE_STYLES: Record<EdgeType, { stroke: string; lineDash: number[] }> = {
   core: { stroke: '#722ED1', lineDash: [] },
   dynamic: { stroke: '#FA8C16', lineDash: [4, 4] },
 };
-
-/** 从节点 path 构建 G6 combo 层级数据 */
-function buildGraphData(data: ProcessedGraph) {
-  const comboMap = new Map<string, { id: string; label: string; combo?: string }>();
-
-  // 为每个节点提取目录路径并构建 combo 层级
-  const nodes = data.nodes.map((n) => {
-    const pathParts = (n.path ?? n.id).split('/');
-    // 目录路径 = 去掉最后一段文件名
-    const dirParts = n.node_type === 'directory' ? pathParts : pathParts.slice(0, -1);
-    const comboId = dirParts.length > 0 ? dirParts.join('/') : 'root';
-
-    // 注册 combo 及其所有父级
-    for (let i = 1; i <= dirParts.length; i++) {
-      const id = dirParts.slice(0, i).join('/');
-      if (!comboMap.has(id)) {
-        comboMap.set(id, {
-          id,
-          label: dirParts[i - 1],
-          combo: i > 1 ? dirParts.slice(0, i - 1).join('/') : 'root',
-        });
-      }
-    }
-
-    return {
-      id: n.id,
-      data: {
-        label: n.label,
-        node_type: n.node_type,
-        violation_count: n.violation_count,
-      },
-      combo: comboId,
-    };
-  });
-
-  // 确保有 root combo
-  if (!comboMap.has('root')) {
-    comboMap.set('root', { id: 'root', label: '/' });
-  }
-  // 没有目录路径的节点归入 root
-  for (const n of nodes) {
-    if (!n.combo) {
-      n.combo = 'root';
-    }
-  }
-
-  const edges = data.edges.map((e, i) => ({
-    id: `${e.source}-${e.target}-${i}`,
-    source: e.source,
-    target: e.target,
-    data: {
-      edge_type: e.edge_type,
-      weight: e.weight,
-    },
-  }));
-
-  const combos = Array.from(comboMap.values());
-
-  return { nodes, edges, combos };
-}
 
 export function DependencyGraph({ data }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);

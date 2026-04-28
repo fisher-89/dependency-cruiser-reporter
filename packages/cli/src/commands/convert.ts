@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 interface DcModule {
   source: string;
-  dependencies: DcDependency[];
+  dependencies: (DcDependency | string)[];
   valid: boolean;
 }
 
@@ -89,7 +89,12 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
       nodeMap.set(mod.source, { id: mod.source, label, violation_count: 0 });
     }
 
-    for (const dep of mod.dependencies) {
+    for (const rawDep of mod.dependencies) {
+      // Handle both object format (real DC output) and string format (simplified)
+      const dep = typeof rawDep === "string"
+        ? { resolved: rawDep, moduleSystem: "es6", coreModule: false, couldNotResolve: false, dependencyTypes: ["local" as const], followable: true }
+        : rawDep;
+
       if (!nodeMap.has(dep.resolved)) {
         const label = dep.resolved.split("/").pop() || dep.resolved;
         nodeMap.set(dep.resolved, { id: dep.resolved, label, violation_count: 0 });
