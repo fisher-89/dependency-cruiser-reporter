@@ -129,4 +129,124 @@ describe("Rust Binary Tests", () => {
 	});
 });
 
+describe("Aggregation Tests", () => {
+		const ext = process.platform === "win32" ? ".exe" : "";
+		const releaseBinary = resolve(monorepoRoot, `rust/target/release/dcr-aggregate${ext}`);
+		const debugBinary = resolve(monorepoRoot, `rust/target/debug/dcr-aggregate${ext}`);
+		const rustBinary = existsSync(releaseBinary)
+			? releaseBinary
+			: existsSync(debugBinary)
+				? debugBinary
+				: null;
+
+	test("Rust binary: small input stays at file level", () => {
+		if (!rustBinary) {
+			console.log("Skipping: Rust binary not found");
+			return;
+		}
+
+		const outputPath = resolve(outputDir, "small-graph.json");
+		if (existsSync(outputPath)) rmSync(outputPath);
+
+		const result = spawnSync(rustBinary, ["--input", sampleCruise, "--output", outputPath], {
+			encoding: "utf-8",
+		});
+
+		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
+		const graph = JSON.parse(readFileSync(outputPath, "utf-8"));
+
+		assert.strictEqual(graph.meta.aggregation_level, "file");
+		assert.strictEqual(graph.meta.original_node_count, graph.meta.aggregated_node_count);
+	});
+
+	test("Rust binary: --level directory forces directory aggregation", () => {
+		if (!rustBinary) {
+			console.log("Skipping: Rust binary not found");
+			return;
+		}
+
+		const outputPath = resolve(outputDir, "dir-graph.json");
+		if (existsSync(outputPath)) rmSync(outputPath);
+
+		const result = spawnSync(rustBinary, [
+			"--input", sampleCruise,
+			"--output", outputPath,
+			"--level", "directory",
+		], { encoding: "utf-8" });
+
+		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
+		const graph = JSON.parse(readFileSync(outputPath, "utf-8"));
+
+		assert.strictEqual(graph.meta.aggregation_level, "directory");
+		assert.ok(
+			graph.meta.aggregated_node_count <= graph.meta.original_node_count,
+			"Aggregated count should be <= original"
+		);
+		// Directory-level nodes should have node_type "directory"
+		assert.ok(
+			graph.nodes.some((n) => n.node_type === "directory"),
+			"Should have directory-type nodes"
+		);
+	});
+
+	test("Node.js reAggregateProcessedGraph: directory level reduces node count", async () => {
+		// Create a large ProcessedGraph fixture (more than 500 nodes)
+		const { reAggregateProcessedGraph } = await import("../cli/dist/commands/convert.js");
+
+		const nodes = [];
+		const edges = [];
+		// Generate 600 file nodes across 50 directories
+		for (let d = 0; d < 50; d++) {
+			for (let f = 0; f < 12; f++) {
+				const id = `src/dir${d}/file${f}.ts`;
+				nodes.push({ id, label: `file${f}.ts`, node_type: "file", path: id, violation_count: 0 });
+				// Add cross-directory edges
+				if (d > 0 && f === 0) {
+					edges.push({ source: id, target: `src/dir0/file0.ts`, edge_type: "local", weight: 1 });
+				}
+			}
+		}
+
+		const graph = {
+			nodes,
+			edges,
+			meta: {
+				original_node_count: 600,
+				aggregated_node_count: 600,
+				aggregation_level: "file",
+				total_violations: 0,
+			},
+			violations: [],
+		};
+
+		const result = reAggregateProcessedGraph(graph, 500);
+
+		assert.ok(result.nodes.length < 600, "Should have fewer nodes after aggregation");
+		assert.strictEqual(result.meta.aggregation_level, "directory");
+		assert.ok(result.nodes.every((n) => n.node_type === "directory"), "All nodes should be directory type");
+		// Cross-directory edges should be preserved
+		assert.ok(result.edges.length > 0, "Should have cross-directory edges");
+	});
+
+	test("Node.js reAggregateProcessedGraph: small graph not aggregated", async () => {
+		const { reAggregateProcessedGraph } = await import("../cli/dist/commands/convert.js");
+
+		const graph = {
+			nodes: [
+				{ id: "src/a.ts", label: "a.ts", node_type: "file", path: "src/a.ts", violation_count: 0 },
+				{ id: "src/b.ts", label: "b.ts", node_type: "file", path: "src/b.ts", violation_count: 0 },
+			],
+			edges: [
+				{ source: "src/a.ts", target: "src/b.ts", edge_type: "local", weight: 1 },
+			],
+			meta: { original_node_count: 2, aggregated_node_count: 2, aggregation_level: "file", total_violations: 0 },
+			violations: [],
+		};
+
+		const result = reAggregateProcessedGraph(graph, 500);
+		assert.strictEqual(result.nodes.length, 2, "Small graph should not be aggregated");
+		assert.strictEqual(result.meta.aggregation_level, "file");
+	});
+});
+
 console.log("Run with: node --test packages/e2e/cli.test.js");

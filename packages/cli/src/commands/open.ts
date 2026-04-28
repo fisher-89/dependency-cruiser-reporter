@@ -1,21 +1,63 @@
 import { createServer, type ServerOptions } from "../server.js";
+import { existsSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { writeFileSync, unlinkSync } from "node:fs";
+import { reAggregateProcessedGraph } from "./convert.js";
 
 export interface OpenOptions {
 	file?: string;
 	port?: number;
 	host?: string;
+	/** Max nodes before auto-aggregation (default 500) */
+	maxNodes?: number;
 }
+
+const DEFAULT_MAX_NODES = 500;
 
 /**
  * Open web viewer with HTTP server
  */
 export async function open(options: OpenOptions): Promise<void> {
-	const { file, port = 3000, host = "localhost" } = options;
+	const { file, port = 3000, host = "localhost", maxNodes = DEFAULT_MAX_NODES } = options;
+
+	let graphFile = file;
+
+	// If file is provided, check if it needs aggregation
+	if (file && existsSync(file)) {
+		try {
+			const content = readFileSync(file, "utf-8");
+			const graph = JSON.parse(content);
+
+			// Check if it's a ProcessedGraph (has nodes/edges/meta)
+			if (graph.nodes && graph.edges && graph.meta) {
+				const nodeCount = graph.nodes.length;
+
+				if (nodeCount > maxNodes) {
+					console.log(`Large graph detected: ${nodeCount} nodes (max: ${maxNodes})`);
+					console.log("Auto-aggregating...");
+
+					const aggregated = reAggregateProcessedGraph(graph, maxNodes);
+					console.log(`Aggregated to ${aggregated.nodes.length} nodes (${aggregated.meta.aggregation_level} level)`);
+
+					// Write to temp file
+					const tempFile = join(tmpdir(), `graph-${Date.now()}.json`);
+					writeFileSync(tempFile, JSON.stringify(aggregated, null, 2));
+					graphFile = tempFile;
+
+					console.log(`Using aggregated graph: ${tempFile}`);
+				}
+			}
+		} catch (err) {
+			// If parsing fails, just serve the file as-is
+			console.warn("Could not parse graph file, serving raw file");
+		}
+	}
 
 	const serverOptions: ServerOptions = {
 		port,
 		host,
-		graphFile: file,
+		graphFile,
 	};
 
 	const server = createServer(serverOptions);
@@ -32,6 +74,12 @@ export async function open(options: OpenOptions): Promise<void> {
 	process.on("SIGINT", () => {
 		console.log("\nShutting down...");
 		server.stop();
+		// Clean up temp file if we created one
+		if (graphFile !== file && graphFile?.includes(tmpdir())) {
+			try {
+				unlinkSync(graphFile);
+			} catch {}
+		}
 		process.exit(0);
 	});
 }

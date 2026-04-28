@@ -194,3 +194,259 @@ function findDcrAggregateBinary(): string | null {
 
   return null;
 }
+
+/**
+ * Re-aggregate an already-processed graph (ProcessedGraph format)
+ * Used when open command receives a large pre-processed graph
+ */
+export function reAggregateProcessedGraph(
+  graph: ProcessedGraph,
+  maxNodes: number = 500
+): ProcessedGraph {
+  const nodeCount = graph.nodes.length;
+
+  // If already small enough, return as-is
+  if (nodeCount <= maxNodes) {
+    return graph;
+  }
+
+  // Calculate optimal depth to get under maxNodes
+  const maxDepth = calculateOptimalDepth(graph, maxNodes);
+  const result = aggregateByDirectory(graph, maxDepth);
+
+  // If still too large, try package level
+  if (result.nodes.length > maxNodes) {
+    return aggregateByPackage(result);
+  }
+
+  return result;
+}
+
+/**
+ * Calculate the optimal directory depth to get under maxNodes.
+ * Finds the deepest depth that keeps node count below threshold.
+ */
+function calculateOptimalDepth(graph: ProcessedGraph, maxNodes: number): number {
+  const paths = graph.nodes.map((n) => (n.path || n.id).split("/"));
+  const maxPathDepth = Math.max(...paths.map((p) => p.length));
+
+  // Find the deepest depth that stays under maxNodes
+  let bestDepth = 1;
+  for (let depth = 1; depth < maxPathDepth; depth++) {
+    const groupCount = new Set(
+      paths.map((parts) => {
+        const dirParts = parts.slice(0, -1);
+        return dirParts.slice(0, depth).join("/");
+      })
+    ).size;
+
+    if (groupCount <= maxNodes) {
+      bestDepth = depth; // Keep going deeper while under threshold
+    } else {
+      break; // Stop as soon as we exceed
+    }
+  }
+
+  return bestDepth;
+}
+
+function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): ProcessedGraph {
+  const nodeMap = new Map<string, { children: string[]; violationCount: number }>();
+  const sourceToDir = new Map<string, string>();
+
+  // Group nodes by parent directory (with depth limit for deep paths)
+  for (const node of graph.nodes) {
+    const path = node.path || node.id;
+    const parts = path.split("/");
+
+    // For directory nodes, go up one level; for file nodes, use parent dir
+    let dirParts: string[];
+    if (node.node_type === "directory") {
+      dirParts = parts.slice(0, -1);
+    } else {
+      dirParts = parts.slice(0, -1);
+    }
+
+    // Truncate to max depth for deep paths
+    if (dirParts.length > maxDepth) {
+      dirParts = dirParts.slice(0, maxDepth);
+    }
+
+    const dirId = dirParts.length > 0 ? dirParts.join("/") : "root";
+
+    sourceToDir.set(node.id, dirId);
+
+    if (!nodeMap.has(dirId)) {
+      nodeMap.set(dirId, { children: [], violationCount: 0 });
+    }
+    const entry = nodeMap.get(dirId)!;
+    if (node.children) {
+      entry.children.push(...node.children);
+    } else {
+      entry.children.push(node.id);
+    }
+    entry.violationCount += node.violation_count;
+  }
+
+  // Build aggregated nodes
+  const nodes: ProcessedGraph["nodes"] = [];
+  for (const [id, data] of nodeMap) {
+    nodes.push({
+      id,
+      label: id.split("/").pop() || id,
+      node_type: "directory",
+      path: id,
+      violation_count: data.violationCount,
+      children: data.children,
+    });
+  }
+
+  // Aggregate edges: remap source/target to directory
+  const edgeMap = new Map<string, { edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number }>();
+  for (const edge of graph.edges) {
+    const srcDir = sourceToDir.get(edge.source) || edge.source;
+    const tgtDir = sourceToDir.get(edge.target) || edge.target;
+
+    if (srcDir === tgtDir) continue;
+
+    const key = `${srcDir}|${tgtDir}`;
+    const existing = edgeMap.get(key);
+    if (existing) {
+      existing.weight += edge.weight;
+    } else {
+      edgeMap.set(key, { edge_type: edge.edge_type, weight: edge.weight });
+    }
+  }
+
+  const edges: ProcessedGraph["edges"] = [];
+  for (const [key, data] of edgeMap) {
+    const [source, target] = key.split("|");
+    edges.push({ source, target, edge_type: data.edge_type, weight: data.weight });
+  }
+
+  return {
+    nodes,
+    edges,
+    meta: {
+      original_node_count: graph.meta.original_node_count,
+      aggregated_node_count: nodes.length,
+      aggregation_level: "directory",
+      total_violations: graph.meta.total_violations,
+    },
+    violations: graph.violations,
+  };
+}
+
+function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
+  const nodeMap = new Map<string, { children: string[]; violationCount: number }>();
+  const sourceToPkg = new Map<string, string>();
+
+  // Group nodes by package (extract from node_modules or use "local")
+  for (const node of graph.nodes) {
+    const path = node.path || node.id;
+    const pkg = extractPackageFromPath(path);
+
+    sourceToPkg.set(node.id, pkg);
+
+    if (!nodeMap.has(pkg)) {
+      nodeMap.set(pkg, { children: [], violationCount: 0 });
+    }
+    const entry = nodeMap.get(pkg)!;
+    // Merge children from the source node if it has any
+    if (node.children) {
+      entry.children.push(...node.children);
+    } else {
+      entry.children.push(node.id);
+    }
+    entry.violationCount += node.violation_count;
+  }
+
+  // Build aggregated nodes
+  const nodes: ProcessedGraph["nodes"] = [];
+  for (const [id, data] of nodeMap) {
+    nodes.push({
+      id,
+      label: id,
+      node_type: "package",
+      path: id,
+      violation_count: data.violationCount,
+      children: data.children,
+    });
+  }
+
+  // Aggregate edges
+  const edgeMap = new Map<string, { edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number }>();
+  for (const edge of graph.edges) {
+    const srcPkg = sourceToPkg.get(edge.source) || "local";
+    const tgtPkg = sourceToPkg.get(edge.target) || "local";
+
+    if (srcPkg === tgtPkg) continue;
+
+    const key = `${srcPkg}|${tgtPkg}`;
+    const existing = edgeMap.get(key);
+    if (existing) {
+      existing.weight += edge.weight;
+    } else {
+      edgeMap.set(key, { edge_type: edge.edge_type, weight: edge.weight });
+    }
+  }
+
+  const edges: ProcessedGraph["edges"] = [];
+  for (const [key, data] of edgeMap) {
+    const [source, target] = key.split("|");
+    edges.push({ source, target, edge_type: data.edge_type, weight: data.weight });
+  }
+
+  return {
+    nodes,
+    edges,
+    meta: {
+      original_node_count: graph.meta.original_node_count,
+      aggregated_node_count: nodes.length,
+      aggregation_level: "package",
+      total_violations: graph.meta.total_violations,
+    },
+    violations: graph.violations,
+  };
+}
+
+function aggregateByRoot(graph: ProcessedGraph): ProcessedGraph {
+  const allChildren = graph.nodes.map((n) => n.id);
+  const totalViolations = graph.nodes.reduce((sum, n) => sum + n.violation_count, 0);
+
+  return {
+    nodes: [
+      {
+        id: "root",
+        label: "root",
+        node_type: "package",
+        path: "root",
+        violation_count: totalViolations,
+        children: allChildren,
+      },
+    ],
+    edges: [],
+    meta: {
+      original_node_count: graph.meta.original_node_count,
+      aggregated_node_count: 1,
+      aggregation_level: "root",
+      total_violations: graph.meta.total_violations,
+    },
+    violations: graph.violations,
+  };
+}
+
+function extractPackageFromPath(path: string): string {
+  // Check for node_modules pattern
+  const nmIdx = path.indexOf("node_modules/");
+  if (nmIdx !== -1) {
+    const afterNm = path.slice(nmIdx + 13);
+    const parts = afterNm.split("/");
+    // Handle scoped packages (@org/pkg)
+    if (parts[0]?.startsWith("@") && parts.length > 1) {
+      return `${parts[0]}/${parts[1]}`;
+    }
+    return parts[0] || "local";
+  }
+  return "local";
+}
