@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { analyze } from "../dist/commands/analyze.js";
-import { scan } from "../dist/commands/scan.js";
-import { open } from "../dist/commands/open.js";
+import { analyze, scan, open } from "../dist/index.js";
 
 program
 	.name("dep-report")
