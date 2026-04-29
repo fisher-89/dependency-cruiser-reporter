@@ -2,11 +2,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
+import { convertWithFallback, reAggregateProcessedGraph } from './commands/convert.js';
+import type { ProcessedGraph } from './commands/convert.js';
 
 export interface ServerOptions {
   port: number;
   host: string;
   graphFile?: string;
+  maxNodes?: number;
 }
 
 export class DcrServer {
@@ -14,6 +17,7 @@ export class DcrServer {
   private _port: number;
   private host: string;
   private graphFile?: string;
+  private maxNodes: number;
   private server?: ReturnType<typeof this.app.listen>;
 
   /** Get the actual port the server is listening on */
@@ -25,6 +29,7 @@ export class DcrServer {
     this._port = options.port;
     this.host = options.host;
     this.graphFile = options.graphFile;
+    this.maxNodes = options.maxNodes ?? 500;
 
     this.app = express();
     this.setupRoutes();
@@ -42,7 +47,7 @@ export class DcrServer {
       });
     });
 
-    // API: Get graph data
+    // API: Get graph data (auto-converts raw dependency-cruiser JSON)
     this.app.get('/api/graph', (_req: Request, res: Response) => {
       if (!this.graphFile) {
         res.status(404).json({ error: 'No graph file specified' });
@@ -56,7 +61,29 @@ export class DcrServer {
 
       try {
         const content = readFileSync(this.graphFile, 'utf-8');
-        res.json(JSON.parse(content));
+        const parsed = JSON.parse(content);
+
+        // Raw dependency-cruiser format: has 'modules' array
+        if (parsed.modules && Array.isArray(parsed.modules)) {
+          const graph = convertWithFallback(content, this.maxNodes);
+          res.json(graph);
+          return;
+        }
+
+        // Already ProcessedGraph: has nodes/edges/meta
+        if (parsed.nodes && parsed.edges && parsed.meta) {
+          // Re-aggregate if too large
+          if (parsed.nodes.length > this.maxNodes) {
+            const aggregated = reAggregateProcessedGraph(parsed as ProcessedGraph, this.maxNodes);
+            res.json(aggregated);
+            return;
+          }
+          res.json(parsed);
+          return;
+        }
+
+        // Unknown format
+        res.status(400).json({ error: 'Unrecognized graph file format' });
       } catch (error) {
         res.status(500).json({ error: 'Failed to read graph file' });
       }

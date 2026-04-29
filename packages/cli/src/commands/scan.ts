@@ -84,22 +84,13 @@ export async function scan(options: ScanOptions): Promise<string> {
     process.exit(1);
   }
 
-  // Convert to ProcessedGraph
-  const { convertDcOutput } = await import('./convert.js');
-  let graph: ReturnType<typeof convertDcOutput>;
-  try {
-    // cruiseResult.output is already the parsed JSON object
-    const dcJson =
-      typeof cruiseResult.output === 'string'
-        ? cruiseResult.output
-        : JSON.stringify(cruiseResult.output);
-    graph = convertDcOutput(dcJson);
-  } catch (e) {
-    console.error('Failed to convert dependency-cruiser output:', e);
-    process.exit(1);
-  }
+  // Save raw dependency-cruiser output (conversion is deferred to server/frontend)
+  const rawOutput =
+    typeof cruiseResult.output === 'string'
+      ? cruiseResult.output
+      : JSON.stringify(cruiseResult.output, null, 2);
 
-  writeFileSync(outputPath, JSON.stringify(graph, null, 2));
+  writeFileSync(outputPath, rawOutput);
   console.log(`Graph written to: ${outputPath}`);
 
   return outputPath;

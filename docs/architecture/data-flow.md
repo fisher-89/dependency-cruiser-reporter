@@ -4,12 +4,20 @@
 
 ```mermaid
 flowchart TB
-    Input[dependency-cruiser JSON] --> CLI[dep-report CLI]
-    CLI --> Rust{Rust binary\navailable?}
+    Input[dependency-cruiser JSON] --> Scan[dep-report scan]
+    Scan --> RawFile[Raw JSON file]
+    RawFile --> Server[HTTP Server]
+    Server --> Detect{Format?}
+    Detect -->|raw dc| Rust{Rust binary\navailable?}
     Rust -->|Yes| Native[Native Rust\nparse_and_aggregate]
     Rust -->|No| Node[Node.js\nconvertDcOutput]
-    Native --> Output[ProcessedGraph JSON]
+    Detect -->|ProcessedGraph| ReAgg{Too large?}
+    ReAgg -->|Yes| Aggregate[reAggregateProcessedGraph]
+    ReAgg -->|No| Direct[Return as-is]
+    Native --> Output[ProcessedGraph]
     Node --> Output
+    Aggregate --> Output
+    Direct --> Output
     Output --> Render[Frontend Render]
 
     style Input fill:#e0f2fe,stroke:#0284c7
@@ -22,43 +30,42 @@ flowchart TB
 flowchart LR
     subgraph Scan["Scan Mode (dep-report scan)"]
         Path["Project directory"] --> DC["dependency-cruiser\nAPI (cruise)"]
-        DC --> Convert["convertDcOutput()\nNode.js"]
-        Convert --> File1["graph.json"]
-    end
-
-    subgraph Analyze["Analyze Mode (dep-report analyze)"]
-        Input["Input JSON"] --> Check{"dcr-aggregate\nbinary?"}
-        Check -->|Found| Rust["Rust binary"]
-        Check -->|Not found| Fallback["convertDcOutput()\nNode.js fallback"]
-        Rust --> File2["graph.json"]
-        Fallback --> File2
+        DC --> RawFile1["raw-graph.json\n(raw dc output)"]
     end
 
     subgraph Open["Open Mode (dep-report open)"]
-        File3["graph.json"] --> Server["Express server"]
-        Server --> Browser["Browser"]
+        File["raw-graph.json"] --> Server["Express server"]
+        Server --> Convert["convertWithFallback()\nRust or Node.js"]
+        Convert --> Browser["Browser"]
     end
 ```
+
+## Key Change: Deferred Conversion
+
+**Before:** `scan` command converted raw dependency-cruiser output to ProcessedGraph immediately, losing original data structure.
+
+**After:** `scan` preserves raw dependency-cruiser JSON. Conversion happens on-demand when frontend requests `/api/graph`:
+- Server detects file format (raw dc vs ProcessedGraph)
+- Raw format: converts using `convertWithFallback` (Rust preferred, Node.js fallback)
+- ProcessedGraph: re-aggregates if node count exceeds threshold
+
+This enables future features like user-selectable aggregation levels.
 
 ## Input Format
 
 dependency-cruiser outputs JSON. The CLI supports two input structures:
 
-### Structure with nested dependencies (used by `scan` command)
+### Raw dependency-cruiser format (saved by `scan`)
 
-The `scan` command uses the dependency-cruiser API, which returns modules with a `source` path and nested `dependencies` array. Each module also has a `valid` flag and optional `rules` violations.
+Modules with nested dependencies array. Each module has `source`, `dependencies`, `valid`, optional `rules`.
 
-> See [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) for full TypeScript input type definitions.
+> See [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) for full type definitions.
 
-### Structure with top-level dependencies (used by Rust engine)
+### ProcessedGraph format (already converted)
 
-The Rust engine expects a flat structure with separate top-level arrays for `modules`, `dependencies`, `violations`, and `summary`. Each dependency is a separate object with `from`/`to` fields rather than being nested inside a module.
+Nodes/edges/meta structure. Backward compatible - server handles both formats.
 
-> See [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs) for full Rust input type definitions.
-
-## Output Format
-
-Both Rust and Node.js paths output the same `ProcessedGraph` JSON format. See [Data Structures](../backend/data-structures.md) for full type definitions.
+> See [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) for type definitions.
 
 ## Scan Mode Flow
 
@@ -67,36 +74,13 @@ sequenceDiagram
     participant User
     participant CLI
     participant DC as dependency-cruiser
-    participant Convert as convertDcOutput
 
     User->>CLI: dep-report scan --path ./project
     CLI->>CLI: Find .dependency-cruiser config
     CLI->>DC: cruise([path], options)
-    DC-->>CLI: CruiseResult
-    CLI->>Convert: convertDcOutput(json)
-    Convert-->>CLI: ProcessedGraph
-    CLI->>CLI: Write graph.json
-```
-
-## Analyze Mode Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant CLI
-    participant Rust as dcr-aggregate
-    participant Fallback as convertDcOutput
-
-    User->>CLI: dep-report analyze --input cruise.json
-    CLI->>CLI: Find dcr-aggregate binary
-    alt Binary found
-        CLI->>Rust: spawn dcr-aggregate --input --output
-        Rust-->>CLI: exit 0
-    else Binary not found
-        CLI->>Fallback: convertDcOutput(json)
-        Fallback-->>CLI: ProcessedGraph
-        CLI->>CLI: Write graph.json
-    end
+    DC-->>CLI: CruiseResult (raw JSON)
+    CLI->>CLI: Write raw-graph.json
+    Note over CLI: No conversion - saves raw data
 ```
 
 ## Open Mode Flow
@@ -106,14 +90,19 @@ sequenceDiagram
     participant User
     participant CLI
     participant Server as Express Server
+    participant Convert as convertWithFallback
     participant Browser
 
-    User->>CLI: dep-report open --file graph.json
+    User->>CLI: dep-report open --file raw-graph.json
     CLI->>Server: Start HTTP server
-    Browser->>Server: GET / (index.html)
-    Browser->>Server: GET /api/config
-    Server-->>Browser: { hasGraphFile: true }
     Browser->>Server: GET /api/graph
+    Server->>Server: Read file, detect format
+    alt Raw dc format
+        Server->>Convert: convertWithFallback(content)
+        Convert-->>Server: ProcessedGraph
+    else ProcessedGraph format
+        Server->>Server: Use as-is (or re-aggregate)
+    end
     Server-->>Browser: ProcessedGraph JSON
     Browser->>Browser: Render visualization
 ```
@@ -129,5 +118,5 @@ stateDiagram-v2
     ReportView --> GraphView: Click Graph tab
     ReportView --> MetricsView: Click Metrics tab
     MetricsView --> GraphView: Click Graph tab
-    MetricsView --> ReportView: Click Report tab
+    MetricsView --> ReportView: Click Metrics tab
 ```

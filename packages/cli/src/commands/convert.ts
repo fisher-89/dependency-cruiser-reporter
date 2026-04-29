@@ -1,4 +1,8 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdtempSync, unlinkSync, rmdirSync } from 'node:fs';
+import { dirname, resolve, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
+import { spawnSync } from 'node:child_process';
 
 interface DcModule {
   source: string;
@@ -31,7 +35,7 @@ interface DcOutput {
   };
 }
 
-interface ProcessedGraph {
+export interface ProcessedGraph {
   nodes: {
     id: string;
     label: string;
@@ -233,23 +237,63 @@ export async function analyzeWithFallback(options: {
   console.log(`Output written to: ${output}`);
 }
 
-function findDcrAggregateBinary(): string | null {
-  const { existsSync: exists } = require('node:fs');
-  const { resolve, dirname } = require('node:path');
+export function findDcrAggregateBinary(): string | null {
   const isWin = process.platform === 'win32';
   const ext = isWin ? '.exe' : '';
 
   // Try relative path from CLI dist directory
   try {
-    const { fileURLToPath } = require('node:url');
     const thisDir = dirname(fileURLToPath(import.meta.url));
     const releaseBin = resolve(thisDir, `../../../rust/target/release/dcr-aggregate${ext}`);
-    if (exists(releaseBin)) return releaseBin;
+    if (existsSync(releaseBin)) return releaseBin;
     const debugBin = resolve(thisDir, `../../../rust/target/debug/dcr-aggregate${ext}`);
-    if (exists(debugBin)) return debugBin;
+    if (existsSync(debugBin)) return debugBin;
   } catch {}
 
   return null;
+}
+
+/**
+ * Convert raw dependency-cruiser JSON to ProcessedGraph.
+ * Tries Rust binary first, falls back to Node.js convertDcOutput.
+ * Re-aggregates if node count exceeds maxNodes.
+ */
+export function convertWithFallback(dcJson: string, maxNodes = 5000): ProcessedGraph {
+  const binary = findDcrAggregateBinary();
+
+  if (binary) {
+    try {
+      // Write input to temp file for Rust binary
+      const tmpDir = mkdtempSync(join(tmpdir(), 'dcr-'));
+      const tmpInput = join(tmpDir, 'input.json');
+      const tmpOutput = join(tmpDir, 'output.json');
+      writeFileSync(tmpInput, dcJson);
+
+      const args = ['--input', tmpInput, '--output', tmpOutput, '--max-nodes', String(maxNodes)];
+      const result = spawnSync(binary, args, { stdio: 'pipe' });
+
+      if (result.status === 0) {
+        const output = readFileSync(tmpOutput, 'utf-8');
+        // Clean up temp files
+        try {
+          unlinkSync(tmpInput);
+          unlinkSync(tmpOutput);
+          rmdirSync(tmpDir);
+        } catch {}
+        return JSON.parse(output) as ProcessedGraph;
+      }
+      console.warn('Rust binary failed, falling back to Node.js converter');
+    } catch {
+      console.warn('Rust binary failed, falling back to Node.js converter');
+    }
+  }
+
+  // Node.js fallback: convert then re-aggregate if needed
+  const graph = convertDcOutput(dcJson);
+  if (graph.nodes.length > maxNodes) {
+    return reAggregateProcessedGraph(graph, maxNodes);
+  }
+  return graph;
 }
 
 /**
