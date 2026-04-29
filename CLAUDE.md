@@ -41,7 +41,7 @@ pnpm demo            # Scan demo project and open viewer
 
 After each meaningful change, commit the code to ensure every commit is complete and executable:
 
-1. **Build before commit**: Run `pnpm build:ts` (and `pnpm build:rust` if Rust code changed) to verify compilation passes.
+1. **Build & verify before commit**: Run `pnpm run build && pnpm run demo`, then open the viewer in a browser and confirm the page renders without errors.
 2. **Test before commit**: Run `pnpm test` to verify tests pass.
 3. **Commit per logical unit**: One commit per task or coherent change set. Do not batch unrelated changes.
 4. **Complete commits**: Each commit must leave the project in a working state — no broken builds, no partial features that crash.
