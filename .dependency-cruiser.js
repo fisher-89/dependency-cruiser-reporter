@@ -124,7 +124,7 @@ module.exports = {
     },
 
     // rules you might want to tweak for your specific situation:
-    
+
     {
       name: 'not-to-spec',
       comment:
@@ -199,18 +199,18 @@ module.exports = {
     // Which modules not to follow further when encountered
     doNotFollow: {
       // path: an array of regular expressions in strings to match against
-      path: ['node_modules']
+      // path: ['^node_modules']
     },
 
     // Which modules to exclude
-    // exclude : {
-    //   // path: an array of regular expressions in strings to match against
-    //   path: '',
-    // },
+    exclude: {
+      // path: an array of regular expressions in strings to match against
+      path: '(?:node_modules|dist|[.]test[.](?:ts|tsx|js|jsx)+$)',
+    },
 
     // Which modules to exclusively include (array of regular expressions in strings)
     // dependency-cruiser will skip everything that doesn't match this pattern
-    // includeOnly : [''],
+    includeOnly: ['packages'],
 
     // List of module systems to cruise.
     // When left out dependency-cruiser will fall back to the list of _all_
@@ -244,7 +244,7 @@ module.exports = {
     // true: also detect dependencies that only exist before typescript-to-javascript compilation
     // 'specify': for each dependency identify whether it only exists before compilation or also after
     // tsPreCompilationDeps: false,
-    
+
     // list of extensions to scan that aren't javascript or compile-to-javascript.
     // Empty by default. Only put extensions in here that you want to take into
     // account that are _not_ parsable.
@@ -295,7 +295,7 @@ module.exports = {
     // re-declared require, use a require-wrapper or use window.require as
     // a hack.
     // exoticRequireStrings: [],
-    
+
     // options to pass on to enhanced-resolve, the package dependency-cruiser
     // uses to resolve module references to disk. The values below should be
     // suitable for most situations
@@ -305,25 +305,25 @@ module.exports = {
     enhancedResolveOptions: {
       // What to consider as an 'exports' field in package.jsons
       exportsFields: ['exports'],
-      
+
       // List of conditions to check for in the exports field.
       // Only works when the 'exportsFields' array is non-empty.
       conditionNames: ['import', 'require', 'node', 'default', 'types'],
-      
+
       // The extensions, by default are the same as the ones dependency-cruiser
       // can access (run `npx depcruise --info` to see which ones that are in
       // _your_ environment). If that list is larger than you need you can pass
       // the extensions you actually use (e.g. ['.js', '.jsx']). This can speed
       // up module resolution, which is the most expensive step.
-      extensions: [".js"],
-      
+      // extensions: [".js"],
+
       // What to consider a 'main' field in package.json
-      
+
       // if you migrate to ESM (or are in an ESM environment already) you will want to
       // have "module" in the list of mainFields, like so:
       // mainFields: ["module", "main", "types", "typings"],
       mainFields: ["main", "types", "typings"],
-      
+
       // A list of alias fields in package.jsons
       // See https://github.com/defunctzombie/package-browser-field-spec and
       // the webpack [resolve.alias](https://webpack.js.org/configuration/resolve/#resolvealiasfields)
@@ -336,7 +336,7 @@ module.exports = {
     // analysis strictly necessary for checking the rule set only. 
     // See https://github.com/sverweij/dependency-cruiser/blob/main/doc/options-reference.md#skipanalysisnotinrules
     skipAnalysisNotInRules: true,
-    
+
     reporterOptions: {
       dot: {
         // Pattern of modules to consolidate to. The default pattern in this configuration
