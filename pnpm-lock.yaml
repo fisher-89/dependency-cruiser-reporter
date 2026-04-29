@@ -65,11 +65,11 @@ importers:
         specifier: ^5.0.0-beta.28
         version: 5.0.51(workerize-loader@2.0.2(webpack@5.106.2))
       react:
-        specifier: ^18.3.1
-        version: 18.3.1
+        specifier: ^19.2.5
+        version: 19.2.5
       react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
+        specifier: ^19.2.5
+        version: 19.2.5(react@19.2.5)
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.9.0
@@ -78,11 +78,11 @@ importers:
         specifier: ^1.45.0
         version: 1.59.1
       '@types/react':
-        specifier: ^18.3.3
-        version: 18.3.28
+        specifier: ^19.2.14
+        version: 19.2.14
       '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.7(@types/react@18.3.28)
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
       '@vitejs/plugin-react':
         specifier: ^6.0.1
         version: 6.0.1(@voidzero-dev/vite-plus-core@0.1.19(@types/node@20.19.39)(terser@5.46.2)(typescript@5.9.3))
@@ -530,22 +530,19 @@ packages:
   '@types/node@20.19.39':
     resolution: {integrity: sha1-6Yo7V1V0BwzTS3hL0XN2cmn5Xpk=, tarball: https://registry.npm.wps.cn/@types/node/download/@types/node-20.19.39.tgz}
 
-  '@types/prop-types@15.7.15':
-    resolution: {integrity: sha1-5uWobWAr6spxzlFj+t9fldcJMcc=, tarball: https://registry.npm.wps.cn/@types/prop-types/download/@types/prop-types-15.7.15.tgz}
-
   '@types/qs@6.15.0':
     resolution: {integrity: sha1-ljq2F3mEP+kQY5pQZhtI8WK8f3k=, tarball: https://registry.npm.wps.cn/@types/qs/download/@types/qs-6.15.0.tgz}
 
   '@types/range-parser@1.2.7':
     resolution: {integrity: sha1-UK5DU+qt3AQEQnmBL1LIxlhX28s=, tarball: https://registry.npm.wps.cn/@types/range-parser/download/@types/range-parser-1.2.7.tgz}
 
-  '@types/react-dom@18.3.7':
-    resolution: {integrity: sha1-uJ3fLNg7T+r8xOLqQa/fuVoNGU8=, tarball: https://registry.npm.wps.cn/@types/react-dom/download/@types/react-dom-18.3.7.tgz}
+  '@types/react-dom@19.2.3':
+    resolution: {integrity: sha1-weMF0VpSo+UI1U3Kdw0gLLY6vyw=, tarball: https://registry.npm.wps.cn/@types/react-dom/download/@types/react-dom-19.2.3.tgz}
     peerDependencies:
-      '@types/react': ^18.0.0
+      '@types/react': ^19.2.0
 
-  '@types/react@18.3.28':
-    resolution: {integrity: sha1-CoWxpyQ7QljZ9ib0N5e6GOtfh4E=, tarball: https://registry.npm.wps.cn/@types/react/download/@types/react-18.3.28.tgz}
+  '@types/react@19.2.14':
+    resolution: {integrity: sha1-OWBJKbXjlX46b6AAHa+xfHr3C60=, tarball: https://registry.npm.wps.cn/@types/react/download/@types/react-19.2.14.tgz}
 
   '@types/send@0.17.6':
     resolution: {integrity: sha1-rrU4W+Yv9YpSzVRZ2qUJrpFlHSU=, tarball: https://registry.npm.wps.cn/@types/send/download/@types/send-0.17.6.tgz}
@@ -1228,9 +1225,6 @@ packages:
     resolution: {integrity: sha1-jRRvCQDolzsQa29zzB6ajLhvjbA=, tarball: https://registry.npm.wps.cn/jest-worker/download/jest-worker-27.5.1.tgz}
     engines: {node: '>= 10.13.0'}
 
-  js-tokens@4.0.0:
-    resolution: {integrity: sha1-GSA/tZmR35jjoocFDUZHzerzJJk=, tarball: https://registry.npm.wps.cn/js-tokens/download/js-tokens-4.0.0.tgz}
-
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha1-rnvLNlard6c7pcSb9lTzjmtoYOI=, tarball: https://registry.npm.wps.cn/json-schema-traverse/download/json-schema-traverse-1.0.0.tgz}
 
@@ -1270,10 +1264,6 @@ packages:
 
   lodash@4.18.1:
     resolution: {integrity: sha1-/ytmwfYybVlRPeJAe/iBQ5gSdxw=, tarball: https://registry.npm.wps.cn/lodash/download/lodash-4.18.1.tgz}
-
-  loose-envify@1.4.0:
-    resolution: {integrity: sha1-ce5R+nvkyuwaY4OffmgtgTLTDK8=, tarball: https://registry.npm.wps.cn/loose-envify/download/loose-envify-1.4.0.tgz}
-    hasBin: true
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha1-oN10voHiqlwvJ+Zc4oNgXuTit/k=, tarball: https://registry.npm.wps.cn/math-intrinsics/download/math-intrinsics-1.1.0.tgz}
@@ -1443,13 +1433,13 @@ packages:
     resolution: {integrity: sha1-EcZlDudwp94bSU8ZeSfeDJI4IuI=, tarball: https://registry.npm.wps.cn/raw-body/download/raw-body-2.5.3.tgz}
     engines: {node: '>= 0.8'}
 
-  react-dom@18.3.1:
-    resolution: {integrity: sha1-wiZdeVEbV9R5s90/36UVNklMXLQ=, tarball: https://registry.npm.wps.cn/react-dom/download/react-dom-18.3.1.tgz}
+  react-dom@19.2.5:
+    resolution: {integrity: sha1-uHaLEIN9C46cpbni1Y3/PYgOol4=, tarball: https://registry.npm.wps.cn/react-dom/download/react-dom-19.2.5.tgz}
     peerDependencies:
-      react: ^18.3.1
+      react: ^19.2.5
 
-  react@18.3.1:
-    resolution: {integrity: sha1-SauJIAnFOTNiW9FrJTP8dUyrKJE=, tarball: https://registry.npm.wps.cn/react/download/react-18.3.1.tgz}
+  react@19.2.5:
+    resolution: {integrity: sha1-yIiri47zPiWX+ui9std+29tChYs=, tarball: https://registry.npm.wps.cn/react/download/react-19.2.5.tgz}
     engines: {node: '>=0.10.0'}
 
   rechoir@0.8.0:
@@ -1486,8 +1476,8 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha1-RPoWGwGHuVSd2Eu5GAL5vYOFzWo=, tarball: https://registry.npm.wps.cn/safer-buffer/download/safer-buffer-2.1.2.tgz}
 
-  scheduler@0.23.2:
-    resolution: {integrity: sha1-QUumSjsoKJLpRM8hCOzAeNEVzcM=, tarball: https://registry.npm.wps.cn/scheduler/download/scheduler-0.23.2.tgz}
+  scheduler@0.27.0:
+    resolution: {integrity: sha1-DE74LWfR5cHjWej8dtOofwRf5b0=, tarball: https://registry.npm.wps.cn/scheduler/download/scheduler-0.27.0.tgz}
 
   schema-utils@4.3.3:
     resolution: {integrity: sha1-WxhQkS+jHfkHFpY9RdkSH9/An0Y=, tarball: https://registry.npm.wps.cn/schema-utils/download/schema-utils-4.3.3.tgz}
@@ -2169,19 +2159,16 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/prop-types@15.7.15': {}
-
   '@types/qs@6.15.0': {}
 
   '@types/range-parser@1.2.7': {}
 
-  '@types/react-dom@18.3.7(@types/react@18.3.28)':
+  '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:
-      '@types/react': 18.3.28
+      '@types/react': 19.2.14
 
-  '@types/react@18.3.28':
+  '@types/react@19.2.14':
     dependencies:
-      '@types/prop-types': 15.7.15
       csstype: 3.2.3
 
   '@types/send@0.17.6':
@@ -2852,8 +2839,6 @@ snapshots:
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
-  js-tokens@4.0.0: {}
-
   json-schema-traverse@1.0.0: {}
 
   json5@2.2.3: {}
@@ -2882,10 +2867,6 @@ snapshots:
       json5: 2.2.3
 
   lodash@4.18.1: {}
-
-  loose-envify@1.4.0:
-    dependencies:
-      js-tokens: 4.0.0
 
   math-intrinsics@1.1.0: {}
 
@@ -3023,15 +3004,12 @@ snapshots:
       iconv-lite: 0.4.24
       unpipe: 1.0.0
 
-  react-dom@18.3.1(react@18.3.1):
+  react-dom@19.2.5(react@19.2.5):
     dependencies:
-      loose-envify: 1.4.0
-      react: 18.3.1
-      scheduler: 0.23.2
+      react: 19.2.5
+      scheduler: 0.27.0
 
-  react@18.3.1:
-    dependencies:
-      loose-envify: 1.4.0
+  react@19.2.5: {}
 
   rechoir@0.8.0:
     dependencies:
@@ -3067,9 +3045,7 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-  scheduler@0.23.2:
-    dependencies:
-      loose-envify: 1.4.0
+  scheduler@0.27.0: {}
 
   schema-utils@4.3.3:
     dependencies:
