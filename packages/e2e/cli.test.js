@@ -261,7 +261,7 @@ describe("Open Command Tests", () => {
 		await new Promise(resolve => setTimeout(resolve, 2000));
 
 		try {
-			const res = await fetch(`http://localhost:${port}/api/graph`);
+			const res = await fetch(`http://localhost:${port}/api/graph`, { method: 'POST' });
 			const graph = await res.json();
 
 			assert.ok(graph.nodes, "should have nodes array");

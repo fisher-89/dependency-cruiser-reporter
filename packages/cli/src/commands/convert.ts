@@ -57,6 +57,7 @@ export interface ProcessedGraph {
     aggregated_node_count: number;
     aggregation_level: 'file' | 'directory' | 'package' | 'root';
     total_violations: number;
+    expanded_dirs?: string[];
   };
   violations: {
     from: string;
@@ -258,7 +259,7 @@ export function findDcrAggregateBinary(): string | null {
  * Tries Rust binary first, falls back to Node.js convertDcOutput.
  * Re-aggregates if node count exceeds maxNodes.
  */
-export function convertWithFallback(dcJson: string, maxNodes = 5000): ProcessedGraph {
+export function convertWithFallback(dcJson: string, maxNodes = 5000, expandedDirs?: string[]): ProcessedGraph {
   const binary = findDcrAggregateBinary();
 
   if (binary) {
@@ -290,8 +291,12 @@ export function convertWithFallback(dcJson: string, maxNodes = 5000): ProcessedG
 
   // Node.js fallback: convert then re-aggregate if needed
   const graph = convertDcOutput(dcJson);
+  // Set expanded_dirs if provided
+  if (expandedDirs) {
+    graph.meta.expanded_dirs = expandedDirs;
+  }
   if (graph.nodes.length > maxNodes) {
-    return reAggregateProcessedGraph(graph, maxNodes);
+    return reAggregateProcessedGraph(graph, maxNodes, expandedDirs);
   }
   return graph;
 }
@@ -300,11 +305,14 @@ export function convertWithFallback(dcJson: string, maxNodes = 5000): ProcessedG
  * Re-aggregate an already-processed graph (ProcessedGraph format)
  * Used when open command receives a large pre-processed graph
  */
-export function reAggregateProcessedGraph(graph: ProcessedGraph, maxNodes = 500): ProcessedGraph {
+export function reAggregateProcessedGraph(graph: ProcessedGraph, maxNodes = 500, expandedDirs?: string[]): ProcessedGraph {
   const nodeCount = graph.nodes.length;
 
   // If already small enough, return as-is
   if (nodeCount <= maxNodes) {
+    if (expandedDirs) {
+      graph.meta.expanded_dirs = expandedDirs;
+    }
     return graph;
   }
 
@@ -314,9 +322,16 @@ export function reAggregateProcessedGraph(graph: ProcessedGraph, maxNodes = 500)
 
   // If still too large, try package level
   if (result.nodes.length > maxNodes) {
-    return aggregateByPackage(result);
+    const pkgResult = aggregateByPackage(result);
+    if (expandedDirs) {
+      pkgResult.meta.expanded_dirs = expandedDirs;
+    }
+    return pkgResult;
   }
 
+  if (expandedDirs) {
+    result.meta.expanded_dirs = expandedDirs;
+  }
   return result;
 }
 

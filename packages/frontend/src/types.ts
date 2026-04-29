@@ -28,6 +28,7 @@ export interface GraphMeta {
   aggregated_node_count: number;
   aggregation_level: AggregationLevel;
   total_violations: number;
+  expanded_dirs?: string[];
 }
 
 export interface ViolationInfo {

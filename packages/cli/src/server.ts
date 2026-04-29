@@ -32,6 +32,7 @@ export class DcrServer {
     this.maxNodes = options.maxNodes ?? 500;
 
     this.app = express();
+    this.app.use(express.json());
     this.setupRoutes();
   }
 
@@ -48,7 +49,7 @@ export class DcrServer {
     });
 
     // API: Get graph data (auto-converts raw dependency-cruiser JSON)
-    this.app.get('/api/graph', (_req: Request, res: Response) => {
+    this.app.post('/api/graph', (req: Request, res: Response) => {
       if (!this.graphFile) {
         res.status(404).json({ error: 'No graph file specified' });
         return;
@@ -62,10 +63,11 @@ export class DcrServer {
       try {
         const content = readFileSync(this.graphFile, 'utf-8');
         const parsed = JSON.parse(content);
+        const expandedDirs = req.body?.expanded_dirs as string[] | undefined;
 
         // Raw dependency-cruiser format: has 'modules' array
         if (parsed.modules && Array.isArray(parsed.modules)) {
-          const graph = convertWithFallback(content, this.maxNodes);
+          const graph = convertWithFallback(content, this.maxNodes, expandedDirs);
           res.json(graph);
           return;
         }
@@ -74,9 +76,13 @@ export class DcrServer {
         if (parsed.nodes && parsed.edges && parsed.meta) {
           // Re-aggregate if too large
           if (parsed.nodes.length > this.maxNodes) {
-            const aggregated = reAggregateProcessedGraph(parsed as ProcessedGraph, this.maxNodes);
+            const aggregated = reAggregateProcessedGraph(parsed as ProcessedGraph, this.maxNodes, expandedDirs);
             res.json(aggregated);
             return;
+          }
+          // Set expanded_dirs if provided
+          if (expandedDirs) {
+            parsed.meta.expanded_dirs = expandedDirs;
           }
           res.json(parsed);
           return;

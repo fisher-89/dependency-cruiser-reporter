@@ -51,6 +51,8 @@ pub struct GraphMeta {
     pub aggregated_node_count: usize,
     pub aggregation_level: AggregationLevel,
     pub total_violations: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub expanded_dirs: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -251,6 +253,7 @@ pub fn parse_and_aggregate(
         aggregated_node_count: nodes.len(),
         aggregation_level: agg_level,
         total_violations: violation_count,
+        expanded_dirs: None,
     };
 
     Ok(ProcessedGraph {

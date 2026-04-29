@@ -16,7 +16,7 @@ function App() {
         const config = await configRes.json();
         if (config.hasGraphFile) {
           setLoading(true);
-          const graphRes = await fetch('/api/graph');
+          const graphRes = await fetch('/api/graph', { method: 'POST' });
           if (graphRes.ok) {
             const graphData = await graphRes.json();
             setData(graphData);
