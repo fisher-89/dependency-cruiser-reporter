@@ -35,7 +35,20 @@ export function DependencyGraph({ data }: Props) {
       container,
       autoFit: 'view',
       padding: 20,
-      behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
+      behaviors: [
+        'drag-canvas',
+        'zoom-canvas',
+        'drag-element',
+        'collapse-expand',
+        {
+          type: 'hover-activate',
+          enable: (e: { targetType: string }) =>
+            e.targetType === 'node' || e.targetType === 'combo',
+          direction: 'out',
+          inactiveState: 'inactive',
+          degree: 1,
+        },
+      ],
       layout: {
         type: 'combo-combined',
         outerLayout: new ForceLayout({
@@ -61,7 +74,7 @@ export function DependencyGraph({ data }: Props) {
       },
       combo: {
         type: 'rect',
-        style: (d: { label?: string }) => {
+        style: (d: { level: number; label: string }) => {
           return {
             labelText: d.label ?? '',
             labelPlacement: 'top',

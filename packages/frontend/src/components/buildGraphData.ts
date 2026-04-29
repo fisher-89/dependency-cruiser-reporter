@@ -16,7 +16,7 @@ const COMBO_PREFIX = 'combo:';
  */
 export function buildGraphData(data: ProcessedGraph) {
   const rootComboId = `${COMBO_PREFIX}root`;
-  const comboMap = new Map<string, { id: string; label: string; combo?: string }>();
+  const comboMap = new Map<string, { id: string; label: string; level: number; combo?: string }>();
 
   // Phase 1: Build initial nodes and combos from directory paths
   const nodes = data.nodes.map((n) => {
@@ -30,6 +30,7 @@ export function buildGraphData(data: ProcessedGraph) {
         comboMap.set(id, {
           id,
           label: dirParts[i - 1],
+          level: i,
           combo: i > 1 ? `${COMBO_PREFIX}${dirParts.slice(0, i - 1).join('/')}` : rootComboId,
         });
       }
@@ -47,7 +48,7 @@ export function buildGraphData(data: ProcessedGraph) {
   });
 
   if (!comboMap.has(rootComboId)) {
-    comboMap.set(rootComboId, { id: rootComboId, label: '/' });
+    comboMap.set(rootComboId, { id: rootComboId, label: '/', level: 0 });
   }
   for (const n of nodes) {
     if (!n.combo) n.combo = rootComboId;
