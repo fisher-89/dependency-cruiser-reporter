@@ -11,6 +11,7 @@ export interface GraphNode {
   node_type: NodeType;
   path?: string;
   violation_count: number;
+  orphan?: boolean;
   children?: string[];
 }
 
@@ -19,6 +20,7 @@ export interface GraphEdge {
   target: string;
   edge_type: EdgeType;
   weight: number;
+  circular?: boolean;
 }
 
 export interface GraphMeta {

@@ -4,6 +4,8 @@ interface DcModule {
   source: string;
   dependencies: (DcDependency | string)[];
   valid: boolean;
+  orphan?: boolean;
+  rules?: { name: string; severity: string }[];
 }
 
 interface DcDependency {
@@ -13,6 +15,7 @@ interface DcDependency {
   couldNotResolve: boolean;
   dependencyTypes: string[];
   followable: boolean;
+  circular?: boolean;
   rules?: { name: string; severity: string }[];
 }
 
@@ -35,6 +38,7 @@ interface ProcessedGraph {
     node_type: "file" | "directory" | "package";
     path?: string;
     violation_count: number;
+    orphan?: boolean;
     children?: string[];
   }[];
   edges: {
@@ -42,6 +46,7 @@ interface ProcessedGraph {
     target: string;
     edge_type: "local" | "npm" | "core" | "dynamic";
     weight: number;
+    circular?: boolean;
   }[];
   meta: {
     original_node_count: number;
@@ -79,20 +84,35 @@ function classifySeverity(s: string): "error" | "warn" | "info" {
 export function convertDcOutput(dcJson: string): ProcessedGraph {
   const dc: DcOutput = JSON.parse(dcJson);
 
-  const nodeMap = new Map<string, { id: string; label: string; violation_count: number }>();
+  const nodeMap = new Map<string, { id: string; label: string; violation_count: number; orphan?: boolean }>();
   const violations: ProcessedGraph["violations"] = [];
-  const edgeSet = new Map<string, { source: string; target: string; edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number }>();
+  const edgeSet = new Map<string, { source: string; target: string; edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number; circular?: boolean }>();
 
   for (const mod of dc.modules) {
     if (!nodeMap.has(mod.source)) {
       const label = mod.source.split("/").pop() || mod.source;
-      nodeMap.set(mod.source, { id: mod.source, label, violation_count: 0 });
+      nodeMap.set(mod.source, { id: mod.source, label, violation_count: 0, orphan: mod.orphan });
+    } else if (mod.orphan) {
+      nodeMap.get(mod.source)!.orphan = mod.orphan;
+    }
+
+    // Module-level violations (orphans)
+    if (mod.rules) {
+      for (const rule of mod.rules) {
+        violations.push({
+          from: mod.source,
+          to: mod.source,
+          rule: rule.name,
+          severity: classifySeverity(rule.severity),
+        });
+        nodeMap.get(mod.source)!.violation_count += 1;
+      }
     }
 
     for (const rawDep of mod.dependencies) {
       // Handle both object format (real DC output) and string format (simplified)
       const dep = typeof rawDep === "string"
-        ? { resolved: rawDep, moduleSystem: "es6", coreModule: false, couldNotResolve: false, dependencyTypes: ["local" as const], followable: true }
+        ? { resolved: rawDep, moduleSystem: "es6", coreModule: false, couldNotResolve: false, dependencyTypes: ["local" as const], followable: true, circular: false }
         : rawDep;
 
       if (!nodeMap.has(dep.resolved)) {
@@ -105,8 +125,9 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
       const edgeType = classifyEdge(dep);
       if (existing) {
         existing.weight += 1;
+        if (dep.circular) existing.circular = true;
       } else {
-        edgeSet.set(edgeKey, { source: mod.source, target: dep.resolved, edge_type: edgeType, weight: 1 });
+        edgeSet.set(edgeKey, { source: mod.source, target: dep.resolved, edge_type: edgeType, weight: 1, circular: dep.circular || false });
       }
 
       if (dep.rules) {
@@ -132,7 +153,9 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
 
   const nodes: ProcessedGraph["nodes"] = [];
   for (const [, v] of nodeMap) {
-    nodes.push({ ...v, node_type: "file", path: v.id });
+    const node: ProcessedGraph["nodes"][0] = { ...v, node_type: "file", path: v.id };
+    if (!node.orphan) delete node.orphan;
+    nodes.push(node);
   }
 
   return {

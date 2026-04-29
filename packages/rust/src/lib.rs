@@ -30,6 +30,8 @@ pub struct GraphNode {
     pub path: Option<String>,
     pub violation_count: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub orphan: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub children: Option<Vec<String>>,
 }
 
@@ -39,6 +41,8 @@ pub struct GraphEdge {
     pub target: String,
     pub edge_type: EdgeType,
     pub weight: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub circular: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -102,6 +106,8 @@ pub struct Module {
     pub dependency_types: Option<Vec<String>>,
     #[serde(default)]
     pub size: Option<usize>,
+    #[serde(default)]
+    pub orphan: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -116,6 +122,8 @@ pub struct Dependency {
     pub from: Option<String>,
     #[serde(rename = "to", default)]
     pub to: Option<String>,
+    #[serde(default)]
+    pub circular: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -265,6 +273,7 @@ fn build_file_nodes(
             node_type: NodeType::File,
             path: Some(m.source.clone()),
             violation_count: 0,
+            orphan: m.orphan,
             children: None,
         })
         .collect();
@@ -308,6 +317,7 @@ fn build_directory_nodes(
                 node_type: NodeType::Directory,
                 path: Some(dir.clone()),
                 violation_count: 0,
+                orphan: None,
                 children: Some(children),
             }
         })
@@ -355,6 +365,7 @@ fn build_package_nodes(
                 node_type: NodeType::Package,
                 path: Some(pkg.clone()),
                 violation_count: 0,
+                orphan: None,
                 children: Some(children),
             }
         })
@@ -391,6 +402,7 @@ fn build_root_nodes(
         node_type: NodeType::Package,
         path: Some("root".to_string()),
         violation_count: 0,
+        orphan: None,
         children: Some(modules.iter().map(|m| m.source.clone()).collect()),
     }];
 
@@ -431,6 +443,7 @@ fn aggregate_edges(
                 target: target.clone(),
                 edge_type,
                 weight: types.len() as u32,
+                circular: None,
             }
         })
         .collect();
