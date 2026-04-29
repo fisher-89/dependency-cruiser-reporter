@@ -4,7 +4,7 @@
 
 | Technology | Purpose |
 |------------|---------|
-| React 18 | UI framework |
+| React 19 | UI framework |
 | AntV G6 5 | Graph visualization |
 | Vite 5 | Build tool |
 | TypeScript 5 | Type safety |
@@ -21,7 +21,7 @@ packages/frontend/
 ├── index.html         # HTML template
 ├── vite.config.ts     # Vite configuration
 ├── tsconfig.json      # TypeScript config
-├── biome.json         # Biome config
+└── package.json
 └── package.json
 ```
 

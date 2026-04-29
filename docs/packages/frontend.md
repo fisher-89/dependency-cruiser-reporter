@@ -16,16 +16,17 @@ packages/frontend/
 │       └── DependencyGraph.tsx  # G6 graph visualization component
 ├── index.html            # HTML template
 ├── vite.config.ts        # Vite configuration
-├── tsconfig.json         # TypeScript config
-├── biome.json            # Biome linting config
+├── tsconfig.json         # TypeScript config (extends tsconfig.base.json)
 └── package.json
+
+> Note: Biome config is centralized at repository root (`biome.json`).
 ```
 
 ## Technology Stack
 
 | Technology | Purpose |
 |------------|---------|
-| React 18 | UI framework |
+| React 19 | UI framework |
 | AntV G6 5 | Graph visualization (combo tree + force layout) |
 | Vite 5 | Build tool |
 | TypeScript 5 | Type safety |

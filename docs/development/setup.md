@@ -162,10 +162,10 @@ pnpm demo
 
 ### Frontend
 - **Vite 5** — Build tool
-- **React 18** — UI framework
+- **React 19** — UI framework
 - **TypeScript 5** — Type safety
-- **D3.js 7** — Graph visualization
-- **Biome** — Linting and formatting
+- **AntV G6 5** — Graph visualization
+- **Biome** — Linting and formatting (root-level config)
 
 ### Rust
 - **serde / serde_json** — JSON serialization
