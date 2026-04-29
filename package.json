@@ -23,9 +23,11 @@
     "demo": "node packages/cli/bin/cli.js scan -p demo && node packages/cli/bin/cli.js open -f demo-graph.json",
     "demo:build": "pnpm run build:ts && pnpm run demo",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint"
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@voidzero-dev/vite-plus-win32-x64-msvc": "^0.1.14",
     "typescript": "^5.5.0",
     "vite-plus": "catalog:"

@@ -11,6 +11,7 @@
         "noExplicitAny": "off"
       },
       "style": {
+        "useNodejsImportProtocol": "error",
         "useConsistentArrayType": "off",
         "useImportType": "off"
       },

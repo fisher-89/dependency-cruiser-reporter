@@ -1,7 +1,7 @@
-import express, { type Express, type Request, type Response } from "express";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import express, { type Express, type Request, type Response } from 'express';
 
 export interface ServerOptions {
   port: number;
@@ -33,19 +33,19 @@ export class DcrServer {
   private setupRoutes(): void {
     // Get frontend dist directory
     const cliDir = dirname(fileURLToPath(import.meta.url));
-    const frontendDist = resolve(cliDir, "../../frontend/dist");
+    const frontendDist = resolve(cliDir, '../../frontend/dist');
 
     // API: Get config
-    this.app.get("/api/config", (_req: Request, res: Response) => {
+    this.app.get('/api/config', (_req: Request, res: Response) => {
       res.json({
         hasGraphFile: !!this.graphFile,
       });
     });
 
     // API: Get graph data
-    this.app.get("/api/graph", (_req: Request, res: Response) => {
+    this.app.get('/api/graph', (_req: Request, res: Response) => {
       if (!this.graphFile) {
-        res.status(404).json({ error: "No graph file specified" });
+        res.status(404).json({ error: 'No graph file specified' });
         return;
       }
 
@@ -55,10 +55,10 @@ export class DcrServer {
       }
 
       try {
-        const content = readFileSync(this.graphFile, "utf-8");
+        const content = readFileSync(this.graphFile, 'utf-8');
         res.json(JSON.parse(content));
       } catch (error) {
-        res.status(500).json({ error: "Failed to read graph file" });
+        res.status(500).json({ error: 'Failed to read graph file' });
       }
     });
 
@@ -66,8 +66,8 @@ export class DcrServer {
     this.app.use(express.static(frontendDist));
 
     // SPA fallback
-    this.app.get("*", (_req: Request, res: Response) => {
-      const indexPath = resolve(frontendDist, "index.html");
+    this.app.get('*', (_req: Request, res: Response) => {
+      const indexPath = resolve(frontendDist, 'index.html');
       if (existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
@@ -85,8 +85,8 @@ export class DcrServer {
           resolve();
         });
 
-        server.on("error", (err: NodeJS.ErrnoException) => {
-          if (err.code === "EADDRINUSE" && port < 65535) {
+        server.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE' && port < 65535) {
             console.log(`Port ${port} is in use, trying ${port + 1}...`);
             server.close();
             tryListen(port + 1);

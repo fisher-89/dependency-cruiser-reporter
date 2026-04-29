@@ -1,13 +1,13 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { convertDcOutput } from "./convert.js";
+import { spawnSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { convertDcOutput } from './convert.js';
 
 export interface AnalyzeOptions {
   input: string;
   output?: string;
-  level?: "file" | "directory" | "package" | "root";
+  level?: 'file' | 'directory' | 'package' | 'root';
   maxNodes?: number;
 }
 
@@ -15,8 +15,8 @@ export interface AnalyzeOptions {
  * Find the dcr-aggregate binary
  */
 function findDcrAggregateBinary(): string | null {
-  const isWin = process.platform === "win32";
-  const ext = isWin ? ".exe" : "";
+  const isWin = process.platform === 'win32';
+  const ext = isWin ? '.exe' : '';
 
   try {
     // Try to find in relative path from CLI dist directory
@@ -35,7 +35,7 @@ function findDcrAggregateBinary(): string | null {
  * Analyze dependency-cruiser JSON output
  */
 export async function analyze(options: AnalyzeOptions): Promise<void> {
-  const { input, output = "graph.json", level, maxNodes = 5000 } = options;
+  const { input, output = 'graph.json', level, maxNodes = 5000 } = options;
 
   if (!existsSync(input)) {
     console.error(`Error: Input file not found: ${input}`);
@@ -46,23 +46,23 @@ export async function analyze(options: AnalyzeOptions): Promise<void> {
   const binary = findDcrAggregateBinary();
 
   if (binary) {
-    const args = ["--input", input, "--output", output, "--max-nodes", String(maxNodes)];
-    if (level) args.push("--level", level);
+    const args = ['--input', input, '--output', output, '--max-nodes', String(maxNodes)];
+    if (level) args.push('--level', level);
 
-    console.log(`Running: ${binary} ${args.join(" ")}`);
-    const result = spawnSync(binary, args, { stdio: "inherit" });
+    console.log(`Running: ${binary} ${args.join(' ')}`);
+    const result = spawnSync(binary, args, { stdio: 'inherit' });
 
     if (result.status === 0) {
       console.log(`Output written to: ${output}`);
       return;
     }
-    console.warn("Rust binary failed, falling back to Node.js converter");
+    console.warn('Rust binary failed, falling back to Node.js converter');
   }
 
   // Fallback: Node.js conversion
-  console.log("Using Node.js converter (Rust binary not available)");
+  console.log('Using Node.js converter (Rust binary not available)');
 
-  const content = readFileSync(input, "utf-8");
+  const content = readFileSync(input, 'utf-8');
   const graph = convertDcOutput(content);
   writeFileSync(output, JSON.stringify(graph, null, 2));
 

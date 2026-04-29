@@ -205,7 +205,7 @@ module.exports = {
     // Which modules to exclude
     exclude: {
       // path: an array of regular expressions in strings to match against
-      path: '(?:node_modules|dist|[.]test[.](?:ts|tsx|js|jsx)+$)',
+      path: '(?:node_modules|^node:|dist|[.]test[.](?:ts|tsx|js|jsx)+$)',
     },
 
     // Which modules to exclusively include (array of regular expressions in strings)

@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { resolve, basename, dirname } from "node:path";
-import { cwd } from "node:process";
-import { cruise } from "dependency-cruiser";
-import extractDepcruiseOptions from "dependency-cruiser/config-utl/extract-depcruise-options";
-import extractTSConfig from "dependency-cruiser/config-utl/extract-ts-config";
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
+import { cwd } from 'node:process';
+import { cruise } from 'dependency-cruiser';
+import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
+import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
 
 export interface ScanOptions {
   path: string;
@@ -29,21 +29,21 @@ export async function scan(options: ScanOptions): Promise<string> {
   if (config) {
     configPath = resolve(cwd(), config);
   } else {
-    configPath = resolve(absScanPath, ".dependency-cruiser.json");
+    configPath = resolve(absScanPath, '.dependency-cruiser.json');
     if (!existsSync(configPath)) {
-      configPath = resolve(absScanPath, ".dependency-cruiser.js");
+      configPath = resolve(absScanPath, '.dependency-cruiser.js');
     }
     if (!existsSync(configPath)) {
-      configPath = resolve(cwd(), ".dependency-cruiser.json");
+      configPath = resolve(cwd(), '.dependency-cruiser.json');
     }
     if (!existsSync(configPath)) {
-      configPath = resolve(cwd(), ".dependency-cruiser.js");
+      configPath = resolve(cwd(), '.dependency-cruiser.js');
     }
   }
 
   // Extract cruise options from config
   let cruiseOptions: Record<string, unknown> = {
-    outputType: "json",
+    outputType: 'json',
   };
 
   if (configPath && existsSync(configPath)) {
@@ -57,8 +57,8 @@ export async function scan(options: ScanOptions): Promise<string> {
   }
 
   // Find and extract tsconfig.json for TypeScript support
-  const tsConfigPath = resolve(absScanPath, "tsconfig.json");
-  let transpilerOptions: { tsConfig?: object } = {};
+  const tsConfigPath = resolve(absScanPath, 'tsconfig.json');
+  const transpilerOptions: { tsConfig?: object } = {};
 
   if (existsSync(tsConfigPath)) {
     console.log(`Using tsconfig: ${tsConfigPath}`);
@@ -80,21 +80,22 @@ export async function scan(options: ScanOptions): Promise<string> {
   );
 
   if (!cruiseResult.output) {
-    console.error("dependency-cruiser did not produce output");
+    console.error('dependency-cruiser did not produce output');
     process.exit(1);
   }
 
   // Convert to ProcessedGraph
-  const { convertDcOutput } = await import("./convert.js");
-  let graph;
+  const { convertDcOutput } = await import('./convert.js');
+  let graph: ReturnType<typeof convertDcOutput>;
   try {
     // cruiseResult.output is already the parsed JSON object
-    const dcJson = typeof cruiseResult.output === "string"
-      ? cruiseResult.output
-      : JSON.stringify(cruiseResult.output);
+    const dcJson =
+      typeof cruiseResult.output === 'string'
+        ? cruiseResult.output
+        : JSON.stringify(cruiseResult.output);
     graph = convertDcOutput(dcJson);
   } catch (e) {
-    console.error("Failed to convert dependency-cruiser output:", e);
+    console.error('Failed to convert dependency-cruiser output:', e);
     process.exit(1);
   }
 

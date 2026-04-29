@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 interface DcModule {
   source: string;
@@ -35,7 +35,7 @@ interface ProcessedGraph {
   nodes: {
     id: string;
     label: string;
-    node_type: "file" | "directory" | "package";
+    node_type: 'file' | 'directory' | 'package';
     path?: string;
     violation_count: number;
     orphan?: boolean;
@@ -44,56 +44,69 @@ interface ProcessedGraph {
   edges: {
     source: string;
     target: string;
-    edge_type: "local" | "npm" | "core" | "dynamic";
+    edge_type: 'local' | 'npm' | 'core' | 'dynamic';
     weight: number;
     circular?: boolean;
   }[];
   meta: {
     original_node_count: number;
     aggregated_node_count: number;
-    aggregation_level: "file" | "directory" | "package" | "root";
+    aggregation_level: 'file' | 'directory' | 'package' | 'root';
     total_violations: number;
   };
   violations: {
     from: string;
     to: string;
     rule: string;
-    severity: "error" | "warn" | "info";
+    severity: 'error' | 'warn' | 'info';
     message?: string;
   }[];
 }
 
-function classifyEdge(dep: DcDependency): "local" | "npm" | "core" | "dynamic" {
-  if (dep.coreModule) return "core";
-  if (dep.couldNotResolve) return "dynamic";
+function classifyEdge(dep: DcDependency): 'local' | 'npm' | 'core' | 'dynamic' {
+  if (dep.coreModule) return 'core';
+  if (dep.couldNotResolve) return 'dynamic';
   if (
     dep.dependencyTypes.some(
-      (t) => t === "npm" || t === "npm-dev" || t === "npm-optional" || t === "npm-peer"
+      (t) => t === 'npm' || t === 'npm-dev' || t === 'npm-optional' || t === 'npm-peer'
     )
   )
-    return "npm";
-  return "local";
+    return 'npm';
+  return 'local';
 }
 
-function classifySeverity(s: string): "error" | "warn" | "info" {
-  if (s === "error") return "error";
-  if (s === "warn") return "warn";
-  return "info";
+function classifySeverity(s: string): 'error' | 'warn' | 'info' {
+  if (s === 'error') return 'error';
+  if (s === 'warn') return 'warn';
+  return 'info';
 }
 
 export function convertDcOutput(dcJson: string): ProcessedGraph {
   const dc: DcOutput = JSON.parse(dcJson);
 
-  const nodeMap = new Map<string, { id: string; label: string; violation_count: number; orphan?: boolean }>();
-  const violations: ProcessedGraph["violations"] = [];
-  const edgeSet = new Map<string, { source: string; target: string; edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number; circular?: boolean }>();
+  const nodeMap = new Map<
+    string,
+    { id: string; label: string; violation_count: number; orphan?: boolean }
+  >();
+  const violations: ProcessedGraph['violations'] = [];
+  const edgeSet = new Map<
+    string,
+    {
+      source: string;
+      target: string;
+      edge_type: ProcessedGraph['edges'][0]['edge_type'];
+      weight: number;
+      circular?: boolean;
+    }
+  >();
 
   for (const mod of dc.modules) {
     if (!nodeMap.has(mod.source)) {
-      const label = mod.source.split("/").pop() || mod.source;
+      const label = mod.source.split('/').pop() || mod.source;
       nodeMap.set(mod.source, { id: mod.source, label, violation_count: 0, orphan: mod.orphan });
     } else if (mod.orphan) {
-      nodeMap.get(mod.source)!.orphan = mod.orphan;
+      const existing = nodeMap.get(mod.source);
+      if (existing) existing.orphan = mod.orphan;
     }
 
     // Module-level violations (orphans)
@@ -105,18 +118,28 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
           rule: rule.name,
           severity: classifySeverity(rule.severity),
         });
-        nodeMap.get(mod.source)!.violation_count += 1;
+        const srcNode = nodeMap.get(mod.source);
+        if (srcNode) srcNode.violation_count += 1;
       }
     }
 
     for (const rawDep of mod.dependencies) {
       // Handle both object format (real DC output) and string format (simplified)
-      const dep = typeof rawDep === "string"
-        ? { resolved: rawDep, moduleSystem: "es6", coreModule: false, couldNotResolve: false, dependencyTypes: ["local" as const], followable: true, circular: false }
-        : rawDep;
+      const dep =
+        typeof rawDep === 'string'
+          ? {
+              resolved: rawDep,
+              moduleSystem: 'es6',
+              coreModule: false,
+              couldNotResolve: false,
+              dependencyTypes: ['local' as const],
+              followable: true,
+              circular: false,
+            }
+          : rawDep;
 
       if (!nodeMap.has(dep.resolved)) {
-        const label = dep.resolved.split("/").pop() || dep.resolved;
+        const label = dep.resolved.split('/').pop() || dep.resolved;
         nodeMap.set(dep.resolved, { id: dep.resolved, label, violation_count: 0 });
       }
 
@@ -127,7 +150,13 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
         existing.weight += 1;
         if (dep.circular) existing.circular = true;
       } else {
-        edgeSet.set(edgeKey, { source: mod.source, target: dep.resolved, edge_type: edgeType, weight: 1, circular: dep.circular || false });
+        edgeSet.set(edgeKey, {
+          source: mod.source,
+          target: dep.resolved,
+          edge_type: edgeType,
+          weight: 1,
+          circular: dep.circular || false,
+        });
       }
 
       if (dep.rules) {
@@ -138,23 +167,23 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
             rule: rule.name,
             severity: classifySeverity(rule.severity),
           });
-          const node = nodeMap.get(mod.source)!;
-          node.violation_count += 1;
+          const srcNode = nodeMap.get(mod.source);
+          if (srcNode) srcNode.violation_count += 1;
         }
       }
     }
   }
 
   const nodeCount = nodeMap.size;
-  let aggregationLevel: "file" | "directory" | "package" | "root" = "file";
-  if (nodeCount > 20000) aggregationLevel = "root";
-  else if (nodeCount > 5000) aggregationLevel = "package";
-  else if (nodeCount > 1000) aggregationLevel = "directory";
+  let aggregationLevel: 'file' | 'directory' | 'package' | 'root' = 'file';
+  if (nodeCount > 20000) aggregationLevel = 'root';
+  else if (nodeCount > 5000) aggregationLevel = 'package';
+  else if (nodeCount > 1000) aggregationLevel = 'directory';
 
-  const nodes: ProcessedGraph["nodes"] = [];
+  const nodes: ProcessedGraph['nodes'] = [];
   for (const [, v] of nodeMap) {
-    const node: ProcessedGraph["nodes"][0] = { ...v, node_type: "file", path: v.id };
-    if (!node.orphan) delete node.orphan;
+    const node: ProcessedGraph['nodes'][0] = { ...v, node_type: 'file', path: v.id };
+    if (!node.orphan) node.orphan = undefined;
     nodes.push(node);
   }
 
@@ -175,7 +204,7 @@ export async function analyzeWithFallback(options: {
   input: string;
   output?: string;
 }): Promise<void> {
-  const { input, output = "graph.json" } = options;
+  const { input, output = 'graph.json' } = options;
 
   if (!existsSync(input)) {
     console.error(`Error: Input file not found: ${input}`);
@@ -185,34 +214,34 @@ export async function analyzeWithFallback(options: {
   // Try Rust binary first, then fall back to Node.js conversion
   const binary = findDcrAggregateBinary();
   if (binary && existsSync(binary)) {
-    const { spawnSync } = await import("node:child_process");
-    const args = ["--input", input, "--output", output, "--max-nodes", "5000"];
-    console.log(`Running: ${binary} ${args.join(" ")}`);
-    const result = spawnSync(binary, args, { stdio: "inherit" });
+    const { spawnSync } = await import('node:child_process');
+    const args = ['--input', input, '--output', output, '--max-nodes', '5000'];
+    console.log(`Running: ${binary} ${args.join(' ')}`);
+    const result = spawnSync(binary, args, { stdio: 'inherit' });
     if (result.status === 0) {
       console.log(`Output written to: ${output}`);
       return;
     }
-    console.warn("Rust binary failed, falling back to Node.js conversion");
+    console.warn('Rust binary failed, falling back to Node.js conversion');
   }
 
   // Fallback: Node.js conversion
-  console.log("Using Node.js converter (Rust binary not available)");
-  const content = readFileSync(input, "utf-8");
+  console.log('Using Node.js converter (Rust binary not available)');
+  const content = readFileSync(input, 'utf-8');
   const graph = convertDcOutput(content);
   writeFileSync(output, JSON.stringify(graph, null, 2));
   console.log(`Output written to: ${output}`);
 }
 
 function findDcrAggregateBinary(): string | null {
-  const { existsSync: exists } = require("node:fs");
-  const { resolve, dirname } = require("node:path");
-  const isWin = process.platform === "win32";
-  const ext = isWin ? ".exe" : "";
+  const { existsSync: exists } = require('node:fs');
+  const { resolve, dirname } = require('node:path');
+  const isWin = process.platform === 'win32';
+  const ext = isWin ? '.exe' : '';
 
   // Try relative path from CLI dist directory
   try {
-    const { fileURLToPath } = require("node:url");
+    const { fileURLToPath } = require('node:url');
     const thisDir = dirname(fileURLToPath(import.meta.url));
     const releaseBin = resolve(thisDir, `../../../rust/target/release/dcr-aggregate${ext}`);
     if (exists(releaseBin)) return releaseBin;
@@ -227,10 +256,7 @@ function findDcrAggregateBinary(): string | null {
  * Re-aggregate an already-processed graph (ProcessedGraph format)
  * Used when open command receives a large pre-processed graph
  */
-export function reAggregateProcessedGraph(
-  graph: ProcessedGraph,
-  maxNodes: number = 500
-): ProcessedGraph {
+export function reAggregateProcessedGraph(graph: ProcessedGraph, maxNodes = 500): ProcessedGraph {
   const nodeCount = graph.nodes.length;
 
   // If already small enough, return as-is
@@ -255,7 +281,7 @@ export function reAggregateProcessedGraph(
  * Finds the deepest depth that keeps node count below threshold.
  */
 function calculateOptimalDepth(graph: ProcessedGraph, maxNodes: number): number {
-  const paths = graph.nodes.map((n) => (n.path || n.id).split("/"));
+  const paths = graph.nodes.map((n) => (n.path || n.id).split('/'));
   const maxPathDepth = Math.max(...paths.map((p) => p.length));
 
   // Find the deepest depth that stays under maxNodes
@@ -264,7 +290,7 @@ function calculateOptimalDepth(graph: ProcessedGraph, maxNodes: number): number 
     const groupCount = new Set(
       paths.map((parts) => {
         const dirParts = parts.slice(0, -1);
-        return dirParts.slice(0, depth).join("/");
+        return dirParts.slice(0, depth).join('/');
       })
     ).size;
 
@@ -278,18 +304,18 @@ function calculateOptimalDepth(graph: ProcessedGraph, maxNodes: number): number 
   return bestDepth;
 }
 
-function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): ProcessedGraph {
+function aggregateByDirectory(graph: ProcessedGraph, maxDepth = 3): ProcessedGraph {
   const nodeMap = new Map<string, { children: string[]; violationCount: number }>();
   const sourceToDir = new Map<string, string>();
 
   // Group nodes by parent directory (with depth limit for deep paths)
   for (const node of graph.nodes) {
     const path = node.path || node.id;
-    const parts = path.split("/");
+    const parts = path.split('/');
 
     // For directory nodes, go up one level; for file nodes, use parent dir
     let dirParts: string[];
-    if (node.node_type === "directory") {
+    if (node.node_type === 'directory') {
       dirParts = parts.slice(0, -1);
     } else {
       dirParts = parts.slice(0, -1);
@@ -300,14 +326,14 @@ function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): Proc
       dirParts = dirParts.slice(0, maxDepth);
     }
 
-    const dirId = dirParts.length > 0 ? dirParts.join("/") : "root";
+    const dirId = dirParts.length > 0 ? dirParts.join('/') : 'root';
 
     sourceToDir.set(node.id, dirId);
 
     if (!nodeMap.has(dirId)) {
       nodeMap.set(dirId, { children: [], violationCount: 0 });
     }
-    const entry = nodeMap.get(dirId)!;
+    const entry = nodeMap.get(dirId) as { children: string[]; violationCount: number };
     if (node.children) {
       entry.children.push(...node.children);
     } else {
@@ -317,12 +343,12 @@ function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): Proc
   }
 
   // Build aggregated nodes
-  const nodes: ProcessedGraph["nodes"] = [];
+  const nodes: ProcessedGraph['nodes'] = [];
   for (const [id, data] of nodeMap) {
     nodes.push({
       id,
-      label: id.split("/").pop() || id,
-      node_type: "directory",
+      label: id.split('/').pop() || id,
+      node_type: 'directory',
       path: id,
       violation_count: data.violationCount,
       children: data.children,
@@ -330,7 +356,10 @@ function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): Proc
   }
 
   // Aggregate edges: remap source/target to directory
-  const edgeMap = new Map<string, { edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number }>();
+  const edgeMap = new Map<
+    string,
+    { edge_type: ProcessedGraph['edges'][0]['edge_type']; weight: number }
+  >();
   for (const edge of graph.edges) {
     const srcDir = sourceToDir.get(edge.source) || edge.source;
     const tgtDir = sourceToDir.get(edge.target) || edge.target;
@@ -346,9 +375,9 @@ function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): Proc
     }
   }
 
-  const edges: ProcessedGraph["edges"] = [];
+  const edges: ProcessedGraph['edges'] = [];
   for (const [key, data] of edgeMap) {
-    const [source, target] = key.split("|");
+    const [source, target] = key.split('|');
     edges.push({ source, target, edge_type: data.edge_type, weight: data.weight });
   }
 
@@ -358,7 +387,7 @@ function aggregateByDirectory(graph: ProcessedGraph, maxDepth: number = 3): Proc
     meta: {
       original_node_count: graph.meta.original_node_count,
       aggregated_node_count: nodes.length,
-      aggregation_level: "directory",
+      aggregation_level: 'directory',
       total_violations: graph.meta.total_violations,
     },
     violations: graph.violations,
@@ -379,7 +408,7 @@ function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
     if (!nodeMap.has(pkg)) {
       nodeMap.set(pkg, { children: [], violationCount: 0 });
     }
-    const entry = nodeMap.get(pkg)!;
+    const entry = nodeMap.get(pkg) as { children: string[]; violationCount: number };
     // Merge children from the source node if it has any
     if (node.children) {
       entry.children.push(...node.children);
@@ -390,12 +419,12 @@ function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
   }
 
   // Build aggregated nodes
-  const nodes: ProcessedGraph["nodes"] = [];
+  const nodes: ProcessedGraph['nodes'] = [];
   for (const [id, data] of nodeMap) {
     nodes.push({
       id,
       label: id,
-      node_type: "package",
+      node_type: 'package',
       path: id,
       violation_count: data.violationCount,
       children: data.children,
@@ -403,10 +432,13 @@ function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
   }
 
   // Aggregate edges
-  const edgeMap = new Map<string, { edge_type: ProcessedGraph["edges"][0]["edge_type"]; weight: number }>();
+  const edgeMap = new Map<
+    string,
+    { edge_type: ProcessedGraph['edges'][0]['edge_type']; weight: number }
+  >();
   for (const edge of graph.edges) {
-    const srcPkg = sourceToPkg.get(edge.source) || "local";
-    const tgtPkg = sourceToPkg.get(edge.target) || "local";
+    const srcPkg = sourceToPkg.get(edge.source) || 'local';
+    const tgtPkg = sourceToPkg.get(edge.target) || 'local';
 
     if (srcPkg === tgtPkg) continue;
 
@@ -419,9 +451,9 @@ function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
     }
   }
 
-  const edges: ProcessedGraph["edges"] = [];
+  const edges: ProcessedGraph['edges'] = [];
   for (const [key, data] of edgeMap) {
-    const [source, target] = key.split("|");
+    const [source, target] = key.split('|');
     edges.push({ source, target, edge_type: data.edge_type, weight: data.weight });
   }
 
@@ -431,24 +463,24 @@ function aggregateByPackage(graph: ProcessedGraph): ProcessedGraph {
     meta: {
       original_node_count: graph.meta.original_node_count,
       aggregated_node_count: nodes.length,
-      aggregation_level: "package",
+      aggregation_level: 'package',
       total_violations: graph.meta.total_violations,
     },
     violations: graph.violations,
   };
 }
 
-function aggregateByRoot(graph: ProcessedGraph): ProcessedGraph {
+export function aggregateByRoot(graph: ProcessedGraph): ProcessedGraph {
   const allChildren = graph.nodes.map((n) => n.id);
   const totalViolations = graph.nodes.reduce((sum, n) => sum + n.violation_count, 0);
 
   return {
     nodes: [
       {
-        id: "root",
-        label: "root",
-        node_type: "package",
-        path: "root",
+        id: 'root',
+        label: 'root',
+        node_type: 'package',
+        path: 'root',
         violation_count: totalViolations,
         children: allChildren,
       },
@@ -457,7 +489,7 @@ function aggregateByRoot(graph: ProcessedGraph): ProcessedGraph {
     meta: {
       original_node_count: graph.meta.original_node_count,
       aggregated_node_count: 1,
-      aggregation_level: "root",
+      aggregation_level: 'root',
       total_violations: graph.meta.total_violations,
     },
     violations: graph.violations,
@@ -466,15 +498,15 @@ function aggregateByRoot(graph: ProcessedGraph): ProcessedGraph {
 
 function extractPackageFromPath(path: string): string {
   // Check for node_modules pattern
-  const nmIdx = path.indexOf("node_modules/");
+  const nmIdx = path.indexOf('node_modules/');
   if (nmIdx !== -1) {
     const afterNm = path.slice(nmIdx + 13);
-    const parts = afterNm.split("/");
+    const parts = afterNm.split('/');
     // Handle scoped packages (@org/pkg)
-    if (parts[0]?.startsWith("@") && parts.length > 1) {
+    if (parts[0]?.startsWith('@') && parts.length > 1) {
       return `${parts[0]}/${parts[1]}`;
     }
-    return parts[0] || "local";
+    return parts[0] || 'local';
   }
-  return "local";
+  return 'local';
 }

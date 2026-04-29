@@ -22,7 +22,9 @@
     "build": "tsc",
     "build:rust": "cd ../rust && cargo build --release",
     "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check src/ --write"
   },
   "dependencies": {
     "commander": "^12.0.0",
