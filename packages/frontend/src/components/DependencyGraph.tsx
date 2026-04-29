@@ -1,4 +1,4 @@
-import { Graph } from '@antv/g6';
+import { ForceLayout, Graph } from '@antv/g6';
 import { useEffect, useMemo, useRef } from 'react';
 import type { EdgeType, NodeType, ProcessedGraph } from '../types';
 import { buildGraphData } from './buildGraphData';
@@ -30,31 +30,18 @@ export function DependencyGraph({ data }: Props) {
     if (!containerRef.current) return;
 
     const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = 600;
 
     const graph = new Graph({
       container,
-      width,
-      height,
       autoFit: 'view',
       padding: 20,
       behaviors: ['drag-canvas', 'zoom-canvas', 'drag-element'],
       layout: {
-        type: 'comboCombined',
-        outerLayout: {
-          type: 'force',
+        type: 'combo-combined',
+        outerLayout: new ForceLayout({
           preventOverlap: true,
-          nodeSize: 100,
-          linkDistance: 200,
-        },
-        innerLayout: {
-          type: 'force',
-          preventOverlap: true,
-          nodeSize: 50,
-          linkDistance: 80,
-          nodeStrength: -200,
-        },
+          nodeSpacing: 50,
+        }),
         comboPadding: 20,
         sortByCombo: true,
       },
@@ -69,6 +56,15 @@ export function DependencyGraph({ data }: Props) {
             lineWidth: 2,
             labelText: d.data?.label ?? '',
             labelPlacement: 'bottom',
+          };
+        },
+      },
+      combo: {
+        type: 'rect',
+        style: (d: { label?: string }) => {
+          return {
+            labelText: d.label ?? '',
+            labelPlacement: 'top',
           };
         },
       },
@@ -107,7 +103,12 @@ export function DependencyGraph({ data }: Props) {
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '600px', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+      style={{
+        width: '100%',
+        height: 'calc(100% - 48px)',
+        border: '1px solid #e2e8f0',
+        borderRadius: '8px',
+      }}
     />
   );
 }

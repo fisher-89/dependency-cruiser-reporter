@@ -239,7 +239,7 @@ function MetricsView({ data }: { data: ProcessedGraph }) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    minHeight: '100vh',
+    height: '100vh',
     background: '#f8fafc',
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
@@ -254,7 +254,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     margin: 0,
     fontSize: '20px',
-    fontWeight: 600,
+    lineHeight: '32px',
     color: '#1e293b',
   },
   nav: {
@@ -276,6 +276,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   main: {
     padding: '24px',
+    height: 'calc(100% - 64px)',
   },
   uploadArea: {
     border: '2px dashed #cbd5e1',
