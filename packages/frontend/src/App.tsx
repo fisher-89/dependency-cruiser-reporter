@@ -36,9 +36,14 @@ function App() {
   const handleToggleDir = useCallback(
     (dir: string) => {
       const next = new Set(expandedDirs);
-      if (next.has(dir)) {
-        next.delete(dir);
-      } else {
+      let isExpand = true;
+      for (const expandedPath of expandedDirs) {
+        if (expandedPath.startsWith(dir)) {
+          next.delete(expandedPath);
+          isExpand = false;
+        }
+      }
+      if (isExpand) {
         next.add(dir);
       }
       setExpandedDirs(next);

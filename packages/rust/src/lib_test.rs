@@ -171,7 +171,7 @@ fn test_compute_auto_expanded_dirs_small_project() {
         })
         .collect();
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
     assert!(dirs.contains(&"src".to_string()));
     assert!(dirs.contains(&"".to_string())); // root dir expanded at file level
 }
@@ -180,7 +180,7 @@ fn test_compute_auto_expanded_dirs_small_project() {
 fn test_compute_auto_expanded_dirs_empty() {
     let modules: Vec<Module> = vec![];
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
     assert!(dirs.is_empty());
 }
 
@@ -199,7 +199,7 @@ fn test_smart_expansion_respects_budget() {
         })
         .collect();
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
     // "src" has 500 direct children > 50, should NOT be expanded
     assert!(!dirs.contains(&"src".to_string()));
 }
@@ -243,7 +243,7 @@ fn test_smart_expansion_respects_direct_children_limit() {
     }
 
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
 
     // "src" has 2 direct children (dense, sparse) <= 50, should expand
     // "src/dense" has 60 direct children > 50, should NOT expand
@@ -291,7 +291,7 @@ fn test_smart_expansion_expands_small_dirs() {
     }
 
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
 
     // "small" has 20 direct children <= 50, should expand
     // "big" has 60 direct children > 50, should NOT expand
@@ -332,7 +332,7 @@ fn test_smart_expansion_prioritizes_violations() {
         violation_counts.insert(format!("bugs/mod{}.ts", i), 3);
     }
 
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
 
     // Both have 10 direct children <= 50, both should expand
     assert!(dirs.contains(&"bugs".to_string()));
@@ -418,7 +418,7 @@ fn test_real_world_scale() {
     }
 
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
 
     // With correct cost calculation:
     // - "src" has 412 descendants, cost = 411 > budget (297), should NOT expand
@@ -431,13 +431,13 @@ fn test_real_world_scale() {
 
     // Verify final node count stays under budget by simulating build_hybrid_nodes
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
-    let all_edges: Vec<super::RawEdge> = vec![];
+    let all_edges: Vec<RawEdge> = vec![];
     let (nodes, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
     assert!(
-        nodes.len() <= TARGET_NODE_BUDGET + 50,
+        nodes.len() <= expand::TARGET_NODE_BUDGET + 50,
         "Final node count {} should be close to budget {}",
         nodes.len(),
-        TARGET_NODE_BUDGET
+        expand::TARGET_NODE_BUDGET
     );
 }
 
@@ -488,23 +488,23 @@ fn test_relative_path_with_single_top_level_dir() {
     }
 
     let violation_counts = HashMap::new();
-    let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
+    let dirs = expand::compute_auto_expanded_dirs(&modules, &violation_counts);
 
     // Should have some expanded dirs (small leaf directories)
     assert!(!dirs.is_empty(), "Should expand some small leaf directories");
 
     // Verify node count stays under budget
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
-    let all_edges: Vec<super::RawEdge> = vec![];
+    let all_edges: Vec<RawEdge> = vec![];
     let (nodes, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
 
     // Node count should be: 1 for ".." + expanded dirs' file nodes
     // Should NOT create intermediate directory nodes
     assert!(
-        nodes.len() <= TARGET_NODE_BUDGET,
+        nodes.len() <= expand::TARGET_NODE_BUDGET,
         "Final node count {} should be under budget {}",
         nodes.len(),
-        TARGET_NODE_BUDGET
+        expand::TARGET_NODE_BUDGET
     );
 
     // Directory nodes should be minimal (only ".." and possibly root)
