@@ -193,10 +193,7 @@ fn detect_edge_type(dep_types: &[String]) -> EdgeType {
 }
 
 fn get_parent_directory(path: &str) -> String {
-    path.rsplit('/')
-        .nth(1)
-        .unwrap_or("")
-        .to_string()
+    path.rsplitn(2, '/').nth(1).unwrap_or("").to_string()
 }
 
 fn extract_package_name(path: &str) -> Option<String> {
@@ -243,8 +240,16 @@ pub fn parse_and_aggregate(
             Some(ViolationInfo {
                 from: v.from.clone()?,
                 to: v.to.clone()?,
-                rule: v.rule.as_ref().and_then(|r| r.name.clone()).unwrap_or_default(),
-                severity: v.rule.as_ref().and_then(|r| r.severity.clone()).unwrap_or_else(|| "warn".to_string()),
+                rule: v
+                    .rule
+                    .as_ref()
+                    .and_then(|r| r.name.clone())
+                    .unwrap_or_default(),
+                severity: v
+                    .rule
+                    .as_ref()
+                    .and_then(|r| r.severity.clone())
+                    .unwrap_or_else(|| "warn".to_string()),
                 message: v.message.clone(),
             })
         })
@@ -259,7 +264,9 @@ pub fn parse_and_aggregate(
     // Build nodes based on aggregation level
     let (nodes, edge_map) = match agg_level {
         AggregationLevel::File => build_file_nodes(&modules, &all_edges, &violation_counts),
-        AggregationLevel::Directory => build_directory_nodes(&modules, &all_edges, &violation_counts),
+        AggregationLevel::Directory => {
+            build_directory_nodes(&modules, &all_edges, &violation_counts)
+        }
         AggregationLevel::Package => build_package_nodes(&modules, &all_edges, &violation_counts),
         AggregationLevel::Root => build_root_nodes(&modules, &all_edges, &violation_counts),
     };
@@ -336,11 +343,13 @@ fn build_file_nodes(
     // Create edges map (source -> target -> EdgeInfo)
     let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
     for e in edges {
-        let info = edge_map.entry((e.from.clone(), e.to.clone())).or_insert(EdgeInfo {
-            dep_types: Vec::new(),
-            count: 0,
-            has_circular: false,
-        });
+        let info = edge_map
+            .entry((e.from.clone(), e.to.clone()))
+            .or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
         info.dep_types.extend(e.dep_types.clone());
         info.count += 1;
         if e.circular {
@@ -362,8 +371,15 @@ fn build_directory_nodes(
 
     for m in modules {
         let parent = get_parent_directory(&m.source);
-        let dir_key = if parent.is_empty() { "root".to_string() } else { parent };
-        dir_groups.entry(dir_key.clone()).or_default().push(m.source.clone());
+        let dir_key = if parent.is_empty() {
+            "root".to_string()
+        } else {
+            parent
+        };
+        dir_groups
+            .entry(dir_key.clone())
+            .or_default()
+            .push(m.source.clone());
         node_lookup.insert(m.source.clone(), dir_key);
     }
 
@@ -371,7 +387,10 @@ fn build_directory_nodes(
         .keys()
         .map(|dir| {
             let children = dir_groups.get(dir).cloned().unwrap_or_default();
-            let vc: u32 = children.iter().filter_map(|c| violation_counts.get(c)).sum();
+            let vc: u32 = children
+                .iter()
+                .filter_map(|c| violation_counts.get(c))
+                .sum();
             GraphNode {
                 id: dir.clone(),
                 label: dir.clone(),
@@ -387,8 +406,14 @@ fn build_directory_nodes(
     // Build directory-level edge map
     let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
     for e in edges {
-        let src_dir = node_lookup.get(&e.from).cloned().unwrap_or_else(|| e.from.clone());
-        let tgt_dir = node_lookup.get(&e.to).cloned().unwrap_or_else(|| e.to.clone());
+        let src_dir = node_lookup
+            .get(&e.from)
+            .cloned()
+            .unwrap_or_else(|| e.from.clone());
+        let tgt_dir = node_lookup
+            .get(&e.to)
+            .cloned()
+            .unwrap_or_else(|| e.to.clone());
         if src_dir != tgt_dir {
             let info = edge_map.entry((src_dir, tgt_dir)).or_insert(EdgeInfo {
                 dep_types: Vec::new(),
@@ -417,7 +442,10 @@ fn build_package_nodes(
 
     for m in modules {
         let pkg = extract_package_name(&m.source).unwrap_or_else(|| "local".to_string());
-        pkg_groups.entry(pkg.clone()).or_default().push(m.source.clone());
+        pkg_groups
+            .entry(pkg.clone())
+            .or_default()
+            .push(m.source.clone());
         node_lookup.insert(m.source.clone(), pkg);
     }
 
@@ -425,7 +453,10 @@ fn build_package_nodes(
         .keys()
         .map(|pkg| {
             let children = pkg_groups.get(pkg).cloned().unwrap_or_default();
-            let vc: u32 = children.iter().filter_map(|c| violation_counts.get(c)).sum();
+            let vc: u32 = children
+                .iter()
+                .filter_map(|c| violation_counts.get(c))
+                .sum();
             GraphNode {
                 id: pkg.clone(),
                 label: pkg.clone(),
@@ -441,8 +472,14 @@ fn build_package_nodes(
     // Build package-level edge map
     let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
     for e in edges {
-        let src_pkg = node_lookup.get(&e.from).cloned().unwrap_or_else(|| "local".to_string());
-        let tgt_pkg = node_lookup.get(&e.to).cloned().unwrap_or_else(|| "local".to_string());
+        let src_pkg = node_lookup
+            .get(&e.from)
+            .cloned()
+            .unwrap_or_else(|| "local".to_string());
+        let tgt_pkg = node_lookup
+            .get(&e.to)
+            .cloned()
+            .unwrap_or_else(|| "local".to_string());
         if src_pkg != tgt_pkg {
             let info = edge_map.entry((src_pkg, tgt_pkg)).or_insert(EdgeInfo {
                 dep_types: Vec::new(),
@@ -482,23 +519,31 @@ fn build_root_nodes(
     let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
     // All edges go to root
     for e in edges {
-        let info = edge_map.entry((e.from.clone(), "root".to_string())).or_insert(EdgeInfo {
-            dep_types: Vec::new(),
-            count: 0,
-            has_circular: false,
-        });
+        let info = edge_map
+            .entry((e.from.clone(), "root".to_string()))
+            .or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
         info.dep_types.extend(e.dep_types.clone());
         info.count += 1;
-        if e.circular { info.has_circular = true; }
+        if e.circular {
+            info.has_circular = true;
+        }
 
-        let info = edge_map.entry(("root".to_string(), e.to.clone())).or_insert(EdgeInfo {
-            dep_types: Vec::new(),
-            count: 0,
-            has_circular: false,
-        });
+        let info = edge_map
+            .entry(("root".to_string(), e.to.clone()))
+            .or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
         info.dep_types.extend(e.dep_types.clone());
         info.count += 1;
-        if e.circular { info.has_circular = true; }
+        if e.circular {
+            info.has_circular = true;
+        }
     }
 
     // Add summary info as special edges
@@ -565,7 +610,10 @@ mod tests {
         assert_eq!(detect_edge_type(&["local".to_string()]), EdgeType::Local);
         assert_eq!(detect_edge_type(&["npm".to_string()]), EdgeType::Npm);
         assert_eq!(detect_edge_type(&["core".to_string()]), EdgeType::Core);
-        assert_eq!(detect_edge_type(&["dynamic".to_string()]), EdgeType::Dynamic);
+        assert_eq!(
+            detect_edge_type(&["dynamic".to_string()]),
+            EdgeType::Dynamic
+        );
     }
 
     #[test]
@@ -574,9 +622,6 @@ mod tests {
             extract_package_name("node_modules/lodash/index.js"),
             Some("lodash".to_string())
         );
-        assert_eq!(
-            extract_package_name("src/components/Button.tsx"),
-            None
-        );
+        assert_eq!(extract_package_name("src/components/Button.tsx"), None);
     }
 }

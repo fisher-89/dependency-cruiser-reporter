@@ -18,7 +18,6 @@ interface DcDependency {
   coreModule: boolean;
   couldNotResolve: boolean;
   dependencyTypes: string[];
-  followable: boolean;
   circular?: boolean;
   rules?: { name: string; severity: string }[];
 }
@@ -138,7 +137,6 @@ export function convertDcOutput(dcJson: string): ProcessedGraph {
             coreModule: false,
             couldNotResolve: false,
             dependencyTypes: ['local' as const],
-            followable: true,
             circular: false,
           }
           : rawDep;

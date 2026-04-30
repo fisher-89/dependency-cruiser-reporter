@@ -21,13 +21,6 @@ export function buildGraphData(data: ProcessedGraph) {
     { id: string; label: string; level: number; combo?: string; style?: { collapsed?: boolean } }
   >();
 
-  // Ensure root combo exists first
-  comboMap.set(rootComboId, {
-    id: rootComboId,
-    label: '/',
-    level: 0,
-  });
-
   // Phase 1: Build initial nodes and combos from directory paths
   const nodes = data.nodes.map((n) => {
     const pathParts = (n.path ?? n.id).split('/');
@@ -56,6 +49,14 @@ export function buildGraphData(data: ProcessedGraph) {
       combo: comboId,
     };
   });
+
+  if (!comboMap.has(rootComboId)) {
+    comboMap.set(rootComboId, {
+      id: rootComboId,
+      label: '/',
+      level: 0,
+    });
+  }
 
   // Phase 2: Collapse single-child combos
   // Count direct children (nodes + sub-combos) per combo

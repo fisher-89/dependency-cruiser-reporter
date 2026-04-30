@@ -79,14 +79,13 @@ export function DependencyGraph({ data, onToggleDir }: Props) {
         'drag-canvas',
         'zoom-canvas',
         'drag-element',
-        // {
-        //   type: 'hover-activate',
-        //   enable: (e: { targetType: string }) =>
-        //     e.targetType === 'node' || e.targetType === 'combo',
-        //   direction: 'out',
-        //   inactiveState: 'inactive',
-        //   degree: 1,
-        // },
+        {
+          type: 'hover-activate',
+          enable: (e: { targetType: string }) => e.targetType === 'node',
+          direction: 'out',
+          inactiveState: 'inactive',
+          degree: 1,
+        },
       ],
       layout: {
         type: 'combo-combined',
