@@ -1,10 +1,13 @@
+import type { Element as G6Element, IPointerEvent } from '@antv/g6';
+import type { GraphData } from '@antv/g6';
 import { ForceLayout, Graph } from '@antv/g6';
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { EdgeType, NodeType, ProcessedGraph } from '../types';
 import { buildGraphData } from './buildGraphData';
 
 interface Props {
   data: ProcessedGraph;
+  onToggleDir?: (dir: string) => void;
 }
 
 const NODE_STYLES: Record<NodeType, { fill: string; stroke: string; size: number }> = {
@@ -20,12 +23,49 @@ const EDGE_STYLES: Record<EdgeType, { stroke: string; lineDash: number[] }> = {
   dynamic: { stroke: '#FA8C16', lineDash: [4, 4] },
 };
 
-export function DependencyGraph({ data }: Props) {
+export function DependencyGraph({ data, onToggleDir }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Graph | null>(null);
+  const graphDataRef = useRef<GraphData | null>(null);
 
   const graphData = useMemo(() => buildGraphData(data), [data]);
 
+  // Guard against invalid data - don't render graph
+  if (!data?.nodes || !data?.edges || !data?.meta) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center', color: '#64748b' }}>
+        No graph data available
+      </div>
+    );
+  }
+
+  const handleNodeDblClick = useCallback(
+    (event: IPointerEvent<G6Element>) => {
+      if (!onToggleDir || event.targetType !== 'node') return;
+      const nodeId = event.target.id;
+      // Find the node to get its path
+      const node = data.nodes.find((n) => n.id === nodeId);
+      if (node?.path) {
+        onToggleDir(node.path);
+      }
+    },
+    [data.nodes, onToggleDir]
+  );
+
+  const handleComboDblClick = useCallback(
+    (event: IPointerEvent<G6Element>) => {
+      if (!onToggleDir || event.targetType !== 'combo') return;
+      const comboId = event.target.id;
+      // Combo IDs are prefixed with "combo:", extract the actual path
+      if (typeof comboId === 'string' && comboId.startsWith('combo:')) {
+        const dirPath = comboId.slice(6); // Remove "combo:" prefix
+        onToggleDir(dirPath);
+      }
+    },
+    [onToggleDir]
+  );
+
+  // Initialize graph once
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -39,15 +79,14 @@ export function DependencyGraph({ data }: Props) {
         'drag-canvas',
         'zoom-canvas',
         'drag-element',
-        'collapse-expand',
-        {
-          type: 'hover-activate',
-          enable: (e: { targetType: string }) =>
-            e.targetType === 'node' || e.targetType === 'combo',
-          direction: 'out',
-          inactiveState: 'inactive',
-          degree: 1,
-        },
+        // {
+        //   type: 'hover-activate',
+        //   enable: (e: { targetType: string }) =>
+        //     e.targetType === 'node' || e.targetType === 'combo',
+        //   direction: 'out',
+        //   inactiveState: 'inactive',
+        //   degree: 1,
+        // },
       ],
       layout: {
         type: 'combo-combined',
@@ -95,9 +134,10 @@ export function DependencyGraph({ data }: Props) {
       },
     });
 
-    graph.setData(graphData);
-    graph.render();
     graphRef.current = graph;
+
+    graph.on('node:dblclick', handleNodeDblClick);
+    graph.on('combo:dblclick', handleComboDblClick);
 
     const onResize = () => {
       if (containerRef.current) {
@@ -108,9 +148,24 @@ export function DependencyGraph({ data }: Props) {
 
     return () => {
       window.removeEventListener('resize', onResize);
+      graph.off('node:dblclick', handleNodeDblClick);
+      graph.off('combo:dblclick', handleComboDblClick);
       graph.destroy();
       graphRef.current = null;
     };
+  }, [handleNodeDblClick, handleComboDblClick]);
+
+  // Update data when graphData changes (don't recreate graph)
+  useEffect(() => {
+    const graph = graphRef.current;
+    if (!graph || !graphData) return;
+
+    // Only update if data actually changed
+    if (graphDataRef.current !== graphData) {
+      graphDataRef.current = graphData;
+      graph.setData(graphData);
+      graph.render();
+    }
   }, [graphData]);
 
   return (

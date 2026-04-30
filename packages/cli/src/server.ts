@@ -2,8 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
-import { convertWithFallback, reAggregateProcessedGraph } from './commands/convert.js';
-import type { ProcessedGraph } from './commands/convert.js';
+import { convertWithFallback, computeExpandedDirs } from './convert.js';
 
 export interface ServerOptions {
   port: number;
@@ -63,35 +62,21 @@ export class DcrServer {
       try {
         const content = readFileSync(this.graphFile, 'utf-8');
         const parsed = JSON.parse(content);
-        const expandedDirs = req.body?.expanded_dirs as string[] | undefined;
+        const expandedDirs: string[] | undefined = req.body?.expanded_dirs?.length ? req.body.expanded_dirs : undefined;
 
-        // Raw dependency-cruiser format: has 'modules' array
         if (parsed.modules && Array.isArray(parsed.modules)) {
           const graph = convertWithFallback(content, this.maxNodes, expandedDirs);
+          if (!graph.meta.expanded_dirs) {
+            graph.meta.expanded_dirs = computeExpandedDirs(graph);
+          }
           res.json(graph);
-          return;
-        }
-
-        // Already ProcessedGraph: has nodes/edges/meta
-        if (parsed.nodes && parsed.edges && parsed.meta) {
-          // Re-aggregate if too large
-          if (parsed.nodes.length > this.maxNodes) {
-            const aggregated = reAggregateProcessedGraph(parsed as ProcessedGraph, this.maxNodes, expandedDirs);
-            res.json(aggregated);
-            return;
-          }
-          // Set expanded_dirs if provided
-          if (expandedDirs) {
-            parsed.meta.expanded_dirs = expandedDirs;
-          }
-          res.json(parsed);
           return;
         }
 
         // Unknown format
         res.status(400).json({ error: 'Unrecognized graph file format' });
       } catch (error) {
-        res.status(500).json({ error: 'Failed to read graph file' });
+        res.status(500).json({ error: 'Failed to read graph file', details: String(error) });
       }
     });
 

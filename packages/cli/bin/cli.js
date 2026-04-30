@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { analyze, scan, open } from "../dist/index.js";
+import { scan, open } from "../dist/index.js";
 
 program
 	.name("dep-report")
@@ -9,24 +9,8 @@ program
 
 program
 	.command("analyze")
-	.description("Analyze dependency-cruiser output and generate graph")
-	.requiredOption("-i, --input <path>", "Input dependency-cruiser JSON file")
-	.option("-o, --output <path>", "Output graph JSON file", "graph.json")
-	.option("-l, --level <level>", "Aggregation level: file | directory | package | root")
-	.option("-m, --max-nodes <number>", "Maximum nodes in output", "5000")
-	.action(async (options) => {
-		await analyze({
-			input: options.input,
-			output: options.output,
-			level: options.level,
-			maxNodes: parseInt(options.maxNodes, 10),
-		});
-	});
-
-program
-	.command("scan")
-	.description("Scan a project directory and generate visualization")
-	.requiredOption("-p, --path <dir>", "Project directory to scan")
+	.description("Analyze a project directory and generate visualization")
+	.requiredOption("-p, --path <dir>", "Project directory to Analyze")
 	.option("-o, --output <path>", "Output graph JSON file")
 	.option("-c, --config <path>", "dependency-cruiser config file")
 	.action(async (options) => {

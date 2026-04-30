@@ -14,6 +14,16 @@ const outputDir = resolve(__dirname, ".output");
 const cliBinary = resolve(__dirname, "../cli/bin/cli.js");
 const monorepoRoot = resolve(__dirname, "../..");
 
+// Check for Rust binary
+const ext = process.platform === "win32" ? ".exe" : "";
+const releaseBinary = resolve(monorepoRoot, `rust/target/release/dcr-aggregate${ext}`);
+const debugBinary = resolve(monorepoRoot, `rust/target/debug/dcr-aggregate${ext}`);
+const rustBinary = existsSync(releaseBinary)
+	? releaseBinary
+	: existsSync(debugBinary)
+		? debugBinary
+		: null;
+
 describe("CLI Integration Tests", () => {
 	before(() => {
 		// Create output directory
@@ -48,8 +58,9 @@ describe("CLI Integration Tests", () => {
 		});
 
 		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
-		assert.ok(result.stdout.includes("--input"));
-		assert.ok(result.stdout.includes("--output"));
+		assert.ok(result.stdout.includes("-p"));
+		assert.ok(result.stdout.includes("-o"));
+		assert.ok(result.stdout.includes("-c"));
 	});
 
 	test("open --help shows options", () => {
@@ -63,7 +74,7 @@ describe("CLI Integration Tests", () => {
 		assert.ok(result.stdout.includes("--port"));
 	});
 
-	test("analyze requires --input", () => {
+	test("analyze requires -p", () => {
 		const result = spawnSync("node", [cliBinary, "analyze"], {
 			cwd: __dirname,
 			encoding: "utf-8",
@@ -75,7 +86,7 @@ describe("CLI Integration Tests", () => {
 	test("analyze fails with missing input file", () => {
 		const result = spawnSync(
 			"node",
-			[cliBinary, "analyze", "--input", "nonexistent.json"],
+			[cliBinary, "analyze", "-p", "nonexistent.json"],
 			{
 				cwd: __dirname,
 				encoding: "utf-8",
@@ -90,18 +101,7 @@ describe("Rust Binary Tests", () => {
 	test("dcr-aggregate processes sample input", () => {
 		const outputPath = resolve(outputDir, "test-graph.json");
 
-		// Check if rust binary exists (use absolute paths from monorepo root)
-		const ext = process.platform === "win32" ? ".exe" : "";
-		const releaseBinary = resolve(monorepoRoot, `rust/target/release/dcr-aggregate${ext}`);
-		const debugBinary = resolve(monorepoRoot, `rust/target/debug/dcr-aggregate${ext}`);
-
-		const binary = existsSync(releaseBinary)
-			? releaseBinary
-			: existsSync(debugBinary)
-				? debugBinary
-				: null;
-
-		if (!binary) {
+		if (!rustBinary) {
 			console.log("Skipping: Rust binary not found (run 'cargo build --release' first)");
 			return;
 		}
@@ -111,7 +111,7 @@ describe("Rust Binary Tests", () => {
 			rmSync(outputPath);
 		}
 
-		const result = spawnSync(binary, ["--input", sampleCruise, "--output", outputPath], {
+		const result = spawnSync(rustBinary, ["--input", sampleCruise, "--output", outputPath], {
 			encoding: "utf-8",
 		});
 
@@ -130,15 +130,6 @@ describe("Rust Binary Tests", () => {
 });
 
 describe("Aggregation Tests", () => {
-		const ext = process.platform === "win32" ? ".exe" : "";
-		const releaseBinary = resolve(monorepoRoot, `rust/target/release/dcr-aggregate${ext}`);
-		const debugBinary = resolve(monorepoRoot, `rust/target/debug/dcr-aggregate${ext}`);
-		const rustBinary = existsSync(releaseBinary)
-			? releaseBinary
-			: existsSync(debugBinary)
-				? debugBinary
-				: null;
-
 	test("Rust binary: small input stays at file level", () => {
 		if (!rustBinary) {
 			console.log("Skipping: Rust binary not found");
@@ -188,69 +179,15 @@ describe("Aggregation Tests", () => {
 			"Should have directory-type nodes"
 		);
 	});
-
-	test("Node.js reAggregateProcessedGraph: directory level reduces node count", async () => {
-		// Create a large ProcessedGraph fixture (more than 500 nodes)
-		const { reAggregateProcessedGraph } = await import("../cli/dist/commands/convert.js");
-
-		const nodes = [];
-		const edges = [];
-		// Generate 600 file nodes across 50 directories
-		for (let d = 0; d < 50; d++) {
-			for (let f = 0; f < 12; f++) {
-				const id = `src/dir${d}/file${f}.ts`;
-				nodes.push({ id, label: `file${f}.ts`, node_type: "file", path: id, violation_count: 0 });
-				// Add cross-directory edges
-				if (d > 0 && f === 0) {
-					edges.push({ source: id, target: `src/dir0/file0.ts`, edge_type: "local", weight: 1 });
-				}
-			}
-		}
-
-		const graph = {
-			nodes,
-			edges,
-			meta: {
-				original_node_count: 600,
-				aggregated_node_count: 600,
-				aggregation_level: "file",
-				total_violations: 0,
-			},
-			violations: [],
-		};
-
-		const result = reAggregateProcessedGraph(graph, 500);
-
-		assert.ok(result.nodes.length < 600, "Should have fewer nodes after aggregation");
-		assert.strictEqual(result.meta.aggregation_level, "directory");
-		assert.ok(result.nodes.every((n) => n.node_type === "directory"), "All nodes should be directory type");
-		// Cross-directory edges should be preserved
-		assert.ok(result.edges.length > 0, "Should have cross-directory edges");
-	});
-
-	test("Node.js reAggregateProcessedGraph: small graph not aggregated", async () => {
-		const { reAggregateProcessedGraph } = await import("../cli/dist/commands/convert.js");
-
-		const graph = {
-			nodes: [
-				{ id: "src/a.ts", label: "a.ts", node_type: "file", path: "src/a.ts", violation_count: 0 },
-				{ id: "src/b.ts", label: "b.ts", node_type: "file", path: "src/b.ts", violation_count: 0 },
-			],
-			edges: [
-				{ source: "src/a.ts", target: "src/b.ts", edge_type: "local", weight: 1 },
-			],
-			meta: { original_node_count: 2, aggregated_node_count: 2, aggregation_level: "file", total_violations: 0 },
-			violations: [],
-		};
-
-		const result = reAggregateProcessedGraph(graph, 500);
-		assert.strictEqual(result.nodes.length, 2, "Small graph should not be aggregated");
-		assert.strictEqual(result.meta.aggregation_level, "file");
-	});
 });
 
 describe("Open Command Tests", () => {
 	test("open command converts raw DC JSON to ProcessedGraph", async () => {
+		if (!rustBinary) {
+			console.log("Skipping: Rust binary not found");
+			return;
+		}
+
 		const port = 3001 + Math.floor(Math.random() * 1000);
 		const proc = spawn("node", [cliBinary, "open", "-f", sampleCruise, "-p", String(port)], {
 			cwd: __dirname,

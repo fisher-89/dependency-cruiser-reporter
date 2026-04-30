@@ -72,7 +72,7 @@ pub enum NodeType {
     Package,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum EdgeType {
     Local,
@@ -94,8 +94,6 @@ pub enum AggregationLevel {
 #[derive(Debug, Deserialize)]
 pub struct CruiseResult {
     pub modules: Option<Vec<Module>>,
-    pub dependencies: Option<Vec<Dependency>>,
-    pub violations: Option<Vec<RawViolation>>,
     pub summary: Option<Summary>,
 }
 
@@ -103,44 +101,39 @@ pub struct CruiseResult {
 pub struct Module {
     pub source: String,
     #[serde(default)]
-    pub dependencies: Vec<String>,
+    pub dependencies: Vec<Dependency>,
     #[serde(default)]
-    pub dependency_types: Option<Vec<String>>,
-    #[serde(default)]
-    pub size: Option<usize>,
+    pub dependents: Option<Vec<String>>,
     #[serde(default)]
     pub orphan: Option<bool>,
+    #[serde(default)]
+    pub valid: Option<bool>,
+    #[serde(default)]
+    pub rules: Option<Vec<Rule>>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct Dependency {
+    pub module: String,
+    #[serde(rename = "moduleSystem")]
+    pub module_system: String,
+    #[serde(default)]
+    pub dynamic: Option<bool>,
     #[serde(rename = "resolved")]
-    pub resolved: Option<String>,
+    pub resolved: String,
     #[serde(rename = "coreModule")]
-    pub core_module: Option<String>,
+    pub core_module: Option<bool>,
     #[serde(rename = "dependencyTypes", default)]
     pub dependency_types: Vec<String>,
-    #[serde(rename = "from", default)]
-    pub from: Option<String>,
-    #[serde(rename = "to", default)]
-    pub to: Option<String>,
     #[serde(default)]
     pub circular: Option<bool>,
+    #[serde(default)]
+    pub valid: Option<bool>,
+    #[serde(default)]
+    pub rules: Option<Vec<Rule>>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct RawViolation {
-    #[serde(rename = "from", default)]
-    pub from: Option<String>,
-    #[serde(rename = "to", default)]
-    pub to: Option<String>,
-    #[serde(rename = "rule", default)]
-    pub rule: Option<Rule>,
-    #[serde(rename = "message", default)]
-    pub message: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Rule {
     #[serde(rename = "severity", default)]
     pub severity: Option<String>,
@@ -150,14 +143,32 @@ pub struct Rule {
 
 #[derive(Debug, Deserialize)]
 pub struct Summary {
-    #[serde(rename = "violations", default)]
-    pub violations: Option<usize>,
-    #[serde(rename = "error", default)]
+    #[serde(default)]
+    pub violations: Option<Vec<RawViolation>>,
+    #[serde(default)]
     pub error: Option<usize>,
-    #[serde(rename = "warn", default)]
+    #[serde(default)]
     pub warn: Option<usize>,
-    #[serde(rename = "info", default)]
+    #[serde(default)]
     pub info: Option<usize>,
+    #[serde(default)]
+    pub total_cruised: Option<usize>,
+    #[serde(default)]
+    pub total_dependencies_cruised: Option<usize>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RawViolation {
+    #[serde(rename = "type", default)]
+    pub violation_type: Option<String>,
+    #[serde(rename = "from", default)]
+    pub from: Option<String>,
+    #[serde(rename = "to", default)]
+    pub to: Option<String>,
+    #[serde(rename = "rule", default)]
+    pub rule: Option<Rule>,
+    #[serde(rename = "message", default)]
+    pub message: Option<String>,
 }
 
 fn select_aggregation_level(node_count: usize) -> AggregationLevel {
@@ -214,35 +225,43 @@ pub fn parse_and_aggregate(
     let modules = cruise.modules.unwrap_or_default();
     let module_count = modules.len();
 
-    // Collect all dependencies
-    let dependencies = cruise.dependencies.unwrap_or_default();
+    // Extract edges from modules' dependencies (source is the module, resolved is the target)
+    let all_edges = extract_edges(&modules);
 
-    // Collect violations
-    let raw_violations = cruise.violations.unwrap_or_default();
+    // Collect violations from summary
+    let raw_violations = cruise
+        .summary
+        .as_ref()
+        .and_then(|s| s.violations.as_ref())
+        .map(|v| v.as_slice())
+        .unwrap_or(&[]);
     let violation_count = raw_violations.len();
 
     let violations: Vec<ViolationInfo> = raw_violations
-        .into_iter()
+        .iter()
         .filter_map(|v| {
             Some(ViolationInfo {
-                from: v.from?,
-                to: v.to?,
+                from: v.from.clone()?,
+                to: v.to.clone()?,
                 rule: v.rule.as_ref().and_then(|r| r.name.clone()).unwrap_or_default(),
-                severity: v.rule.and_then(|r| r.severity).unwrap_or_else(|| "warn".to_string()),
-                message: v.message,
+                severity: v.rule.as_ref().and_then(|r| r.severity.clone()).unwrap_or_else(|| "warn".to_string()),
+                message: v.message.clone(),
             })
         })
         .collect();
+
+    // Count violation per module
+    let violation_counts = compute_violation_counts(&violations);
 
     // Determine aggregation level
     let agg_level = level.unwrap_or(select_aggregation_level(module_count));
 
     // Build nodes based on aggregation level
     let (nodes, edge_map) = match agg_level {
-        AggregationLevel::File => build_file_nodes(&modules, &dependencies),
-        AggregationLevel::Directory => build_directory_nodes(&modules, &dependencies),
-        AggregationLevel::Package => build_package_nodes(&modules, &dependencies),
-        AggregationLevel::Root => build_root_nodes(&modules, &dependencies),
+        AggregationLevel::File => build_file_nodes(&modules, &all_edges, &violation_counts),
+        AggregationLevel::Directory => build_directory_nodes(&modules, &all_edges, &violation_counts),
+        AggregationLevel::Package => build_package_nodes(&modules, &all_edges, &violation_counts),
+        AggregationLevel::Root => build_root_nodes(&modules, &all_edges, &violation_counts),
     };
 
     // Aggregate edges
@@ -264,10 +283,43 @@ pub fn parse_and_aggregate(
     })
 }
 
+/// Extract edges from modules' dependencies: (from_source, resolved, dep_types, circular)
+struct RawEdge {
+    from: String,
+    to: String,
+    dep_types: Vec<String>,
+    circular: bool,
+}
+
+fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
+    let mut edges = Vec::new();
+    for m in modules {
+        for dep in &m.dependencies {
+            edges.push(RawEdge {
+                from: m.source.clone(),
+                to: dep.resolved.clone(),
+                dep_types: dep.dependency_types.clone(),
+                circular: dep.circular.unwrap_or(false),
+            });
+        }
+    }
+    edges
+}
+
+fn compute_violation_counts(violations: &[ViolationInfo]) -> HashMap<String, u32> {
+    let mut counts: HashMap<String, u32> = HashMap::new();
+    for v in violations {
+        *counts.entry(v.from.clone()).or_default() += 1;
+        *counts.entry(v.to.clone()).or_default() += 1;
+    }
+    counts
+}
+
 fn build_file_nodes(
     modules: &[Module],
-    _dependencies: &[Dependency],
-) -> (Vec<GraphNode>, HashMap<(String, String), Vec<String>>) {
+    edges: &[RawEdge],
+    violation_counts: &HashMap<String, u32>,
+) -> (Vec<GraphNode>, HashMap<(String, String), EdgeInfo>) {
     let nodes: Vec<GraphNode> = modules
         .iter()
         .map(|m| GraphNode {
@@ -275,20 +327,24 @@ fn build_file_nodes(
             label: m.source.split('/').last().unwrap_or(&m.source).to_string(),
             node_type: NodeType::File,
             path: Some(m.source.clone()),
-            violation_count: 0,
+            violation_count: violation_counts.get(&m.source).copied().unwrap_or(0),
             orphan: m.orphan,
             children: None,
         })
         .collect();
 
-    // Create edges map (source -> target -> dep_types)
-    let mut edge_map: HashMap<(String, String), Vec<String>> = HashMap::new();
-    for dep in _dependencies {
-        if let (Some(from), Some(to)) = (&dep.from, &dep.to) {
-            edge_map
-                .entry((from.clone(), to.clone()))
-                .or_default()
-                .extend(dep.dependency_types.clone());
+    // Create edges map (source -> target -> EdgeInfo)
+    let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
+    for e in edges {
+        let info = edge_map.entry((e.from.clone(), e.to.clone())).or_insert(EdgeInfo {
+            dep_types: Vec::new(),
+            count: 0,
+            has_circular: false,
+        });
+        info.dep_types.extend(e.dep_types.clone());
+        info.count += 1;
+        if e.circular {
+            info.has_circular = true;
         }
     }
 
@@ -297,8 +353,9 @@ fn build_file_nodes(
 
 fn build_directory_nodes(
     modules: &[Module],
-    dependencies: &[Dependency],
-) -> (Vec<GraphNode>, HashMap<(String, String), Vec<String>>) {
+    edges: &[RawEdge],
+    violation_counts: &HashMap<String, u32>,
+) -> (Vec<GraphNode>, HashMap<(String, String), EdgeInfo>) {
     // Group modules by parent directory
     let mut dir_groups: HashMap<String, Vec<String>> = HashMap::new();
     let mut node_lookup: HashMap<String, String> = HashMap::new();
@@ -314,12 +371,13 @@ fn build_directory_nodes(
         .keys()
         .map(|dir| {
             let children = dir_groups.get(dir).cloned().unwrap_or_default();
+            let vc: u32 = children.iter().filter_map(|c| violation_counts.get(c)).sum();
             GraphNode {
                 id: dir.clone(),
                 label: dir.clone(),
                 node_type: NodeType::Directory,
                 path: Some(dir.clone()),
-                violation_count: 0,
+                violation_count: vc,
                 orphan: None,
                 children: Some(children),
             }
@@ -327,16 +385,20 @@ fn build_directory_nodes(
         .collect();
 
     // Build directory-level edge map
-    let mut edge_map: HashMap<(String, String), Vec<String>> = HashMap::new();
-    for dep in dependencies {
-        if let (Some(from), Some(to)) = (&dep.from, &dep.to) {
-            let src_dir = node_lookup.get(from).cloned().unwrap_or_else(|| from.clone());
-            let tgt_dir = node_lookup.get(to).cloned().unwrap_or_else(|| to.clone());
-            if src_dir != tgt_dir {
-                edge_map
-                    .entry((src_dir, tgt_dir))
-                    .or_default()
-                    .extend(dep.dependency_types.clone());
+    let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
+    for e in edges {
+        let src_dir = node_lookup.get(&e.from).cloned().unwrap_or_else(|| e.from.clone());
+        let tgt_dir = node_lookup.get(&e.to).cloned().unwrap_or_else(|| e.to.clone());
+        if src_dir != tgt_dir {
+            let info = edge_map.entry((src_dir, tgt_dir)).or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
+            info.dep_types.extend(e.dep_types.clone());
+            info.count += 1;
+            if e.circular {
+                info.has_circular = true;
             }
         }
     }
@@ -346,8 +408,9 @@ fn build_directory_nodes(
 
 fn build_package_nodes(
     modules: &[Module],
-    dependencies: &[Dependency],
-) -> (Vec<GraphNode>, HashMap<(String, String), Vec<String>>) {
+    edges: &[RawEdge],
+    violation_counts: &HashMap<String, u32>,
+) -> (Vec<GraphNode>, HashMap<(String, String), EdgeInfo>) {
     // Group modules by package
     let mut pkg_groups: HashMap<String, Vec<String>> = HashMap::new();
     let mut node_lookup: HashMap<String, String> = HashMap::new();
@@ -362,12 +425,13 @@ fn build_package_nodes(
         .keys()
         .map(|pkg| {
             let children = pkg_groups.get(pkg).cloned().unwrap_or_default();
+            let vc: u32 = children.iter().filter_map(|c| violation_counts.get(c)).sum();
             GraphNode {
                 id: pkg.clone(),
                 label: pkg.clone(),
                 node_type: NodeType::Package,
                 path: Some(pkg.clone()),
-                violation_count: 0,
+                violation_count: vc,
                 orphan: None,
                 children: Some(children),
             }
@@ -375,16 +439,20 @@ fn build_package_nodes(
         .collect();
 
     // Build package-level edge map
-    let mut edge_map: HashMap<(String, String), Vec<String>> = HashMap::new();
-    for dep in dependencies {
-        if let (Some(from), Some(to)) = (&dep.from, &dep.to) {
-            let src_pkg = node_lookup.get(from).cloned().unwrap_or_else(|| "local".to_string());
-            let tgt_pkg = node_lookup.get(to).cloned().unwrap_or_else(|| "local".to_string());
-            if src_pkg != tgt_pkg {
-                edge_map
-                    .entry((src_pkg, tgt_pkg))
-                    .or_default()
-                    .extend(dep.dependency_types.clone());
+    let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
+    for e in edges {
+        let src_pkg = node_lookup.get(&e.from).cloned().unwrap_or_else(|| "local".to_string());
+        let tgt_pkg = node_lookup.get(&e.to).cloned().unwrap_or_else(|| "local".to_string());
+        if src_pkg != tgt_pkg {
+            let info = edge_map.entry((src_pkg, tgt_pkg)).or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
+            info.dep_types.extend(e.dep_types.clone());
+            info.count += 1;
+            if e.circular {
+                info.has_circular = true;
             }
         }
     }
@@ -394,59 +462,72 @@ fn build_package_nodes(
 
 fn build_root_nodes(
     modules: &[Module],
-    _dependencies: &[Dependency],
-) -> (Vec<GraphNode>, HashMap<(String, String), Vec<String>>) {
+    edges: &[RawEdge],
+    violation_counts: &HashMap<String, u32>,
+) -> (Vec<GraphNode>, HashMap<(String, String), EdgeInfo>) {
     let total_modules = modules.len();
-    let total_deps = _dependencies.len();
+    let total_deps = edges.len();
+    let total_violations: u32 = violation_counts.values().sum();
 
     let nodes = vec![GraphNode {
         id: "root".to_string(),
         label: "root".to_string(),
         node_type: NodeType::Package,
         path: Some("root".to_string()),
-        violation_count: 0,
+        violation_count: total_violations,
         orphan: None,
         children: Some(modules.iter().map(|m| m.source.clone()).collect()),
     }];
 
-    let mut edge_map: HashMap<(String, String), Vec<String>> = HashMap::new();
+    let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
     // All edges go to root
-    for dep in _dependencies {
-        if let (Some(from), Some(to)) = (&dep.from, &dep.to) {
-            edge_map
-                .entry((from.clone(), "root".to_string()))
-                .or_default()
-                .extend(dep.dependency_types.clone());
-            edge_map
-                .entry(("root".to_string(), to.clone()))
-                .or_default()
-                .extend(dep.dependency_types.clone());
-        }
+    for e in edges {
+        let info = edge_map.entry((e.from.clone(), "root".to_string())).or_insert(EdgeInfo {
+            dep_types: Vec::new(),
+            count: 0,
+            has_circular: false,
+        });
+        info.dep_types.extend(e.dep_types.clone());
+        info.count += 1;
+        if e.circular { info.has_circular = true; }
+
+        let info = edge_map.entry(("root".to_string(), e.to.clone())).or_insert(EdgeInfo {
+            dep_types: Vec::new(),
+            count: 0,
+            has_circular: false,
+        });
+        info.dep_types.extend(e.dep_types.clone());
+        info.count += 1;
+        if e.circular { info.has_circular = true; }
     }
 
     // Add summary info as special edges
     edge_map.insert(
         ("root".to_string(), "metadata".to_string()),
-        vec![format!("{} modules, {} deps", total_modules, total_deps)],
+        EdgeInfo {
+            dep_types: vec![format!("{} modules, {} deps", total_modules, total_deps)],
+            count: 1,
+            has_circular: false,
+        },
     );
 
     (nodes, edge_map)
 }
 
 fn aggregate_edges(
-    edge_map: &HashMap<(String, String), Vec<String>>,
+    edge_map: &HashMap<(String, String), EdgeInfo>,
     max_nodes: usize,
 ) -> Vec<GraphEdge> {
     let mut all_edges: Vec<GraphEdge> = edge_map
         .iter()
-        .map(|((source, target), types)| {
-            let edge_type = detect_edge_type(types);
+        .map(|((source, target), info)| {
+            let edge_type = detect_edge_type(&info.dep_types);
             GraphEdge {
                 source: source.clone(),
                 target: target.clone(),
                 edge_type,
-                weight: types.len() as u32,
-                circular: None,
+                weight: info.count,
+                circular: if info.has_circular { Some(true) } else { None },
             }
         })
         .collect();
@@ -456,6 +537,12 @@ fn aggregate_edges(
     all_edges.truncate(max_nodes.min(10000));
 
     all_edges
+}
+
+struct EdgeInfo {
+    dep_types: Vec<String>,
+    count: u32,
+    has_circular: bool,
 }
 
 #[cfg(test)]

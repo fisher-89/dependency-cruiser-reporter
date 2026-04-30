@@ -15,16 +15,18 @@ const COMBO_PREFIX = 'combo:';
  * with their sole child node.
  */
 export function buildGraphData(data: ProcessedGraph) {
-  const expandedDirs = new Set(data.meta.expanded_dirs ?? []);
-  return buildGraphDataInternal(data, expandedDirs);
-}
-
-function buildGraphDataInternal(data: ProcessedGraph, expandedDirs: Set<string>) {
   const rootComboId = `${COMBO_PREFIX}root`;
   const comboMap = new Map<
     string,
     { id: string; label: string; level: number; combo?: string; style?: { collapsed?: boolean } }
   >();
+
+  // Ensure root combo exists first
+  comboMap.set(rootComboId, {
+    id: rootComboId,
+    label: '/',
+    level: 0,
+  });
 
   // Phase 1: Build initial nodes and combos from directory paths
   const nodes = data.nodes.map((n) => {
@@ -35,14 +37,11 @@ function buildGraphDataInternal(data: ProcessedGraph, expandedDirs: Set<string>)
     for (let i = 1; i <= dirParts.length; i++) {
       const id = `${COMBO_PREFIX}${dirParts.slice(0, i).join('/')}`;
       if (!comboMap.has(id)) {
-        const dirPath = dirParts.slice(0, i).join('/');
-        const isCollapsed = expandedDirs.size > 0 && !expandedDirs.has(dirPath);
         comboMap.set(id, {
           id,
           label: dirParts[i - 1],
           level: i,
           combo: i > 1 ? `${COMBO_PREFIX}${dirParts.slice(0, i - 1).join('/')}` : rootComboId,
-          style: isCollapsed ? { collapsed: true } : undefined,
         });
       }
     }
@@ -57,19 +56,6 @@ function buildGraphDataInternal(data: ProcessedGraph, expandedDirs: Set<string>)
       combo: comboId,
     };
   });
-
-  if (!comboMap.has(rootComboId)) {
-    const isCollapsed = expandedDirs.size > 0 && !expandedDirs.has('root');
-    comboMap.set(rootComboId, {
-      id: rootComboId,
-      label: '/',
-      level: 0,
-      style: isCollapsed ? { collapsed: true } : undefined,
-    });
-  }
-  for (const n of nodes) {
-    if (!n.combo) n.combo = rootComboId;
-  }
 
   // Phase 2: Collapse single-child combos
   // Count direct children (nodes + sub-combos) per combo

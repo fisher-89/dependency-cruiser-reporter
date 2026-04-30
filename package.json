@@ -20,7 +20,7 @@
     "build": "pnpm -r build && pnpm run build:rust",
     "build:ts": "pnpm -r build",
     "build:rust": "node scripts/build-rust.js",
-    "demo": "node packages/cli/bin/cli.js scan -p demo && node packages/cli/bin/cli.js open -f demo-graph.json",
+    "demo": "node packages/cli/bin/cli.js analyze -p demo && node packages/cli/bin/cli.js open -f demo-graph.json",
     "demo:build": "pnpm run build:ts && pnpm run demo",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",

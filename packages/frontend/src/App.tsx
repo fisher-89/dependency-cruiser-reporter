@@ -7,29 +7,50 @@ function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+
+  const fetchGraph = useCallback(async (newExpandedDirs?: string[]) => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/graph', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expanded_dirs: newExpandedDirs }),
+      });
+      if (res.ok) {
+        const graphData = (await res.json()) as ProcessedGraph;
+        if (graphData.nodes && graphData.edges && graphData.meta) {
+          setData(graphData);
+          if (graphData.meta.expanded_dirs) {
+            setExpandedDirs(new Set(graphData.meta.expanded_dirs));
+          }
+        }
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to fetch graph');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleToggleDir = useCallback(
+    (dir: string) => {
+      const next = new Set(expandedDirs);
+      if (next.has(dir)) {
+        next.delete(dir);
+      } else {
+        next.add(dir);
+      }
+      setExpandedDirs(next);
+      fetchGraph(Array.from(next));
+    },
+    [expandedDirs, fetchGraph]
+  );
 
   // Auto-load graph from server if available
   useEffect(() => {
-    const loadGraphFromServer = async () => {
-      try {
-        const configRes = await fetch('/api/config');
-        const config = await configRes.json();
-        if (config.hasGraphFile) {
-          setLoading(true);
-          const graphRes = await fetch('/api/graph', { method: 'POST' });
-          if (graphRes.ok) {
-            const graphData = await graphRes.json();
-            setData(graphData);
-          }
-        }
-      } catch {
-        // Ignore errors - server may not be running or no graph file
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadGraphFromServer();
-  }, []);
+    fetchGraph();
+  }, [fetchGraph]);
 
   const handleFileUpload = useCallback(async (file: File) => {
     setLoading(true);
@@ -122,7 +143,7 @@ function App() {
           </div>
         ) : (
           <>
-            {viewMode === 'graph' && <DependencyGraph data={data} />}
+            {viewMode === 'graph' && <DependencyGraph data={data} onToggleDir={handleToggleDir} />}
             {viewMode === 'report' && <ReportView violations={data.violations} />}
             {viewMode === 'metrics' && <MetricsView data={data} />}
             <button
