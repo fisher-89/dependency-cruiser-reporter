@@ -1,15 +1,17 @@
+mod aggregate;
 mod types;
-mod expand;
 
 pub use types::*;
 
-use std::collections::{HashMap, HashSet};
+use aggregate::{
+    aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, compute_violation_counts,
+    extract_edges,
+};
+use std::collections::HashSet;
 use std::path::Path;
 
-use expand::{build_hybrid_nodes, compute_auto_expanded_dirs, EdgeInfo};
-
 // Re-export for tests
-pub use expand::is_path_expanded;
+pub use aggregate::is_path_expanded;
 
 /// Parse dependency-cruiser JSON and aggregate graph
 ///
@@ -90,75 +92,6 @@ pub fn parse_and_aggregate(
         meta,
         violations,
     })
-}
-
-/// Extract edges from modules' dependencies: (from_source, resolved, dep_types, circular)
-pub(crate) struct RawEdge {
-    pub from: String,
-    pub to: String,
-    pub dep_types: Vec<String>,
-    pub circular: bool,
-}
-
-fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
-    let mut edges = Vec::new();
-    for m in modules {
-        for dep in &m.dependencies {
-            edges.push(RawEdge {
-                from: m.source.clone(),
-                to: dep.resolved.clone(),
-                dep_types: dep.dependency_types.clone(),
-                circular: dep.circular.unwrap_or(false),
-            });
-        }
-    }
-    edges
-}
-
-fn compute_violation_counts(violations: &[ViolationInfo]) -> HashMap<String, u32> {
-    let mut counts: HashMap<String, u32> = HashMap::new();
-    for v in violations {
-        *counts.entry(v.from.clone()).or_default() += 1;
-        *counts.entry(v.to.clone()).or_default() += 1;
-    }
-    counts
-}
-
-fn aggregate_edges(
-    edge_map: &HashMap<(String, String), EdgeInfo>,
-    max_nodes: usize,
-) -> Vec<GraphEdge> {
-    let mut all_edges: Vec<GraphEdge> = edge_map
-        .iter()
-        .map(|((source, target), info)| {
-            let edge_type = detect_edge_type(&info.dep_types);
-            GraphEdge {
-                source: source.clone(),
-                target: target.clone(),
-                edge_type,
-                weight: info.count,
-                circular: if info.has_circular { Some(true) } else { None },
-            }
-        })
-        .collect();
-
-    // Sort by weight descending and limit
-    all_edges.sort_by(|a, b| b.weight.cmp(&a.weight));
-    all_edges.truncate(max_nodes.min(10000));
-
-    all_edges
-}
-
-fn detect_edge_type(dep_types: &[String]) -> EdgeType {
-    if dep_types.iter().any(|t| t == "npm" || t == "node_modules") {
-        EdgeType::Npm
-    } else if dep_types.iter().any(|t| t == "core") {
-        EdgeType::Core
-    } else if dep_types.iter().any(|t| t == "dynamic") {
-        EdgeType::Dynamic
-    } else {
-        EdgeType::Local
-    }
 }
 
 #[cfg(test)]
