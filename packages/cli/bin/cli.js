@@ -2,6 +2,8 @@
 import { program } from "commander";
 import { scan, open } from "../dist/index.js";
 
+//TODO 将cli.js整合到源码，构建后生成dist/bin
+
 program
 	.name("dep-report")
 	.description("dependency-cruiser result visualizer")
