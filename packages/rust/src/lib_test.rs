@@ -1,45 +1,36 @@
 use super::*;
 use super::aggregate::{self, detect_edge_type, TARGET_NODE_BUDGET};
 use std::collections::HashMap;
-use std::io::Write;
-use std::sync::atomic::{AtomicU64, Ordering};
 
-static FILE_COUNTER: AtomicU64 = AtomicU64::new(0);
-
-/// Helper to create a temp file with test JSON content
-struct TempJsonFile {
-    path: std::path::PathBuf,
+/// Helper to serialize modules into a JSON string for aggregate_from_str
+fn make_json(modules: Vec<Module>) -> String {
+    let cruise = CruiseResult {
+        modules: Some(modules),
+        summary: None,
+    };
+    serde_json::to_string(&cruise).unwrap()
 }
 
-impl TempJsonFile {
-    fn new(modules: Vec<Module>) -> Self {
-        let cruise = CruiseResult {
-            modules: Some(modules),
-            summary: None,
-        };
-        let json = serde_json::to_string(&cruise).unwrap();
-        let temp_dir = std::env::temp_dir();
-        let id = FILE_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let path = temp_dir.join(format!("dcr_test_{}_{}.json", std::process::id(), id));
-        let mut file = std::fs::File::create(&path).unwrap();
-        file.write_all(json.as_bytes()).unwrap();
-        Self { path }
-    }
-
-    fn path(&self) -> &std::path::Path {
-        &self.path
-    }
+/// Helper to serialize modules + summary (with violations) into JSON
+fn make_json_with_violations(modules: Vec<Module>, violations: Vec<RawViolation>) -> String {
+    let cruise = CruiseResult {
+        modules: Some(modules),
+        summary: Some(Summary {
+            violations: Some(violations),
+            error: None,
+            warn: None,
+            info: None,
+            total_cruised: None,
+            total_dependencies_cruised: None,
+        }),
+    };
+    serde_json::to_string(&cruise).unwrap()
 }
 
-impl Drop for TempJsonFile {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_file(&self.path);
-    }
-}
+// --- aggregate_from_str tests (replaces parse_and_aggregate tests) ---
 
 #[test]
-fn test_parse_and_aggregate_returns_non_empty_expanded_dirs() {
-    // Create a realistic project with modules
+fn test_aggregate_from_str_returns_non_empty_expanded_dirs() {
     let modules: Vec<Module> = (0..50)
         .map(|i| Module {
             source: format!("src/mod{}.ts", i),
@@ -51,18 +42,22 @@ fn test_parse_and_aggregate_returns_non_empty_expanded_dirs() {
         })
         .collect();
 
-    let file = TempJsonFile::new(modules);
-    let result = parse_and_aggregate(file.path(), 200, None).unwrap();
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
 
-    // expanded_dirs should not be empty when modules exist
     let expanded = result.meta.expanded_dirs.unwrap();
-    assert!(!expanded.is_empty(), "expanded_dirs should not be empty for non-empty modules");
-    assert!(expanded.contains(&"src".to_string()), "expanded_dirs should contain 'src'");
+    assert!(
+        !expanded.is_empty(),
+        "expanded_dirs should not be empty for non-empty modules"
+    );
+    assert!(
+        expanded.contains(&"src".to_string()),
+        "expanded_dirs should contain 'src'"
+    );
 }
 
 #[test]
-fn test_parse_and_aggregate_small_project_expands_all() {
-    // Small project (under TARGET_NODE_BUDGET) should expand root
+fn test_aggregate_from_str_small_project_expands_all() {
     let modules: Vec<Module> = (0..10)
         .map(|i| Module {
             source: format!("src/mod{}.ts", i),
@@ -74,20 +69,20 @@ fn test_parse_and_aggregate_small_project_expands_all() {
         })
         .collect();
 
-    let file = TempJsonFile::new(modules);
-    let result = parse_and_aggregate(file.path(), 200, None).unwrap();
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
 
     let expanded = result.meta.expanded_dirs.unwrap();
     assert!(!expanded.is_empty(), "expanded_dirs should not be empty");
-    assert!(expanded.contains(&"".to_string()), "small project should expand root");
+    assert!(
+        expanded.contains(&"".to_string()),
+        "small project should expand root"
+    );
 }
 
 #[test]
-fn test_parse_and_aggregate_large_project_has_expanded_dirs() {
-    // Large project (over TARGET_NODE_BUDGET) should still have some expanded dirs
+fn test_aggregate_from_str_large_project_has_expanded_dirs() {
     let mut modules: Vec<Module> = vec![];
-
-    // Create nested structure
     for c in 0..10 {
         for f in 0..10 {
             modules.push(Module {
@@ -100,8 +95,6 @@ fn test_parse_and_aggregate_large_project_has_expanded_dirs() {
             });
         }
     }
-
-    // Add more files to exceed budget
     for i in 0..300 {
         modules.push(Module {
             source: format!("lib/mod{}.ts", i),
@@ -113,24 +106,265 @@ fn test_parse_and_aggregate_large_project_has_expanded_dirs() {
         });
     }
 
-    let file = TempJsonFile::new(modules);
-    let result = parse_and_aggregate(file.path(), 200, None).unwrap();
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
 
     let expanded = result.meta.expanded_dirs.unwrap();
-    assert!(!expanded.is_empty(), "expanded_dirs should not be empty even for large projects");
+    assert!(
+        !expanded.is_empty(),
+        "expanded_dirs should not be empty even for large projects"
+    );
 }
 
 #[test]
-fn test_parse_and_aggregate_empty_modules_returns_empty_expanded_dirs() {
-    // Edge case: empty modules should return empty expanded_dirs
+fn test_aggregate_from_str_empty_modules_returns_empty_expanded_dirs() {
     let modules: Vec<Module> = vec![];
-
-    let file = TempJsonFile::new(modules);
-    let result = parse_and_aggregate(file.path(), 200, None).unwrap();
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
 
     let expanded = result.meta.expanded_dirs.unwrap();
-    assert!(expanded.is_empty(), "empty modules should have empty expanded_dirs");
+    assert!(
+        expanded.is_empty(),
+        "empty modules should have empty expanded_dirs"
+    );
 }
+
+#[test]
+fn test_aggregate_from_str_invalid_json() {
+    let result = aggregate_from_str("not valid json", 200, None);
+    assert!(result.is_err(), "should return error for invalid JSON");
+}
+
+#[test]
+fn test_aggregate_from_str_with_dependencies() {
+    let modules = vec![
+        Module {
+            source: "src/index.ts".to_string(),
+            dependencies: vec![Dependency {
+                module: "./utils".to_string(),
+                module_system: "es6".to_string(),
+                dynamic: None,
+                resolved: "src/utils.ts".to_string(),
+                core_module: None,
+                dependency_types: vec!["local".to_string()],
+                circular: None,
+                valid: None,
+                rules: None,
+            }],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/utils.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
+
+    // Should have edges between the two modules
+    assert!(!result.edges.is_empty(), "should have edges between modules");
+    assert_eq!(result.edges[0].source, "src/index.ts");
+    assert_eq!(result.edges[0].target, "src/utils.ts");
+    assert_eq!(result.edges[0].edge_type, EdgeType::Local);
+}
+
+#[test]
+fn test_aggregate_from_str_with_violations() {
+    let modules = vec![
+        Module {
+            source: "src/a.ts".to_string(),
+            dependencies: vec![Dependency {
+                module: "./b".to_string(),
+                module_system: "es6".to_string(),
+                dynamic: None,
+                resolved: "src/b.ts".to_string(),
+                core_module: None,
+                dependency_types: vec!["local".to_string()],
+                circular: None,
+                valid: Some(false),
+                rules: Some(vec![Rule {
+                    severity: Some("error".to_string()),
+                    name: Some("no-circular".to_string()),
+                }]),
+            }],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/b.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    let violations = vec![RawViolation {
+        violation_type: Some("dependency".to_string()),
+        from: Some("src/a.ts".to_string()),
+        to: Some("src/b.ts".to_string()),
+        rule: Some(Rule {
+            severity: Some("error".to_string()),
+            name: Some("no-circular".to_string()),
+        }),
+        message: Some("circular dependency".to_string()),
+    }];
+
+    let json = make_json_with_violations(modules, violations);
+    let result = aggregate_from_str(&json, 200, None).unwrap();
+
+    assert_eq!(result.meta.total_violations, 1);
+    assert_eq!(result.violations.len(), 1);
+    assert_eq!(result.violations[0].from, "src/a.ts");
+    assert_eq!(result.violations[0].severity, "error");
+
+    // Edge should have error_count
+    let edge = &result.edges[0];
+    assert_eq!(edge.error_count, Some(1));
+}
+
+#[test]
+fn test_aggregate_from_str_with_explicit_expanded_dirs() {
+    let modules: Vec<Module> = (0..10)
+        .map(|i| Module {
+            source: format!("src/mod{}.ts", i),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        })
+        .collect();
+
+    let json = make_json(modules);
+    let result = aggregate_from_str(&json, 200, Some(vec!["src".to_string()])).unwrap();
+
+    let expanded = result.meta.expanded_dirs.unwrap();
+    assert_eq!(expanded, vec!["src".to_string()]);
+}
+
+// --- wasm_aggregate tests ---
+// These tests only run on wasm32 target (via wasm-pack test --node)
+
+#[cfg(target_arch = "wasm32")]
+mod wasm_tests {
+    use super::*;
+    use wasm_bindgen_test::*;
+
+    #[wasm_bindgen_test]
+    fn test_wasm_aggregate_basic() {
+        let modules: Vec<Module> = (0..10)
+            .map(|i| Module {
+                source: format!("src/mod{}.ts", i),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+            })
+            .collect();
+        let json = make_json(modules);
+
+        let result = wasm_aggregate(&json, 200, None);
+        assert!(result.is_ok(), "wasm_aggregate should succeed with valid input");
+
+        let value = result.unwrap();
+        assert!(value.is_object(), "result should be a JS object");
+    }
+
+    #[wasm_bindgen_test]
+    fn test_wasm_aggregate_invalid_json() {
+        let result = wasm_aggregate("invalid json", 200, None);
+        assert!(result.is_err(), "wasm_aggregate should return error for invalid JSON");
+    }
+
+    #[wasm_bindgen_test]
+    fn test_wasm_aggregate_with_expanded_dirs() {
+        let modules: Vec<Module> = (0..10)
+            .map(|i| Module {
+                source: format!("src/mod{}.ts", i),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+            })
+            .collect();
+        let json = make_json(modules);
+
+        let expanded = Array::new();
+        expanded.push(&JsValue::from_str("src"));
+
+        let result = wasm_aggregate(&json, 200, Some(expanded));
+        assert!(result.is_ok(), "wasm_aggregate with expandedDirs should succeed");
+    }
+
+    #[wasm_bindgen_test]
+    fn test_wasm_aggregate_with_dependencies() {
+        let modules = vec![
+            Module {
+                source: "src/app.ts".to_string(),
+                dependencies: vec![Dependency {
+                    module: "./lib".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/lib.ts".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                }],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+            },
+            Module {
+                source: "src/lib.ts".to_string(),
+                dependencies: vec![Dependency {
+                    module: "lodash".to_string(),
+                    module_system: "cjs".to_string(),
+                    dynamic: None,
+                    resolved: "node_modules/lodash/index.js".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["npm".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                }],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+            },
+        ];
+        let json = make_json(modules);
+
+        let result = wasm_aggregate(&json, 200, None);
+        assert!(result.is_ok(), "wasm_aggregate with dependencies should succeed");
+    }
+
+    #[wasm_bindgen_test]
+    fn test_wasm_aggregate_empty_modules() {
+        let json = make_json(vec![]);
+        let result = wasm_aggregate(&json, 200, None);
+        assert!(result.is_ok(), "wasm_aggregate should handle empty modules");
+    }
+}
+
+// --- Existing unit tests (unchanged) ---
 
 #[test]
 fn test_edge_type_detection() {
@@ -146,22 +380,21 @@ fn test_edge_type_detection() {
 #[test]
 fn test_is_path_expanded() {
     let set: HashSet<&str> = ["src", "src/components"].into_iter().collect();
-    assert!(is_path_expanded("src/index.ts", &set)); // parent "src" is expanded
-    assert!(is_path_expanded("src/components/Button.tsx", &set)); // "src" and "src/components" expanded
-    assert!(!is_path_expanded("lib/utils.ts", &set)); // "lib" not expanded
-    assert!(!is_path_expanded("index.ts", &set)); // top-level file, no ancestor expanded
+    assert!(is_path_expanded("src/index.ts", &set));
+    assert!(is_path_expanded("src/components/Button.tsx", &set));
+    assert!(!is_path_expanded("lib/utils.ts", &set));
+    assert!(!is_path_expanded("index.ts", &set));
 }
 
 #[test]
 fn test_is_path_expanded_root() {
-    let set: HashSet<&str> = [""].into_iter().collect(); // root expanded
-    assert!(is_path_expanded("index.ts", &set)); // top-level file expanded
-    assert!(is_path_expanded("src/mod.ts", &set)); // nested file also expanded
+    let set: HashSet<&str> = [""].into_iter().collect();
+    assert!(is_path_expanded("index.ts", &set));
+    assert!(is_path_expanded("src/mod.ts", &set));
 }
 
 #[test]
 fn test_compute_auto_expanded_dirs_small_project() {
-    // Small project (under TARGET_NODE_BUDGET): expand all
     let modules: Vec<Module> = (0..10)
         .map(|i| Module {
             source: format!("src/mod{}.ts", i),
@@ -175,7 +408,7 @@ fn test_compute_auto_expanded_dirs_small_project() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
     assert!(dirs.contains(&"src".to_string()));
-    assert!(dirs.contains(&"".to_string())); // root dir expanded at file level
+    assert!(dirs.contains(&"".to_string()));
 }
 
 #[test]
@@ -188,8 +421,6 @@ fn test_compute_auto_expanded_dirs_empty() {
 
 #[test]
 fn test_smart_expansion_respects_budget() {
-    // Create 500 modules in single top-level dir — exceeds TARGET_NODE_BUDGET (300)
-    // "src" has 500 direct children > MAX_DIRECT_CHILDREN (50), won't expand
     let modules: Vec<Module> = (0..500)
         .map(|i| Module {
             source: format!("src/mod{}.ts", i),
@@ -202,16 +433,11 @@ fn test_smart_expansion_respects_budget() {
         .collect();
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
-    // "src" has 500 direct children > 50, should NOT be expanded
     assert!(!dirs.contains(&"src".to_string()));
 }
 
 #[test]
 fn test_smart_expansion_respects_direct_children_limit() {
-    // "src" has 2 direct children (dense + sparse dirs) <= 50, should expand
-    // "src/dense" has 60 direct children > 50, should NOT expand
-    // "src/sparse" has 10 direct children <= 50, should expand
-    // Plus additional files to push past TARGET_NODE_BUDGET
     let mut modules: Vec<Module> = (0..60)
         .map(|i| Module {
             source: format!("src/dense/mod{}.ts", i),
@@ -232,7 +458,6 @@ fn test_smart_expansion_respects_direct_children_limit() {
             rules: None,
         });
     }
-    // Add more files to exceed TARGET_NODE_BUDGET
     for i in 0..250 {
         modules.push(Module {
             source: format!("lib/mod{}.ts", i),
@@ -247,10 +472,6 @@ fn test_smart_expansion_respects_direct_children_limit() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // "src" has 2 direct children (dense, sparse) <= 50, should expand
-    // "src/dense" has 60 direct children > 50, should NOT expand
-    // "src/sparse" has 10 direct children <= 50, should expand (parent "src" is expanded)
-    // "lib" has 250 direct children > 50, should NOT expand
     assert!(dirs.contains(&"src".to_string()));
     assert!(!dirs.contains(&"src/dense".to_string()));
     assert!(dirs.contains(&"src/sparse".to_string()));
@@ -259,8 +480,6 @@ fn test_smart_expansion_respects_direct_children_limit() {
 
 #[test]
 fn test_smart_expansion_expands_small_dirs() {
-    // Two top-level dirs: one sparse (20 files), one dense (60 files)
-    // Plus 250 files in "other" to push past TARGET_NODE_BUDGET (300)
     let mut modules: Vec<Module> = (0..20)
         .map(|i| Module {
             source: format!("small/mod{}.ts", i),
@@ -295,9 +514,6 @@ fn test_smart_expansion_expands_small_dirs() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // "small" has 20 direct children <= 50, should expand
-    // "big" has 60 direct children > 50, should NOT expand
-    // "other" has 250 direct children > 50, should NOT expand
     assert!(dirs.contains(&"small".to_string()));
     assert!(!dirs.contains(&"big".to_string()));
     assert!(!dirs.contains(&"other".to_string()));
@@ -305,7 +521,6 @@ fn test_smart_expansion_expands_small_dirs() {
 
 #[test]
 fn test_smart_expansion_prioritizes_violations() {
-    // Same-size dirs, but one has violations
     let mut modules: Vec<Module> = vec![];
     for i in 0..10 {
         modules.push(Module {
@@ -328,7 +543,6 @@ fn test_smart_expansion_prioritizes_violations() {
         });
     }
 
-    // Only "bugs" has violations
     let mut violation_counts: HashMap<String, u32> = HashMap::new();
     for i in 0..10 {
         violation_counts.insert(format!("bugs/mod{}.ts", i), 3);
@@ -336,22 +550,14 @@ fn test_smart_expansion_prioritizes_violations() {
 
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // Both have 10 direct children <= 50, both should expand
     assert!(dirs.contains(&"bugs".to_string()));
     assert!(dirs.contains(&"clean".to_string()));
 }
 
-/// Simulates a real-world project with 3388 files
-/// Verifies that expansion respects budget based on actual descendant counts
 #[test]
 fn test_real_world_scale() {
-    // Simulate common-graph.json structure: src/ with many subdirs, each with few files
-    // 350 files in src/components/* (35 dirs × 10 files each)
-    // 60 files in src/utils/*
-    // plus scattered files elsewhere
     let mut modules: Vec<Module> = vec![];
 
-    // src/components: 35 subdirectories, each with 10 files = 350 files
     for c in 0..35 {
         for f in 0..10 {
             modules.push(Module {
@@ -365,7 +571,6 @@ fn test_real_world_scale() {
         }
     }
 
-    // src/utils: 60 files directly under utils
     for i in 0..60 {
         modules.push(Module {
             source: format!("src/utils/util{}.ts", i),
@@ -377,7 +582,6 @@ fn test_real_world_scale() {
         });
     }
 
-    // src/index.ts and src/App.tsx (root src files)
     modules.push(Module {
         source: "src/index.ts".to_string(),
         dependencies: vec![],
@@ -395,7 +599,6 @@ fn test_real_world_scale() {
         rules: None,
     });
 
-    // lib: 250 files (should not expand)
     for i in 0..250 {
         modules.push(Module {
             source: format!("lib/mod{}.ts", i),
@@ -407,7 +610,6 @@ fn test_real_world_scale() {
         });
     }
 
-    // More files in other top-level dirs to push past budget
     for i in 0..2700 {
         modules.push(Module {
             source: format!("vendor/pkg{}/index.js", i % 100),
@@ -422,15 +624,10 @@ fn test_real_world_scale() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // Algorithm uses direct children count for cost estimation:
-    // - "src" has 4 direct children (components, utils, index.ts, App.tsx) <= 50, can expand
-    // - "lib" has 250 direct children > 50, should NOT expand
-    // - "vendor" has 100 direct children > 50, should NOT expand
     assert!(dirs.contains(&"src".to_string()), "src has 4 direct children <= 50, should expand");
     assert!(!dirs.contains(&"lib".to_string()), "lib has 250 direct children > 50");
     assert!(!dirs.contains(&"vendor".to_string()), "vendor has 100 direct children > 50");
 
-    // Verify final node count stays under budget by simulating build_hybrid_nodes
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
     assert!(
@@ -441,17 +638,10 @@ fn test_real_world_scale() {
     );
 }
 
-/// Test that paths starting with ".." (relative paths) are handled correctly.
-/// When the only top-level directory is ".." with thousands of files,
-/// expansion should still find small subdirectories to expand without
-/// creating excessive intermediate directory nodes.
 #[test]
 fn test_relative_path_with_single_top_level_dir() {
-    // Simulate common-graph.json structure: all modules under "../wpsweb/..."
     let mut modules: Vec<Module> = vec![];
 
-    // Create a deep directory structure with small leaf directories
-    // ../wpsweb/client/app/applications/dbsheet/helpers has 20 files
     for i in 0..20 {
         modules.push(Module {
             source: format!("../wpsweb/client/app/applications/dbsheet/helpers/helper{}.ts", i),
@@ -463,7 +653,6 @@ fn test_relative_path_with_single_top_level_dir() {
         });
     }
 
-    // ../wpsweb/client/app/common has 30 files
     for i in 0..30 {
         modules.push(Module {
             source: format!("../wpsweb/client/app/common/util{}.ts", i),
@@ -475,7 +664,6 @@ fn test_relative_path_with_single_top_level_dir() {
         });
     }
 
-    // Add many more files to make ".." exceed budget
     for i in 0..500 {
         modules.push(Module {
             source: format!("../wpsweb/client/app/applications/spreadsheet/core/mod{}.ts", i),
@@ -490,15 +678,11 @@ fn test_relative_path_with_single_top_level_dir() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // Should have some expanded dirs (small leaf directories)
     assert!(!dirs.is_empty(), "Should expand some small leaf directories");
 
-    // Verify node count stays under budget
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
 
-    // Node count should be: 1 for ".." + expanded dirs' file nodes
-    // Should NOT create intermediate directory nodes
     assert!(
         nodes.len() <= TARGET_NODE_BUDGET,
         "Final node count {} should be under budget {}",
@@ -506,7 +690,6 @@ fn test_relative_path_with_single_top_level_dir() {
         TARGET_NODE_BUDGET
     );
 
-    // Directory nodes should be minimal (only ".." and possibly root)
     let dir_nodes: Vec<_> = nodes.iter().filter(|n| matches!(n.node_type, NodeType::Directory)).collect();
     assert!(
         dir_nodes.len() <= 3,

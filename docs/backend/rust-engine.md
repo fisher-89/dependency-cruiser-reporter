@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Rust preprocessing engine is the core of dependency-cruiser-reporter, responsible for parsing, aggregating, and transforming dependency-cruiser JSON output. It compiles to a native binary (`dcr-aggregate`) invoked by the CLI.
+The Rust preprocessing engine is the core of dependency-cruiser-reporter, responsible for parsing, aggregating, and transforming dependency-cruiser JSON output. It compiles to a WebAssembly module invoked by the CLI via JavaScript bindings.
 
 ## Dependencies
 
@@ -10,7 +10,9 @@ The Rust preprocessing engine is the core of dependency-cruiser-reporter, respon
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
 | `thiserror` | Error handling |
-| `clap` | CLI argument parsing (binary only) |
+| `wasm-bindgen` | JavaScript/WASM interop |
+| `serde-wasm-bindgen` | Serde integration for WASM |
+| `js-sys` | JavaScript standard library bindings |
 
 ## Module Structure
 
@@ -18,27 +20,28 @@ The Rust preprocessing engine is the core of dependency-cruiser-reporter, respon
 packages/rust/
 ├── Cargo.toml
 ├── src/
-│   ├── lib.rs           # Library entry point, re-exports types
+│   ├── lib.rs           # Library entry point, WASM exports
 │   ├── lib_test.rs      # Unit tests
 │   ├── types.rs         # Data structures (ProcessedGraph, GraphNode, etc.)
-│   ├── main.rs          # CLI entry point (dcr-aggregate binary)
 │   └── aggregate/       # Aggregation logic
 │       ├── mod.rs       # Module exports
 │       ├── edges.rs     # Edge extraction, aggregation, type detection
 │       ├── expand.rs    # Auto-compute expanded directories algorithm
 │       └── hybrid.rs    # Hybrid node building with combo generation
+│       └── violations.rs # Violation parsing and edge association
 ```
 
 The codebase is organized into modules:
 - `types.rs`: All data structures and error types
 - `aggregate/`: Processing logic for node aggregation and edge handling
+- `violations.rs`: Violation parsing and counting
 - `lib_test.rs`: Comprehensive unit tests
 
 ## Processing Flow
 
 ```mermaid
 flowchart TB
-    Input[Read input file] --> Parse[Parse JSON\nserde_json::from_str]
+    Input[JSON string input] --> Parse[Parse JSON\nserde_json::from_str]
     Parse --> Validate[Validate CruiseResult]
     Validate --> Violations[Extract violations]
     Violations --> ComputeExpanded{expanded_dirs\nprovided?}
@@ -49,7 +52,7 @@ flowchart TB
 
     BuildHybrid --> Combos[Generate combos\nwith single-child collapse]
     Combos --> EdgeProc[aggregate_edges]
-    EdgeProc --> Output[Serialize ProcessedGraph]
+    EdgeProc --> Output[Return ProcessedGraph]
 
     style Input fill:#e0f2fe,stroke:#0284c7
     style Output fill:#dcfce7,stroke:#16a34a
@@ -57,41 +60,57 @@ flowchart TB
 
 The hybrid aggregation approach allows mixing expanded (file-level) and collapsed (directory-level) nodes in the same graph.
 
-## Entry Point
+## Entry Points
 
-### Library API (`lib.rs`)
+### WASM API (`lib.rs`)
 
 ```rust
-pub fn parse_and_aggregate(
-    input: &Path,
+#[wasm_bindgen(js_name = aggregate)]
+pub fn wasm_aggregate(
+    content: &str,
     max_nodes: usize,
-    expanded_dirs: Option<Vec<String>>,
-) -> Result<ProcessedGraph, DcrError>
+    expanded_dirs: Option<Array>,
+) -> Result<JsValue, JsValue>
 ```
 
-Reads the input file, parses the JSON, determines which directories to expand, builds nodes/combos/edges, and returns the processed graph.
+WASM entry point called from JavaScript. Parses dependency-cruiser JSON string and returns the aggregated graph as a JavaScript object.
 
 **Parameters:**
 
 | Param | Type | Description |
 |-------|------|-------------|
-| `input` | `&Path` | Path to dependency-cruiser JSON file |
-| `max_nodes` | `usize` | Maximum edges in output (default: 5000) |
+| `content` | `&str` | dependency-cruiser JSON string |
+| `max_nodes` | `usize` | Maximum edges in output |
+| `expanded_dirs` | `Option<Array>` | JS array of directory paths to expand |
+
+### Core Logic (`lib.rs`)
+
+```rust
+pub fn aggregate_from_str(
+    content: &str,
+    max_nodes: usize,
+    expanded_dirs: Option<Vec<String>>,
+) -> Result<ProcessedGraph, DcrError>
+```
+
+Core aggregation logic used by both WASM and test targets. Parses JSON string and produces the aggregated graph.
+
+**Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `content` | `&str` | dependency-cruiser JSON string |
+| `max_nodes` | `usize` | Maximum edges in output |
 | `expanded_dirs` | `Option<Vec<String>>` | Directories to expand; `None` triggers auto-computation |
 
 When `expanded_dirs` is `None`, the `compute_auto_expanded_dirs` function determines which directories to expand based on a budget algorithm. Directories in this set show file-level nodes; others are collapsed to directory nodes.
 
-### CLI (`main.rs`)
-
-```bash
-dcr-aggregate --input <path> --output <path> [options]
-```
-
-Uses clap derive API. Parses arguments, calls `parse_and_aggregate`, and writes the output JSON.
-
 ## Error Handling
 
-> Error handling is defined in the [Rust package docs](../packages/rust.md#error-handling).
+`DcrError` has three variants:
+- **IoError** — file I/O failures (for compatibility, though not used in WASM mode)
+- **JsonError** — JSON parse failures (auto-converted from `serde_json::Error`)
+- **InvalidInput** — malformed input data (with descriptive message)
 
 ## Core Functions
 
@@ -132,19 +151,25 @@ flowchart LR
 Tests are in `lib_test.rs`:
 
 ```bash
-cargo test        # Run unit tests
+cargo test        # Run unit tests (native)
 cargo clippy      # Lint
 cargo fmt         # Format
+```
+
+WASM-specific tests use `wasm-bindgen-test` and run via `wasm-pack test --node`:
+
+```bash
+wasm-pack test --node  # Run WASM tests in Node.js
 ```
 
 ### Test Coverage
 
 | Test | Purpose |
 |------|---------|
-| `test_aggregation_level_selection` | Verify level determination from expanded_set |
+| `test_aggregate_from_str_*` | Verify JSON parsing and aggregation |
+| `test_wasm_aggregate_*` | Verify WASM bindings (wasm32 target only) |
 | `test_edge_type_detection` | Verify edge type classification |
-| `test_violation_counts` | Verify violation counting |
-| `test_edge_aggregation` | Verify edge weight aggregation |
+| `test_smart_expansion_*` | Verify auto-expand budget algorithm |
 
 ## Build Profiles
 
@@ -152,3 +177,22 @@ Release builds are optimized for:
 - Maximum optimization level (`opt-level = 3`)
 - Link-time optimization (`lto = true`)
 - Single codegen unit for better optimization
+
+## Build Commands
+
+```bash
+# Build WASM module (via wasm-pack)
+pnpm build:rust
+
+# Debug build
+cargo build
+
+# Run tests
+cargo test
+
+# Lint
+cargo clippy
+
+# Format check
+cargo fmt --check
+```

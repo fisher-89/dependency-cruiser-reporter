@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `packages/rust` package provides the native Rust preprocessing engine. It compiles to a CLI binary (`dcr-aggregate`) called by the `dep-report analyze` command for high-performance JSON processing. When the Rust binary is unavailable, the CLI falls back to a Node.js converter.
+The `packages/rust` package provides the WASM preprocessing engine. It compiles to a WebAssembly module loaded by the CLI for high-performance JSON processing. When the WASM module is unavailable, the CLI falls back to a Node.js converter.
 
 ## Package Structure
 
@@ -10,15 +10,16 @@ The `packages/rust` package provides the native Rust preprocessing engine. It co
 packages/rust/
 ├── Cargo.toml          # Rust configuration
 ├── src/
-│   ├── lib.rs          # Library entry point
+│   ├── lib.rs          # Library entry point, WASM exports
 │   ├── lib_test.rs     # Unit tests
 │   ├── types.rs        # Data structures
-│   ├── main.rs         # CLI entry point (dcr-aggregate binary)
 │   └── aggregate/      # Aggregation logic
 │       ├── mod.rs      # Module exports
 │       ├── edges.rs    # Edge processing
 │       ├── expand.rs   # Auto-expand algorithm
 │       └── hybrid.rs   # Hybrid node building
+│       └── violations.rs # Violation parsing
+└── pkg/                # Built WASM output (via wasm-pack)
 ```
 
 ## Architecture
@@ -26,14 +27,11 @@ packages/rust/
 ```mermaid
 flowchart TB
     subgraph Rust["Rust Source (src/)"]
-        Lib["lib.rs\nData structures + processing logic"]
-        Main["main.rs\nCLI entry point (dcr-aggregate)"]
-
-        Main --> Lib
+        Lib["lib.rs\nWASM exports + processing logic"]
     end
 
     subgraph Output["Build Artifacts"]
-        Binary["target/release/dcr-aggregate\nNative binary"]
+        WASM["pkg/\nwasm + JS bindings"]
     end
 
     Rust --> Output
@@ -41,13 +39,36 @@ flowchart TB
 
 ## Library API (`lib.rs`)
 
-### `parse_and_aggregate`
+### `wasm_aggregate`
 
-Main function that parses dependency-cruiser JSON and produces an aggregated graph:
+WASM entry point called from JavaScript:
 
 ```rust
-pub fn parse_and_aggregate(
-    input: &Path,
+#[wasm_bindgen(js_name = aggregate)]
+pub fn wasm_aggregate(
+    content: &str,
+    max_nodes: usize,
+    expanded_dirs: Option<Array>,
+) -> Result<JsValue, JsValue>
+```
+
+**Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `content` | `&str` | dependency-cruiser JSON string |
+| `max_nodes` | `usize` | Maximum edges in output |
+| `expanded_dirs` | `Option<Array>` | JS array of directory paths to expand |
+
+**Returns:** `Result<JsValue, JsValue>` — ProcessedGraph as a JS object, or error string
+
+### `aggregate_from_str`
+
+Core aggregation logic (public, for testing and reuse):
+
+```rust
+pub fn aggregate_from_str(
+    content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, DcrError>
@@ -57,8 +78,8 @@ pub fn parse_and_aggregate(
 
 | Param | Type | Description |
 |-------|------|-------------|
-| `input` | `&Path` | Path to dependency-cruiser JSON file |
-| `max_nodes` | `usize` | Maximum edges in output (default: 5000) |
+| `content` | `&str` | dependency-cruiser JSON string |
+| `max_nodes` | `usize` | Maximum edges in output |
 | `expanded_dirs` | `Option<Vec<String>>` | Directories to expand; `None` triggers auto-computation |
 
 **Returns:** `Result<ProcessedGraph, DcrError>`
@@ -68,27 +89,9 @@ When `expanded_dirs` is `None`, the function calls `compute_auto_expanded_dirs` 
 ### Error Handling
 
 `DcrError` has three variants:
-- **IoError** — file I/O failures (auto-converted from `std::io::Error`)
+- **IoError** — file I/O failures (for compatibility)
 - **JsonError** — JSON parse failures (auto-converted from `serde_json::Error`)
 - **InvalidInput** — malformed input data (with descriptive message)
-
-## CLI Binary (`main.rs`)
-
-### `dcr-aggregate`
-
-```bash
-dcr-aggregate --input <path> --output <path> [options]
-```
-
-**Options:**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-i, --input <path>` | (required) | Input dependency-cruiser JSON file |
-| `-o, --output <path>` | `graph.json` | Output graph JSON file |
-| `-m, --max-nodes <n>` | `5000` | Maximum edges in output |
-
-Built with [clap](https://docs.rs/clap) derive API.
 
 ## Cargo Configuration
 
@@ -98,13 +101,22 @@ Built with [clap](https://docs.rs/clap) derive API.
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
 | `thiserror` | Error handling |
-| `clap` | CLI argument parsing |
+| `wasm-bindgen` | JavaScript/WASM interop |
+| `serde-wasm-bindgen` | Serde integration for WASM |
+| `js-sys` | JavaScript standard library bindings |
+| `wasm-bindgen-test` | WASM test framework (optional, `wasm-test` feature) |
+
+**Features:**
+
+| Feature | Description |
+|---------|-------------|
+| `wasm-test` | Enable WASM-specific tests (`wasm-bindgen-test`) |
 
 ## Processing Flow
 
 ```mermaid
 flowchart TB
-    Input[Read input file] --> Parse[Parse JSON\nserde_json::from_str]
+    Input[JSON string input] --> Parse[Parse JSON\nserde_json::from_str]
     Parse --> Validate[Validate CruiseResult]
     Validate --> Violations[Extract violations]
     Violations --> ComputeExpanded{expanded_dirs\nprovided?}
@@ -115,7 +127,7 @@ flowchart TB
 
     BuildHybrid --> Combos[Generate combos\nwith single-child collapse]
     Combos --> EdgeProc[aggregate_edges]
-    EdgeProc --> Output[Serialize ProcessedGraph]
+    EdgeProc --> Output[Return ProcessedGraph]
 
     style Input fill:#e0f2fe,stroke:#0284c7
     style Output fill:#dcfce7,stroke:#16a34a
@@ -125,25 +137,28 @@ The hybrid aggregation approach supports mixing expanded directories (showing fi
 
 ## Integration with CLI
 
-The `dep-report analyze` command invokes the Rust binary for aggregation:
+The `dep-report open` command uses the WASM module for aggregation:
 
 1. The server's `/api/graph` endpoint calls `convertWithFallback`
-2. If Rust binary available, spawn with `--input`, `--output`, `--max-nodes`
-3. If binary unavailable or fails, fall back to Node.js `convertDcOutput`
+2. If WASM module available, calls `wasm_aggregate` via JS bindings
+3. If WASM unavailable or fails, falls back to Node.js `convertDcOutput`
 
 See [CLI Package](./cli.md) for details.
 
 ## Build Commands
 
 ```bash
+# Build WASM module (via wasm-pack)
+pnpm build:rust
+
 # Debug build
 cargo build
 
-# Release build (optimized)
-cargo build --release
-
-# Run tests
+# Run tests (native)
 cargo test
+
+# Run WASM tests
+wasm-pack test --node
 
 # Lint
 cargo clippy
@@ -156,9 +171,12 @@ cargo fmt --check
 
 | Test | Purpose |
 |------|---------|
-| `test_aggregation_level_selection` | Verify level determination from expanded_set |
+| `test_aggregate_from_str_*` | Verify JSON parsing and aggregation |
+| `test_wasm_aggregate_*` | Verify WASM bindings (wasm32 target only) |
 | `test_edge_type_detection` | Verify edge type classification |
-| `test_violation_counts` | Verify violation counting |
-| `test_edge_aggregation` | Verify edge weight aggregation |
+| `test_smart_expansion_*` | Verify auto-expand budget algorithm |
+| `test_is_path_expanded` | Verify path expansion checks |
+| `test_real_world_scale` | Verify budget with 3000+ modules |
+| `test_relative_path_with_single_top_level_dir` | Verify relative path handling |
 
 Tests are defined in `lib_test.rs`.

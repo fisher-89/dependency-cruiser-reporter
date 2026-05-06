@@ -6,5 +6,8 @@
   "scripts": {
     "test": "node --test && npx tsx --test buildGraphData.test.ts",
     "test:verbose": "node --test --test-name-pattern"
+  },
+  "dependencies": {
+    "@dcr-reporter/wasm": "workspace:*"
   }
 }

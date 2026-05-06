@@ -17,11 +17,10 @@
     }
   },
   "scripts": {
-    "build": "pnpm -r build && pnpm run build:rust",
-    "build:ts": "pnpm -r build",
+    "init": "pnpm run build:rust && pnpm i",
+    "build": "pnpm run build:rust && pnpm -r build",
     "build:rust": "node scripts/build-rust.js",
     "demo": "node packages/cli/dist/bin/cli.js analyze -p demo && node packages/cli/dist/bin/cli.js open -f demo-graph.json",
-    "demo:build": "pnpm run build:ts && pnpm run demo",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix"

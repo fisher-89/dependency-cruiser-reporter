@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
-import { convertWithFallback } from './convert.js';
+import { convert } from './convert.js';
 
 export interface ServerOptions {
   port: number;
@@ -67,7 +67,7 @@ export class DcrServer {
           : undefined;
 
         if (parsed.modules && Array.isArray(parsed.modules)) {
-          const graph = await convertWithFallback(content, this.maxNodes, expandedDirs);
+          const graph = await convert(content, this.maxNodes, expandedDirs);
           res.json(graph);
           return;
         }

@@ -39,7 +39,7 @@ importers:
       '@dcr-reporter/frontend':
         specifier: workspace:*
         version: link:../frontend
-      '@dcr-reporter/rust-wasm':
+      '@dcr-reporter/wasm':
         specifier: workspace:*
         version: link:../rust/pkg
       commander:
@@ -59,7 +59,11 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
-  packages/e2e: {}
+  packages/e2e:
+    dependencies:
+      '@dcr-reporter/wasm':
+        specifier: workspace:*
+        version: link:../rust/pkg
 
   packages/frontend:
     dependencies:

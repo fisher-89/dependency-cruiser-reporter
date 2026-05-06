@@ -6,17 +6,42 @@ pub use types::*;
 
 use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, extract_edges};
 use std::collections::HashSet;
-use std::path::Path;
 
 use violations::{build_edge_violations, compute_violation_counts, parse_violations};
 
 // Re-export for tests
 pub use aggregate::is_path_expanded;
 
+use js_sys::Array;
+use wasm_bindgen::prelude::*;
+
+/// WASM entry point: aggregate dependency-cruiser JSON output
+///
+/// @param content - dependency-cruiser JSON string
+/// @param maxNodes - maximum number of nodes in the output graph
+/// @param expandedDirs - optional list of directory paths to expand (show files)
+/// @returns ProcessedGraph with nodes, edges, combos, meta, and violations
+
+#[wasm_bindgen(js_name = aggregate)]
+pub fn wasm_aggregate(
+    content: &str,
+    #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
+    #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Array>,
+) -> Result<JsValue, JsValue> {
+    let expanded =
+        expanded_dirs.map(|arr| arr.iter().filter_map(|v| v.as_string()).collect::<Vec<_>>());
+
+    aggregate_from_str(content, max_nodes, expanded)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .and_then(|result| {
+            serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
+        })
+}
+
 /// Core aggregation logic - parses JSON string and produces aggregated graph
 ///
 /// This is the shared implementation used by both WASM and binary targets.
-fn aggregate_from_str(
+pub fn aggregate_from_str(
     content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
@@ -74,20 +99,6 @@ fn aggregate_from_str(
         meta,
         violations,
     })
-}
-
-/// Parse dependency-cruiser JSON and aggregate graph (file-based, for binary target)
-///
-/// When `expanded_dirs` is provided, directories in that set are expanded (show files),
-/// while directories not in that set are collapsed (show as single directory node).
-/// When `expanded_dirs` is None, it's auto-computed based on module count thresholds.
-pub fn parse_and_aggregate(
-    input: &Path,
-    max_nodes: usize,
-    expanded_dirs: Option<Vec<String>>,
-) -> Result<ProcessedGraph, DcrError> {
-    let content = std::fs::read_to_string(input)?;
-    aggregate_from_str(&content, max_nodes, expanded_dirs)
 }
 
 #[cfg(test)]

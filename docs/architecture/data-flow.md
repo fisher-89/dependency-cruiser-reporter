@@ -8,9 +8,9 @@ flowchart TB
     Scan --> RawFile[Raw JSON file]
     RawFile --> Server[HTTP Server]
     Server --> Detect{Format?}
-    Detect -->|raw dc| Rust{Rust binary\navailable?}
-    Rust -->|Yes| Native[Native Rust\nparse_and_aggregate\nwith hybrid aggregation]
-    Rust -->|No| Node[Node.js\nconvertDcOutput]
+    Detect -->|raw dc| WASM{WASM module\navailable?}
+    WASM -->|Yes| Native[WASM aggregate_from_str\nwith hybrid aggregation]
+    WASM -->|No| Node[Node.js\nconvertDcOutput]
     Detect -->|ProcessedGraph| Direct[Return as-is]
     Native --> Output[ProcessedGraph\nnodes + combos + edges]
     Node --> Output
@@ -32,7 +32,7 @@ flowchart LR
 
     subgraph Open["Open Mode (dep-report open)"]
         File["raw-graph.json"] --> Server["Express server"]
-        Server --> Convert["convertWithFallback()\nRust or Node.js"]
+        Server --> Convert["convertWithFallback()\nWASM or Node.js"]
         Convert --> Browser["Browser"]
     end
 ```
@@ -43,10 +43,10 @@ flowchart LR
 
 **After:** `analyze` preserves raw dependency-cruiser JSON. Conversion happens on-demand when frontend requests `/api/graph`:
 - Server detects file format (raw dc vs ProcessedGraph)
-- Raw format: converts using `convertWithFallback` (Rust preferred, Node.js fallback)
+- Raw format: converts using `convertWithFallback` (WASM preferred, Node.js fallback)
 - ProcessedGraph: uses as-is
 
-The Rust engine now uses **hybrid aggregation** controlled by `expanded_dirs`:
+The WASM engine now uses **hybrid aggregation** controlled by `expanded_dirs`:
 - Directories in `expanded_dirs` show file-level nodes
 - Other directories are collapsed to single nodes
 - Auto-computed when not provided (budget algorithm targeting ~200 nodes)

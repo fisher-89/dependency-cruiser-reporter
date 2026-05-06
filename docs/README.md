@@ -12,13 +12,13 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 - [Architecture Overview](architecture/overview.md) — Three-component system, key files, design decisions
   - `convertDcOutput` `Express server` `React SPA` `GraphNode` `GraphEdge` `GraphMeta` `GraphCombo` `ViolationInfo` `dcr-aggregate` `expanded_dirs` `packages/cli` `packages/rust` `packages/frontend`
 - [Data Flow](architecture/data-flow.md) — Pipeline from dependency-cruiser JSON to ProcessedGraph
-  - `parse_and_aggregate` `DcOutput` `DcModule` `DcDependency` `CruiseResult` `RawViolation` `/api/config` `POST /api/graph` `expandedDirs` `graph.json` `cruise()` `spawn dcr-aggregate`
+  - `aggregate_from_str` `wasm_aggregate` `DcOutput` `DcModule` `DcDependency` `CruiseResult` `RawViolation` `/api/config` `POST /api/graph` `expandedDirs` `graph.json` `cruise()`
 - [Aggregation Strategy](architecture/aggregation.md) — Hybrid aggregation, expanded directories, edge compression
   - `hybrid aggregation` `expanded_dirs` `compute_auto_expanded_dirs` `TARGET_NODE_BUDGET: 200` `combo generation` `single-child collapse` `edge compression` `circular dependencies`
 
 ### Backend
-- [Rust Engine](backend/rust-engine.md) — Binary design, modules, error handling, build
-  - `parse_and_aggregate` `DcrError: IoError/JsonError/InvalidInput` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `cargo test` `cargo clippy`
+- [Rust Engine](backend/rust-engine.md) — WASM module design, modules, error handling, build
+  - `aggregate_from_str` `wasm_aggregate` `DcrError: IoError/JsonError/InvalidInput` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `cargo test` `cargo clippy`
 - [Data Structures](backend/data-structures.md) — Shared type contracts (Rust ↔ TypeScript)
   - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/orphan/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight/circular` `GraphMeta: expanded_dirs` `ViolationInfo` `NodeType` `EdgeType` `DcModule` `DcDependency`
 - [Rust Package](packages/rust.md) — Library API, CLI binary, Cargo config
@@ -57,7 +57,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 | Looking for... | Go to |
 |---|---|
 | `ProcessedGraph`, `GraphNode`, `GraphEdge`, type contracts | [Data Structures](backend/data-structures.md) |
-| `parse_and_aggregate`, `dcr-aggregate`, `expanded_dirs` | [Rust Engine](backend/rust-engine.md) |
+| `aggregate_from_str`, `wasm_aggregate`, `expanded_dirs` | [Rust Engine](backend/rust-engine.md) |
 | `convertDcOutput`, Node.js fallback | [CLI Package](packages/cli.md) |
 | `dep-report analyze/open`, CLI options | [CLI Reference](usage/cli.md) |
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Aggregation Strategy](architecture/aggregation.md) |

@@ -41,21 +41,12 @@ console.log(`Using wasm-pack: ${wasmPack}`);
 const result = spawnSync(wasmPack, [
   'build',
   '--target', 'nodejs',
+  '--scope', 'dcr-reporter',
   '--out-dir', 'pkg',
-  '--out-name', 'dcr_reporter',
 ], {
   cwd: rustDir,
   stdio: 'inherit',
   shell: process.platform === 'win32'
 });
-
-if (result.status === 0) {
-  // Fix package name to match workspace import
-  const pkgJsonPath = path.join(rustDir, 'pkg', 'package.json');
-  const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
-  pkgJson.name = '@dcr-reporter/rust-wasm';
-  fs.writeFileSync(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + '\n');
-  console.log('Fixed package name to @dcr-reporter/rust-wasm');
-}
 
 process.exit(result.status || 0);
