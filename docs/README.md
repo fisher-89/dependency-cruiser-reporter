@@ -20,7 +20,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 - [Rust Engine](backend/rust-engine.md) — Binary design, modules, error handling, build
   - `parse_and_aggregate` `DcrError: IoError/JsonError/InvalidInput` `build_file_nodes` `build_directory_nodes` `build_package_nodes` `aggregate_edges` `detect_edge_type` `cargo test` `cargo clippy`
 - [Data Structures](backend/data-structures.md) — Shared type contracts (Rust ↔ TypeScript)
-  - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/children` `GraphEdge: source/target/edge_type/weight` `GraphMeta` `ViolationInfo` `NodeType` `EdgeType` `AggregationLevel` `DcModule` `DcDependency`
+  - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight` `GraphMeta` `ViolationInfo` `NodeType` `EdgeType` `AggregationLevel` `DcModule` `DcDependency`
 - [Rust Package](packages/rust.md) — Library API, CLI binary, Cargo config
   - `dcr-aggregate` `--input` `--output` `--max-nodes` `--level` `target/release/dcr-aggregate` `cargo build --release` `test_aggregation_level_selection`
 

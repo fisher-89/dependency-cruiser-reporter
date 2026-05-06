@@ -72,7 +72,7 @@ pub fn parse_and_aggregate(
     let expanded_set: HashSet<&str> = expanded.iter().map(|s| s.as_str()).collect();
 
     // Build nodes using hybrid aggregation based on expanded_dirs
-    let (nodes, edge_map, agg_level) =
+    let (nodes, combos, edge_map, agg_level) =
         build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
 
     // Aggregate edges
@@ -89,6 +89,7 @@ pub fn parse_and_aggregate(
     Ok(ProcessedGraph {
         nodes,
         edges,
+        combos,
         meta,
         violations,
     })

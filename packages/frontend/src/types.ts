@@ -1,6 +1,7 @@
 export interface ProcessedGraph {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  combos: GraphCombo[];
   meta: GraphMeta;
   violations: ViolationInfo[];
 }
@@ -13,6 +14,13 @@ export interface GraphNode {
   violation_count: number;
   orphan?: boolean;
   children?: string[];
+  combo?: string;
+}
+
+export interface GraphCombo {
+  id: string;
+  label: string;
+  combo?: string;
 }
 
 export interface GraphEdge {

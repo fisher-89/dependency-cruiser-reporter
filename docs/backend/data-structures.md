@@ -9,6 +9,7 @@ classDiagram
     class ProcessedGraph {
         +GraphNode[] nodes
         +GraphEdge[] edges
+        +GraphCombo[] combos
         +GraphMeta meta
         +ViolationInfo[] violations
     }
@@ -20,6 +21,7 @@ classDiagram
         +string path
         +number violation_count
         +string[] children
+        +string combo
     }
 
     class GraphEdge {
@@ -27,6 +29,12 @@ classDiagram
         +string target
         +EdgeType edge_type
         +number weight
+    }
+
+    class GraphCombo {
+        +string id
+        +string label
+        +string combo
     }
 
     class GraphMeta {
@@ -46,8 +54,11 @@ classDiagram
 
     ProcessedGraph --> GraphNode : nodes
     ProcessedGraph --> GraphEdge : edges
+    ProcessedGraph --> GraphCombo : combos
     ProcessedGraph --> GraphMeta : meta
     ProcessedGraph --> ViolationInfo : violations
+    GraphNode --> GraphCombo : combo
+    GraphCombo --> GraphCombo : combo (parent)
 ```
 
 ## Core Types
@@ -58,6 +69,7 @@ classDiagram
 |-------|------|-------------|
 | `nodes` | `GraphNode[]` | All nodes in the graph |
 | `edges` | `GraphEdge[]` | All edges (dependencies) in the graph |
+| `combos` | `GraphCombo[]` | Grouping containers for visual hierarchy (G6 combos) |
 | `meta` | `GraphMeta` | Aggregation metadata and statistics |
 | `violations` | `ViolationInfo[]` | Dependency rule violations |
 
@@ -71,6 +83,17 @@ classDiagram
 | `path` | `string?` | Original file path for drill-down navigation; omitted when node represents an aggregated group |
 | `violation_count` | `number` | Number of violations involving this node |
 | `children` | `string[]?` | IDs of child nodes; only present when node is aggregated (directory/package level) |
+| `combo` | `string?` | ID of parent combo for visual grouping |
+
+### GraphCombo
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier with `combo:` prefix (e.g., `combo:src/components`) |
+| `label` | `string` | Display name (directory name) |
+| `combo` | `string?` | ID of parent combo; `null` for root combo |
+
+Combos are pre-computed by the Rust backend with single-child collapsing applied. This ensures G6 renders a clean hierarchy without overlapping containers.
 
 ### GraphEdge
 

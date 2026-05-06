@@ -13,6 +13,7 @@ interface ProcessedGraph {
     violation_count: number;
     orphan?: boolean;
     children?: string[];
+    combo?: string;
   }[];
   edges: {
     source: string;
@@ -20,6 +21,11 @@ interface ProcessedGraph {
     edge_type: 'local' | 'npm' | 'core' | 'dynamic';
     weight: number;
     circular?: boolean;
+  }[];
+  combos: {
+    id: string;
+    label: string;
+    combo?: string;
   }[];
   meta: {
     original_node_count: number;

@@ -58,8 +58,10 @@ export function DependencyGraph({ data, onToggleDir }: Props) {
       const comboId = event.target.id;
       // Combo IDs are prefixed with "combo:", extract the actual path
       if (typeof comboId === 'string' && comboId.startsWith('combo:')) {
-        const dirPath = comboId.slice(6); // Remove "combo:" prefix
-        onToggleDir(dirPath);
+        const rawPath = comboId.slice(6); // Remove "combo:" prefix
+        // Skip root combo - it's a synthetic container with no real directory
+        if (rawPath === 'root') return;
+        onToggleDir(rawPath);
       }
     },
     [onToggleDir]
@@ -140,7 +142,7 @@ export function DependencyGraph({ data, onToggleDir }: Props) {
 
     const onResize = () => {
       if (containerRef.current) {
-        graph.resize(containerRef.current.clientWidth, 600);
+        graph.resize();
       }
     };
     window.addEventListener('resize', onResize);

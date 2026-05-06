@@ -434,7 +434,7 @@ fn test_real_world_scale() {
     // Verify final node count stays under budget by simulating build_hybrid_nodes
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let all_edges: Vec<RawEdge> = vec![];
-    let (nodes, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
+    let (nodes, _, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
     assert!(
         nodes.len() <= TARGET_NODE_BUDGET + 50,
         "Final node count {} should be close to budget {}",
@@ -498,7 +498,7 @@ fn test_relative_path_with_single_top_level_dir() {
     // Verify node count stays under budget
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let all_edges: Vec<RawEdge> = vec![];
-    let (nodes, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
+    let (nodes, _, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
 
     // Node count should be: 1 for ".." + expanded dirs' file nodes
     // Should NOT create intermediate directory nodes

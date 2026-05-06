@@ -15,6 +15,7 @@ pub enum DcrError {
 pub struct ProcessedGraph {
     pub nodes: Vec<GraphNode>,
     pub edges: Vec<GraphEdge>,
+    pub combos: Vec<GraphCombo>,
     pub meta: GraphMeta,
     pub violations: Vec<ViolationInfo>,
 }
@@ -31,6 +32,16 @@ pub struct GraphNode {
     pub orphan: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub children: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub combo: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphCombo {
+    pub id: String,
+    pub label: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub combo: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
