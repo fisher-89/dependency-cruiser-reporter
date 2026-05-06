@@ -1,14 +1,14 @@
 mod aggregate;
 mod types;
+mod violations;
 
 pub use types::*;
 
-use aggregate::{
-    aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, compute_violation_counts,
-    extract_edges,
-};
+use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, extract_edges};
 use std::collections::HashSet;
 use std::path::Path;
+
+use violations::{compute_violation_counts, parse_violations};
 
 // Re-export for tests
 pub use aggregate::is_path_expanded;
@@ -34,7 +34,7 @@ pub fn parse_and_aggregate(
     // Extract edges from modules' dependencies (source is the module, resolved is the target)
     let all_edges = extract_edges(&modules);
 
-    // Collect violations from summary
+    // Collect and parse violations from summary
     let raw_violations = cruise
         .summary
         .as_ref()
@@ -43,26 +43,7 @@ pub fn parse_and_aggregate(
         .unwrap_or(&[]);
     let violation_count = raw_violations.len();
 
-    let violations: Vec<ViolationInfo> = raw_violations
-        .iter()
-        .filter_map(|v| {
-            Some(ViolationInfo {
-                from: v.from.clone()?,
-                to: v.to.clone()?,
-                rule: v
-                    .rule
-                    .as_ref()
-                    .and_then(|r| r.name.clone())
-                    .unwrap_or_default(),
-                severity: v
-                    .rule
-                    .as_ref()
-                    .and_then(|r| r.severity.clone())
-                    .unwrap_or_else(|| "warn".to_string()),
-                message: v.message.clone(),
-            })
-        })
-        .collect();
+    let violations = parse_violations(raw_violations);
 
     // Count violation per module
     let violation_counts = compute_violation_counts(&violations);

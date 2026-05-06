@@ -28,16 +28,6 @@ pub fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
     edges
 }
 
-/// Count violations per module (both from and to).
-pub fn compute_violation_counts(violations: &[crate::types::ViolationInfo]) -> HashMap<String, u32> {
-    let mut counts: HashMap<String, u32> = HashMap::new();
-    for v in violations {
-        *counts.entry(v.from.clone()).or_default() += 1;
-        *counts.entry(v.to.clone()).or_default() += 1;
-    }
-    counts
-}
-
 /// Aggregate edge map into sorted, truncated GraphEdge list.
 pub fn aggregate_edges(
     edge_map: &HashMap<(String, String), EdgeInfo>,
