@@ -20,7 +20,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 - [Rust Engine](backend/rust-engine.md) — Binary design, modules, error handling, build
   - `parse_and_aggregate` `DcrError: IoError/JsonError/InvalidInput` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `cargo test` `cargo clippy`
 - [Data Structures](backend/data-structures.md) — Shared type contracts (Rust ↔ TypeScript)
-  - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/orphan/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight/circular` `GraphMeta: expanded_dirs` `ViolationInfo` `NodeType` `EdgeType` `AggregationLevel` `DcModule` `DcDependency`
+  - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/orphan/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight/circular` `GraphMeta: expanded_dirs` `ViolationInfo` `NodeType` `EdgeType` `DcModule` `DcDependency`
 - [Rust Package](packages/rust.md) — Library API, CLI binary, Cargo config
   - `dcr-aggregate` `--input` `--output` `--max-nodes` `expanded_dirs` `parse_and_aggregate` `target/release/dcr-aggregate` `cargo build --release` `test_aggregation_level_selection`
 
@@ -61,7 +61,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 | `convertDcOutput`, Node.js fallback | [CLI Package](packages/cli.md) |
 | `dep-report analyze/open`, CLI options | [CLI Reference](usage/cli.md) |
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Aggregation Strategy](architecture/aggregation.md) |
-| `EdgeType`, `NodeType`, `AggregationLevel` | [Data Structures](backend/data-structures.md) |
+| `EdgeType`, `NodeType` | [Data Structures](backend/data-structures.md) |
 | `createServer`, `/api/config`, `POST /api/graph` | [CLI Package](packages/cli.md) |
 | `AntV G6`, `DependencyGraph`, layout | [Frontend Package](packages/frontend.md) |
 | Graph/Report/Metrics views | [Views](frontend/views.md) |

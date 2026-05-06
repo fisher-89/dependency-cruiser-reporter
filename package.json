@@ -28,6 +28,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "@types/node": "^20.19.39",
     "@voidzero-dev/vite-plus-win32-x64-msvc": "^0.1.14",
     "typescript": "^5.5.0",
     "vite-plus": "catalog:"

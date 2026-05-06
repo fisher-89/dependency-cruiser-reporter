@@ -62,7 +62,9 @@ export class DcrServer {
       try {
         const content = readFileSync(this.graphFile, 'utf-8');
         const parsed = JSON.parse(content);
-        const expandedDirs: string[] | undefined = req.body?.expanded_dirs?.length ? req.body.expanded_dirs : undefined;
+        const expandedDirs: string[] | undefined = req.body?.expanded_dirs?.length
+          ? req.body.expanded_dirs
+          : undefined;
 
         if (parsed.modules && Array.isArray(parsed.modules)) {
           const graph = convertWithFallback(content, this.maxNodes, expandedDirs);

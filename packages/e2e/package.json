@@ -6,8 +6,5 @@
   "scripts": {
     "test": "node --test && npx tsx --test buildGraphData.test.ts",
     "test:verbose": "node --test --test-name-pattern"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.0"
   }
 }

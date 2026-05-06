@@ -1,6 +1,6 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert";
-import { spawn, spawnSync, execSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync, rmSync, readFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -125,7 +125,6 @@ describe("Rust Binary Tests", () => {
 		assert.ok(graph.nodes, "Should have nodes");
 		assert.ok(graph.edges, "Should have edges");
 		assert.ok(graph.meta, "Should have meta");
-		assert.ok(graph.meta.aggregation_level, "Should have aggregation level");
 	});
 });
 
@@ -146,7 +145,6 @@ describe("Aggregation Tests", () => {
 		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
 		const graph = JSON.parse(readFileSync(outputPath, "utf-8"));
 
-		assert.strictEqual(graph.meta.aggregation_level, "file");
 		assert.strictEqual(graph.meta.original_node_count, graph.meta.aggregated_node_count);
 	});
 
@@ -168,7 +166,6 @@ describe("Aggregation Tests", () => {
 		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
 		const graph = JSON.parse(readFileSync(outputPath, "utf-8"));
 
-		assert.strictEqual(graph.meta.aggregation_level, "directory");
 		assert.ok(
 			graph.meta.aggregated_node_count <= graph.meta.original_node_count,
 			"Aggregated count should be <= original"
@@ -204,7 +201,6 @@ describe("Open Command Tests", () => {
 			assert.ok(graph.nodes, "should have nodes array");
 			assert.ok(graph.edges, "should have edges array");
 			assert.ok(graph.meta, "should have meta object");
-			assert.ok(graph.meta.aggregation_level, "should have aggregation_level");
 		} finally {
 			proc.kill();
 		}

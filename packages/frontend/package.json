@@ -8,9 +8,9 @@
     "build": "tsc && biome check --write src/ && vp build",
     "preview": "vp preview",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src/",
-    "lint:fix": "biome check src/ --write",
-    "format": "biome format --write src/",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
     "lint-deps": "dependency-cruiser --config .dependency-cruiser.json src/",
     "lint-deps-all": "dependency-cruiser --config .dependency-cruiser.json src/ -I",
     "test:e2e": "playwright test",
@@ -35,8 +35,5 @@
   "engines": {
     "node": ">=18"
   },
-  "files": [
-    "bin/",
-    "dist/"
-  ]
+  "files": ["bin/", "dist/"]
 }

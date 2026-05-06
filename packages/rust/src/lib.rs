@@ -8,7 +8,7 @@ use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs,
 use std::collections::HashSet;
 use std::path::Path;
 
-use violations::{compute_violation_counts, build_edge_violations, parse_violations};
+use violations::{build_edge_violations, compute_violation_counts, parse_violations};
 
 // Re-export for tests
 pub use aggregate::is_path_expanded;
@@ -57,16 +57,15 @@ pub fn parse_and_aggregate(
     let expanded_set: HashSet<&str> = expanded.iter().map(|s| s.as_str()).collect();
 
     // Build nodes using hybrid aggregation based on expanded_dirs
-    let (nodes, combos, edge_map, agg_level) =
-        build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set, &edge_violations);
+    let (nodes, combos, node_lookup) =
+        build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
 
     // Aggregate edges
-    let edges = aggregate_edges(&edge_map, max_nodes);
+    let edges = aggregate_edges(&all_edges, &node_lookup, &edge_violations, max_nodes);
 
     let meta = GraphMeta {
         original_node_count: module_count,
         aggregated_node_count: nodes.len(),
-        aggregation_level: agg_level,
         total_violations: violation_count,
         expanded_dirs: Some(expanded),
     };

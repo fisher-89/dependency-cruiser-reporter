@@ -48,7 +48,7 @@ function makeGraph(overrides: Partial<ProcessedGraph> = {}): ProcessedGraph {
     nodes: [],
     edges: [],
     combos: [],
-    meta: { original_node_count: 0, aggregated_node_count: 0, aggregation_level: "file", total_violations: 0 },
+    meta: { original_node_count: 0, aggregated_node_count: 0, total_violations: 0 },
     violations: [],
     ...overrides,
   };

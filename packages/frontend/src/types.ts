@@ -37,7 +37,6 @@ export interface GraphEdge {
 export interface GraphMeta {
   original_node_count: number;
   aggregated_node_count: number;
-  aggregation_level: AggregationLevel;
   total_violations: number;
   expanded_dirs?: string[];
 }
@@ -53,7 +52,5 @@ export interface ViolationInfo {
 export type NodeType = 'file' | 'directory' | 'package';
 
 export type EdgeType = 'local' | 'npm' | 'core' | 'dynamic';
-
-export type AggregationLevel = 'file' | 'directory' | 'package' | 'root';
 
 export type ViewMode = 'graph' | 'report' | 'metrics';

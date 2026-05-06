@@ -1,8 +1,15 @@
-import { existsSync, readFileSync, writeFileSync, mkdtempSync, unlinkSync, rmdirSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  rmdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 interface ProcessedGraph {
   nodes: {
@@ -33,7 +40,6 @@ interface ProcessedGraph {
   meta: {
     original_node_count: number;
     aggregated_node_count: number;
-    aggregation_level: 'file' | 'directory' | 'package' | 'root';
     total_violations: number;
     expanded_dirs?: string[];
   };
@@ -57,7 +63,7 @@ function findDcrAggregateBinary(): string | null {
     if (existsSync(releaseBin)) return releaseBin;
     const debugBin = resolve(thisDir, `../../../rust/target/debug/dcr-aggregate${ext}`);
     if (existsSync(debugBin)) return debugBin;
-  } catch { }
+  } catch {}
 
   return null;
 }
@@ -66,7 +72,11 @@ function findDcrAggregateBinary(): string | null {
  * Convert raw dependency-cruiser JSON to ProcessedGraph using Rust binary.
  * Throws an error if Rust binary is unavailable or fails.
  */
-export function convertWithFallback(dcJson: string, maxNodes = 200, expandedDirs?: string[]): ProcessedGraph {
+export function convertWithFallback(
+  dcJson: string,
+  maxNodes = 200,
+  expandedDirs?: string[]
+): ProcessedGraph {
   const binary = findDcrAggregateBinary();
 
   if (!binary) {
@@ -92,11 +102,11 @@ export function convertWithFallback(dcJson: string, maxNodes = 200, expandedDirs
       unlinkSync(tmpInput);
       unlinkSync(tmpOutput);
       rmdirSync(tmpDir);
-    } catch { }
+    } catch {}
     throw new Error(`Rust binary failed: ${result.stderr || 'Unknown error'}`);
   }
 
-  console.log('convert in rust\n', result.stdout)
+  console.log('convert in rust\n', result.stdout);
 
   const output = readFileSync(tmpOutput, 'utf-8');
   // Clean up temp files
@@ -104,7 +114,7 @@ export function convertWithFallback(dcJson: string, maxNodes = 200, expandedDirs
     unlinkSync(tmpInput);
     unlinkSync(tmpOutput);
     rmdirSync(tmpDir);
-  } catch { }
+  } catch {}
 
   return JSON.parse(output) as ProcessedGraph;
 }

@@ -40,7 +40,6 @@ classDiagram
     class GraphMeta {
         +number original_node_count
         +number aggregated_node_count
-        +AggregationLevel aggregation_level
         +number total_violations
     }
 
@@ -112,7 +111,6 @@ Combos are pre-computed by the Rust backend using hybrid aggregation. Single-chi
 |-------|------|-------------|
 | `original_node_count` | `number` | Nodes before aggregation |
 | `aggregated_node_count` | `number` | Nodes after aggregation |
-| `aggregation_level` | `AggregationLevel` | Controls the granularity of the entire graph |
 | `total_violations` | `number` | Total violation count |
 | `expanded_dirs` | `string[]?` | List of directories expanded in the graph |
 
@@ -147,17 +145,8 @@ classDiagram
         dynamic
     }
 
-    class AggregationLevel {
-        <<enumeration>>
-        file
-        directory
-        package
-        root
-    }
-
     GraphNode --> NodeType : node_type
     GraphEdge --> EdgeType : edge_type
-    GraphMeta --> AggregationLevel : aggregation_level
 ```
 
 ### NodeType
@@ -176,20 +165,6 @@ classDiagram
 | `npm` | External npm package |
 | `core` | Node.js built-in |
 | `dynamic` | Dynamic import |
-
-### AggregationLevel
-
-| Value | Description |
-|-------|-------------|
-| `file` | All directories expanded, showing individual files |
-| `directory` | Some directories expanded, others collapsed |
-| `package` | No directories expanded, package-level grouping |
-| `root` | Single root node |
-
-The aggregation level is derived from the `expanded_dirs` set:
-- All modules have expanded parents → `file`
-- Mixed expanded/collapsed → `directory`
-- No directories expanded → `package`
 
 ## Input Types
 
@@ -230,7 +205,7 @@ The snake_case convention is critical because it defines the JSON contract betwe
 ### Rust
 
 ```rust
-#[serde(rename_all = "lowercase")]  // NodeType, EdgeType, AggregationLevel
+#[serde(rename_all = "lowercase")]  // NodeType, EdgeType
 #[serde(skip_serializing_if = "Option::is_none")]  // Optional fields
 #[serde(default)]  // Missing fields use default values
 ```
@@ -242,5 +217,4 @@ Use snake_case to match JSON output:
 ```typescript
 node_type  // NOT nodeType
 edge_type  // NOT edgeType
-aggregation_level  // NOT aggregationLevel
 ```

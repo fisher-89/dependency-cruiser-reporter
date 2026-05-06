@@ -64,7 +64,6 @@ pub struct GraphEdge {
 pub struct GraphMeta {
     pub original_node_count: usize,
     pub aggregated_node_count: usize,
-    pub aggregation_level: AggregationLevel,
     pub total_violations: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub expanded_dirs: Option<Vec<String>>,
@@ -94,15 +93,6 @@ pub enum EdgeType {
     Npm,
     Core,
     Dynamic,
-}
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
-pub enum AggregationLevel {
-    File,
-    Directory,
-    Package,
-    Root,
 }
 
 // dependency-cruiser JSON input structures

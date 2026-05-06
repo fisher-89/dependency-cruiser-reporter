@@ -1,19 +1,7 @@
-use crate::types::{AggregationLevel, GraphCombo, GraphNode, Module, NodeType};
-use crate::violations::EdgeViolationCounts;
+use crate::types::{GraphCombo, GraphNode, Module, NodeType};
 use std::collections::{HashMap, HashSet};
 
-use super::edges::RawEdge;
-
 const COMBO_PREFIX: &str = "combo:";
-
-pub struct EdgeInfo {
-    pub dep_types: Vec<String>,
-    pub count: u32,
-    pub has_circular: bool,
-    pub error_count: u32,
-    pub warn_count: u32,
-    pub info_count: u32,
-}
 
 /// Build nodes and combos using hybrid aggregation: directories in expanded_set show files,
 /// directories not in expanded_set are collapsed to directory nodes.
@@ -23,31 +11,9 @@ pub struct EdgeInfo {
 /// ancestor combo that has multiple children (or root).
 pub fn build_hybrid_nodes(
     modules: &[Module],
-    edges: &[RawEdge],
     violation_counts: &HashMap<String, u32>,
     expanded_set: &HashSet<&str>,
-    edge_violations: &HashMap<(String, String), EdgeViolationCounts>,
-) -> (
-    Vec<GraphNode>,
-    Vec<GraphCombo>,
-    HashMap<(String, String), EdgeInfo>,
-    AggregationLevel,
-) {
-    // Determine aggregation level from expanded_set
-    let agg_level = if expanded_set.is_empty() {
-        AggregationLevel::Package
-    } else {
-        let all_expanded = modules.iter().all(|m| {
-            let parent = get_parent_directory(&m.source);
-            parent.is_empty() || is_path_expanded(&m.source, expanded_set)
-        });
-        if all_expanded {
-            AggregationLevel::File
-        } else {
-            AggregationLevel::Directory
-        }
-    };
-
+) -> (Vec<GraphNode>, Vec<GraphCombo>, HashMap<String, String>) {
     let root_combo_id = format!("{}root", COMBO_PREFIX);
 
     // Map each module source to its node ID (file path or directory path)
@@ -151,7 +117,11 @@ pub fn build_hybrid_nodes(
         };
 
         // Register all ancestor combos
-        let dir_parts: Vec<&str> = if dir == "root" { vec![] } else { dir.split('/').collect() };
+        let dir_parts: Vec<&str> = if dir == "root" {
+            vec![]
+        } else {
+            dir.split('/').collect()
+        };
         for i in 1..=dir_parts.len() {
             let id = format!("{}{}", COMBO_PREFIX, dir_parts[..i].join("/"));
             if !combo_map.contains_key(&id) {
@@ -267,41 +237,7 @@ pub fn build_hybrid_nodes(
         depth_a.cmp(&depth_b)
     });
 
-    // Build edge map
-    let mut edge_map: HashMap<(String, String), EdgeInfo> = HashMap::new();
-    for e in edges {
-        let src_node = node_lookup
-            .get(&e.from)
-            .cloned()
-            .unwrap_or_else(|| e.from.clone());
-        let tgt_node = node_lookup
-            .get(&e.to)
-            .cloned()
-            .unwrap_or_else(|| e.to.clone());
-        if src_node != tgt_node {
-            let info = edge_map.entry((src_node.clone(), tgt_node.clone())).or_insert(EdgeInfo {
-                dep_types: Vec::new(),
-                count: 0,
-                has_circular: false,
-                error_count: 0,
-                warn_count: 0,
-                info_count: 0,
-            });
-            info.dep_types.extend(e.dep_types.clone());
-            info.count += 1;
-            if e.circular {
-                info.has_circular = true;
-            }
-            // Aggregate violations from file-level edge to directory-level edge
-            if let Some(viol_counts) = edge_violations.get(&(e.from.clone(), e.to.clone())) {
-                info.error_count += viol_counts.error_count;
-                info.warn_count += viol_counts.warn_count;
-                info.info_count += viol_counts.info_count;
-            }
-        }
-    }
-
-    (nodes, combos, edge_map, agg_level)
+    (nodes, combos, node_lookup)
 }
 
 /// Check if a module path should be expanded (its parent dir or any ancestor is in expanded_set).
