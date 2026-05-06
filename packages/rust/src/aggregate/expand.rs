@@ -34,9 +34,6 @@ pub fn compute_auto_expanded_dirs(
         return result;
     }
 
-    // Pre-compute total descendants for each directory (all files under that path)
-    let dir_total_descendants: HashMap<String, usize> = compute_total_descendants(modules);
-
     // Build: directory -> direct children (files + immediate subdirectories)
     let mut dir_direct_children: HashMap<String, HashSet<String>> = HashMap::new();
     // Build: directory -> violation sum
@@ -44,18 +41,11 @@ pub fn compute_auto_expanded_dirs(
 
     for m in modules {
         let parts: Vec<&str> = m.source.split('/').collect();
-        // Each file contributes to its immediate parent's direct children
-        if parts.len() > 1 {
-            let parent = parts[..parts.len() - 1].join("/");
-            dir_direct_children
-                .entry(parent)
-                .or_default()
-                .insert(m.source.clone());
-        }
+
         // Add subdirectories as children of ancestor directories
         for i in 1..parts.len() - 1 {
-            let ancestor = parts[..i].join("/");
-            let child_dir = parts[..i + 1].join("/");
+            let ancestor = parts[..i - 1].join("/");
+            let child_dir = parts[..i].join("/");
             dir_direct_children
                 .entry(ancestor)
                 .or_default()
@@ -95,7 +85,6 @@ pub fn compute_auto_expanded_dirs(
     // Level-by-level expansion with transaction semantics
     let mut expanded: HashSet<String> = HashSet::new();
     let mut current_node_count = baseline_nodes;
-    let mut skipped_depths: HashSet<usize> = HashSet::new();
 
     for depth in 1..=max_depth {
         let candidates: Vec<String> = dirs_by_depth
@@ -104,6 +93,10 @@ pub fn compute_auto_expanded_dirs(
             .unwrap_or(&[])
             .iter()
             .filter(|dir| {
+                if dir.is_empty() {
+                    return false;
+                }
+
                 let children_count = dir_direct_children.get(*dir).map(|s| s.len()).unwrap_or(0);
                 if children_count > MAX_DIRECT_CHILDREN {
                     return false;
@@ -115,10 +108,6 @@ pub fn compute_auto_expanded_dirs(
                 }
                 let parent = parts[..parts.len() - 1].join("/");
                 if expanded.contains(&parent) {
-                    return true;
-                }
-                let parent_depth = parent.matches('/').count() + 1;
-                if skipped_depths.contains(&parent_depth) {
                     return true;
                 }
                 false
@@ -141,72 +130,22 @@ pub fn compute_auto_expanded_dirs(
 
         // === BEGIN TRANSACTION: save current state ===
         let saved_expanded = expanded.clone();
-        let saved_node_count = current_node_count;
 
         for (dir, _violations) in &sorted_candidates {
-            let parts: Vec<&str> = dir.split('/').collect();
-            let ancestor_skipped = (1..parts.len())
-                .any(|i| skipped_depths.contains(&(i + 1)));
-
-            let total_desc = dir_total_descendants.get(dir).copied().unwrap_or(0);
-
-            let already_expanded_count: usize = expanded
-                .iter()
-                .filter(|e| e.starts_with(&format!("{}/", dir)))
-                .map(|e| dir_total_descendants.get(e.as_str()).copied().unwrap_or(0))
-                .sum();
-
-            let cost = if ancestor_skipped {
-                total_desc
-                    .saturating_sub(already_expanded_count)
-                    .saturating_add(1)
-            } else {
-                total_desc
-                    .saturating_sub(already_expanded_count)
-                    .saturating_sub(1)
-            };
-
+            let children_count = dir_direct_children.get(dir).map(|s| s.len()).unwrap_or(0);
             expanded.insert(dir.clone());
-            current_node_count += cost;
+            current_node_count += children_count;
         }
 
-        // === CHECK BUDGET: rollback if exceeded ===
-        if current_node_count > TARGET_NODE_BUDGET {
+        // === CHECK BUDGET: stop if exceeded ===
+        print!("depth {} , node_count {}\n", depth, current_node_count);
+        if depth > 2 && current_node_count > TARGET_NODE_BUDGET {
             expanded = saved_expanded;
-            current_node_count = saved_node_count;
-            skipped_depths.insert(depth);
-            continue;
+            break;
         }
     }
 
     let mut result: Vec<String> = expanded.into_iter().collect();
     result.sort();
     result
-}
-
-/// Compute total descendants (all files) for each directory using path prefix matching.
-pub fn compute_total_descendants(modules: &[Module]) -> HashMap<String, usize> {
-    let mut counts: HashMap<String, usize> = HashMap::new();
-
-    let mut sorted_sources: Vec<&str> = modules.iter().map(|m| m.source.as_str()).collect();
-    sorted_sources.sort();
-
-    let mut all_dirs: HashSet<String> = HashSet::new();
-    for source in &sorted_sources {
-        let parts: Vec<&str> = source.split('/').collect();
-        for i in 1..parts.len() {
-            all_dirs.insert(parts[..i].join("/"));
-        }
-    }
-
-    for dir in &all_dirs {
-        let prefix = format!("{}/", dir);
-        let count = sorted_sources
-            .iter()
-            .filter(|s| *s == dir || s.starts_with(&prefix))
-            .count();
-        counts.insert(dir.clone(), count);
-    }
-
-    counts
 }

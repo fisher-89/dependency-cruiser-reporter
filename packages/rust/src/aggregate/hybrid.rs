@@ -16,7 +16,11 @@ pub fn build_hybrid_nodes(
     edges: &[RawEdge],
     violation_counts: &HashMap<String, u32>,
     expanded_set: &HashSet<&str>,
-) -> (Vec<GraphNode>, HashMap<(String, String), EdgeInfo>, AggregationLevel) {
+) -> (
+    Vec<GraphNode>,
+    HashMap<(String, String), EdgeInfo>,
+    AggregationLevel,
+) {
     // Determine aggregation level from expanded_set
     let agg_level = if expanded_set.is_empty() {
         AggregationLevel::Package
@@ -99,13 +103,11 @@ pub fn build_hybrid_nodes(
             .cloned()
             .unwrap_or_else(|| e.to.clone());
         if src_node != tgt_node {
-            let info = edge_map
-                .entry((src_node, tgt_node))
-                .or_insert(EdgeInfo {
-                    dep_types: Vec::new(),
-                    count: 0,
-                    has_circular: false,
-                });
+            let info = edge_map.entry((src_node, tgt_node)).or_insert(EdgeInfo {
+                dep_types: Vec::new(),
+                count: 0,
+                has_circular: false,
+            });
             info.dep_types.extend(e.dep_types.clone());
             info.count += 1;
             if e.circular {
@@ -123,11 +125,9 @@ pub fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
         return true;
     }
     let parts: Vec<&str> = path.split('/').collect();
-    for i in 1..parts.len() {
-        let dir: String = parts[..i].join("/");
-        if expanded_set.contains(dir.as_str()) {
-            return true;
-        }
+    let dir: String = parts[..parts.len() - 1].join("/");
+    if expanded_set.contains(dir.as_str()) {
+        return true;
     }
     false
 }
@@ -142,7 +142,11 @@ fn find_closest_unexpanded_ancestor(path: &str, expanded_set: &HashSet<&str>) ->
     for i in 1..parts.len() {
         let ancestor = parts[..i].join("/");
         if !expanded_set.contains(ancestor.as_str()) {
-            return if ancestor.is_empty() { "root".to_string() } else { ancestor };
+            return if ancestor.is_empty() {
+                "root".to_string()
+            } else {
+                ancestor
+            };
         }
     }
     "root".to_string()
