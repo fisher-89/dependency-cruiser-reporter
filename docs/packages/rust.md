@@ -10,8 +10,15 @@ The `packages/rust` package provides the native Rust preprocessing engine. It co
 packages/rust/
 ├── Cargo.toml          # Rust configuration
 ├── src/
-│   ├── lib.rs          # Core library (data structures + processing)
-│   └── main.rs         # CLI entry point (dcr-aggregate binary)
+│   ├── lib.rs          # Library entry point
+│   ├── lib_test.rs     # Unit tests
+│   ├── types.rs        # Data structures
+│   ├── main.rs         # CLI entry point (dcr-aggregate binary)
+│   └── aggregate/      # Aggregation logic
+│       ├── mod.rs      # Module exports
+│       ├── edges.rs    # Edge processing
+│       ├── expand.rs   # Auto-expand algorithm
+│       └── hybrid.rs   # Hybrid node building
 ```
 
 ## Architecture
@@ -42,8 +49,7 @@ Main function that parses dependency-cruiser JSON and produces an aggregated gra
 pub fn parse_and_aggregate(
     input: &Path,
     max_nodes: usize,
-    level: Option<AggregationLevel>,
-    _layout: bool,
+    expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, DcrError>
 ```
 
@@ -52,11 +58,12 @@ pub fn parse_and_aggregate(
 | Param | Type | Description |
 |-------|------|-------------|
 | `input` | `&Path` | Path to dependency-cruiser JSON file |
-| `max_nodes` | `usize` | Maximum nodes in output (default: 5000) |
-| `level` | `Option<AggregationLevel>` | Aggregation level override |
-| `_layout` | `bool` | Layout coordinate computation (reserved) |
+| `max_nodes` | `usize` | Maximum edges in output (default: 5000) |
+| `expanded_dirs` | `Option<Vec<String>>` | Directories to expand; `None` triggers auto-computation |
 
 **Returns:** `Result<ProcessedGraph, DcrError>`
+
+When `expanded_dirs` is `None`, the function calls `compute_auto_expanded_dirs` to determine which directories should show file-level nodes versus collapsed directory nodes. This uses a budget algorithm targeting ~200 nodes.
 
 ### Error Handling
 
@@ -79,9 +86,7 @@ dcr-aggregate --input <path> --output <path> [options]
 |------|---------|-------------|
 | `-i, --input <path>` | (required) | Input dependency-cruiser JSON file |
 | `-o, --output <path>` | `graph.json` | Output graph JSON file |
-| `-m, --max-nodes <n>` | `5000` | Maximum nodes in output |
-| `-l, --level <level>` | auto | Aggregation level: `file` \| `directory` \| `package` \| `root` |
-| `-L, --layout` | false | Calculate layout coordinates |
+| `-m, --max-nodes <n>` | `5000` | Maximum edges in output |
 
 Built with [clap](https://docs.rs/clap) derive API.
 
@@ -101,32 +106,30 @@ Built with [clap](https://docs.rs/clap) derive API.
 flowchart TB
     Input[Read input file] --> Parse[Parse JSON\nserde_json::from_str]
     Parse --> Validate[Validate CruiseResult]
-    Validate --> Count[Count modules]
-    Count --> Select{Select aggregation\nlevel}
-    Select -->|File| FileBuild[build_file_nodes]
-    Select -->|Directory| DirBuild[build_directory_nodes]
-    Select -->|Package| PkgBuild[build_package_nodes]
-    Select -->|Root| RootBuild[build_root_nodes]
+    Validate --> Violations[Extract violations]
+    Violations --> ComputeExpanded{expanded_dirs\nprovided?}
+    ComputeExpanded -->|No| AutoExpand[compute_auto_expanded_dirs\nbudget algorithm]
+    ComputeExpanded -->|Yes| UseProvided[Use provided set]
+    AutoExpand --> BuildHybrid[build_hybrid_nodes]
+    UseProvided --> BuildHybrid
 
-    FileBuild --> EdgeProc[aggregate_edges]
-    DirBuild --> EdgeProc
-    PkgBuild --> EdgeProc
-    RootBuild --> EdgeProc
-
-    EdgeProc --> Violations[Extract violations]
-    Violations --> Output[Serialize ProcessedGraph]
+    BuildHybrid --> Combos[Generate combos\nwith single-child collapse]
+    Combos --> EdgeProc[aggregate_edges]
+    EdgeProc --> Output[Serialize ProcessedGraph]
 
     style Input fill:#e0f2fe,stroke:#0284c7
     style Output fill:#dcfce7,stroke:#16a34a
 ```
 
+The hybrid aggregation approach supports mixing expanded directories (showing files) and collapsed directories (showing as single nodes) in the same graph.
+
 ## Integration with CLI
 
-The `dep-report analyze` command locates and invokes the `dcr-aggregate` binary:
+The `dep-report scan` command invokes the Rust binary for aggregation:
 
-1. Search `target/release/dcr-aggregate` then `target/debug/dcr-aggregate` relative to CLI dist
-2. If found, spawn the binary with `--input`, `--output`, `--max-nodes`, `--level` arguments
-3. If binary fails or is not found, fall back to Node.js `convertDcOutput` in `packages/cli/src/utils/convert.ts`
+1. The server's `/api/graph` endpoint calls `convertWithFallback`
+2. If Rust binary available, spawn with `--input`, `--output`, `--max-nodes`
+3. If binary unavailable or fails, fall back to Node.js `convertDcOutput`
 
 See [CLI Package](./cli.md) for details.
 
@@ -153,8 +156,9 @@ cargo fmt --check
 
 | Test | Purpose |
 |------|---------|
-| `test_aggregation_level_selection` | Verify threshold logic |
+| `test_aggregation_level_selection` | Verify level determination from expanded_set |
 | `test_edge_type_detection` | Verify edge type classification |
-| `test_package_name_extraction` | Verify npm package parsing |
+| `test_violation_counts` | Verify violation counting |
+| `test_edge_aggregation` | Verify edge weight aggregation |
 
-Tests are defined inline in `lib.rs` under `#[cfg(test)] mod tests`.
+Tests are defined in `lib_test.rs`.

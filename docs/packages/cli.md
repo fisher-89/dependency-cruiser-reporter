@@ -4,9 +4,8 @@
 
 The `packages/cli` package provides the command-line interface for dependency-cruiser-reporter. It handles:
 
-1. **`scan`** — Run dependency-cruiser on a project directory and generate graph
-2. **`analyze`** — Process dependency-cruiser JSON output into aggregated graph
-3. **`open`** — Start HTTP server to view results
+1. **`scan`** — Run dependency-cruiser on a project directory and save raw output
+2. **`open`** — Start HTTP server to view results (aggregation happens on-demand)
 
 Also exports a programmatic Express server via `createServer`.
 
@@ -14,15 +13,18 @@ Also exports a programmatic Express server via `createServer`.
 
 ```
 packages/cli/
-├── bin/
-│   └── cli.js           # CLI entry point (commander program)
+├── scripts/
+│   └── postbuild.js     # Post-build script for CLI
 ├── src/
+│   ├── bin/
+│   │   └── cli.ts       # CLI entry point (commander program)
 │   ├── commands/
-│   │   ├── analyze.ts   # Analyze command (Rust binary + Node.js fallback)
-│   │   ├── convert.ts   # Node.js dependency-cruiser JSON converter
+│   │   ├── index.ts     # Command exports
 │   │   ├── scan.ts      # Scan command (runs dependency-cruiser API)
 │   │   └── open.ts      # Open command (starts HTTP server)
-│   ├── server.ts        # Express HTTP server
+│   ├── utils/
+│   │   ├── convert.ts   # Node.js dependency-cruiser JSON converter
+│   │   └── server.ts    # Express HTTP server
 │   └── index.ts         # Main exports
 ├── package.json
 └── tsconfig.json
@@ -32,14 +34,13 @@ packages/cli/
 
 ### `dep-report scan`
 
-Run dependency-cruiser on a project and generate a visualization-ready graph.
+Run dependency-cruiser on a project and save raw output.
 
 ```mermaid
 flowchart LR
     CLI["dep-report scan"] --> Find["Find .dependency-cruiser config"]
     Find --> DC["dependency-cruiser API\ncruise()"]
-    DC --> Convert["convertDcOutput()"]
-    Convert --> Write["Write graph.json"]
+    DC --> Write["Write raw-graph.json\n(raw dependency-cruiser output)"]
 ```
 
 **Usage:**
@@ -53,7 +54,7 @@ dep-report scan --path <dir> [options]
 | Flag | Default | Description |
 |------|---------|-------------|
 | `-p, --path <dir>` | (required) | Project directory to scan |
-| `-o, --output <path>` | `<dirname>-graph.json` | Output graph JSON file |
+| `-o, --output <path>` | `<dirname>-graph.json` | Output JSON file |
 | `-c, --config <path>` | auto-detect | dependency-cruiser config file |
 
 The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the scan directory or current working directory. It also detects `tsconfig.json` for TypeScript support.
@@ -65,48 +66,10 @@ The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruis
 dep-report scan --path ./my-project
 
 # Specify output and config
-dep-report scan -p ./my-project -o output/graph.json -c .dependency-cruiser.json
+dep-report scan -p ./my-project -o output/raw-graph.json -c .dependency-cruiser.json
 ```
 
----
-
-### `dep-report analyze`
-
-Process dependency-cruiser JSON and generate aggregated graph.
-
-```mermaid
-flowchart TB
-    CLI["dep-report analyze"] --> Find["Find dcr-aggregate binary"]
-    Find -->|Found| Rust["Rust binary:\nparse_and_aggregate"]
-    Find -->|Not found| Node["Node.js fallback:\nconvertDcOutput"]
-    Rust --> Write["Write graph.json"]
-    Node --> Write
-```
-
-**Usage:**
-
-```bash
-dep-report analyze --input <path> [options]
-```
-
-**Options:**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-i, --input <path>` | (required) | Input dependency-cruiser JSON file |
-| `-o, --output <path>` | `graph.json` | Output graph JSON file |
-| `-l, --level <level>` | auto | Aggregation level: `file` \| `directory` \| `package` \| `root` |
-| `-m, --max-nodes <n>` | `5000` | Maximum nodes in output |
-
-**Example:**
-
-```bash
-# Basic usage
-dep-report analyze --input cruise.json
-
-# Specify output and level
-dep-report analyze -i cruise.json -o output/graph.json -l directory
-```
+> **Note:** The `scan` command saves raw dependency-cruiser output. Aggregation happens on-demand when the frontend requests `/api/graph`.
 
 ---
 
@@ -166,7 +129,7 @@ Edge classification logic:
 | `dep.dependencyTypes` includes `npm`/`npm-dev`/`npm-optional`/`npm-peer` | `npm` |
 | Otherwise | `local` |
 
-The `analyzeWithFallback` function (also in `convert.ts`) provides the same analyze flow as `analyze.ts` but with an alternative binary search path. Both `analyze.ts` and `convert.ts` contain `findDcrAggregateBinary()`.
+The `analyzeWithFallback` function in `convert.ts` provides the flow used by `/api/graph`: find the Rust binary, spawn it, or fall back to Node.js processing.
 
 ## HTTP Server
 
@@ -183,7 +146,13 @@ sequenceDiagram
     Browser->>Server: GET / (index.html)
     Browser->>Server: GET /api/config
     Server-->>Browser: { hasGraphFile: boolean }
-    Browser->>Server: GET /api/graph (if hasGraphFile)
+    Browser->>Server: POST /api/graph
+    Server->>Server: Read file, detect format
+    alt Raw dc format
+        Server->>Server: convertWithFallback (Rust or Node.js)
+    else ProcessedGraph format
+        Server->>Server: Use as-is
+    end
     Server-->>Browser: ProcessedGraph JSON
     Browser->>Browser: Render visualization
 ```
@@ -194,8 +163,20 @@ sequenceDiagram
 |----------|--------|-------------|
 | `/` | GET | Serve frontend index.html (SPA) |
 | `/api/config` | GET | Return `{ hasGraphFile: boolean }` |
-| `/api/graph` | GET | Return graph JSON (if `--file` specified) |
+| `/api/graph` | POST | Return graph JSON (supports `expanded_dirs` body) |
 | `/assets/*` | GET | Static assets (JS, CSS) |
+
+### `/api/graph` Endpoint
+
+The graph endpoint accepts an optional JSON body:
+
+```json
+{
+  "expandedDirs": ["src/components", "src/utils"]
+}
+```
+
+This allows the frontend to request different expansion configurations without rescanning.
 
 ### Programmatic API
 
@@ -213,12 +194,13 @@ server.stop();
 
 ## Integration with Rust Binary
 
-The `analyze` command locates the `dcr-aggregate` binary by checking:
+The server's `/api/graph` endpoint uses `convertWithFallback`:
 
-1. `packages/rust/target/release/dcr-aggregate[.exe]`
-2. `packages/rust/target/debug/dcr-aggregate[.exe]`
+1. Search for `dcr-aggregate` binary in `packages/rust/target/release/` or `target/debug/`
+2. If found, spawn the binary with appropriate arguments
+3. If binary fails or is not found, fall back to `convertDcOutput` in Node.js
 
-Paths are resolved relative to the CLI dist directory. If the binary exists, it is spawned with the appropriate arguments. On failure, it falls back to the Node.js converter.
+The Node.js fallback maintains feature parity for basic aggregation.
 
 ## Build Process
 

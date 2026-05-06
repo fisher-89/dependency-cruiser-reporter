@@ -15,13 +15,15 @@
 ```
 packages/frontend/
 ├── src/
-│   ├── App.tsx        # Main application (all views inline)
-│   ├── main.tsx       # React entry point
-│   └── types.ts       # Type definitions
-├── index.html         # HTML template
-├── vite.config.ts     # Vite configuration
-├── tsconfig.json      # TypeScript config
-└── package.json
+│   ├── App.tsx           # Main application (upload + view switching)
+│   ├── main.tsx          # React entry point
+│   ├── types.ts          # TypeScript type definitions
+│   └── components/
+│       ├── DependencyGraph.tsx  # G6 graph visualization
+│       └── buildGraphData.ts    # Data transformation for G6
+├── index.html            # HTML template
+├── vite.config.ts        # Vite configuration
+├── tsconfig.json         # TypeScript config (extends tsconfig.base.json)
 └── package.json
 ```
 
@@ -56,7 +58,7 @@ Main application component managing:
 - View mode switching
 - Data loading
 
-On mount, the App fetches graph data from the Express server via `/api/config` and `/api/graph` endpoints. If no server data is available, it falls back to file upload.
+On mount, the App fetches graph data from the Express server via `/api/config` and `POST /api/graph` endpoints. If no server data is available, it falls back to file upload. The graph endpoint accepts `expandedDirs` in the POST body for controlling hybrid aggregation.
 
 ### UploadArea
 

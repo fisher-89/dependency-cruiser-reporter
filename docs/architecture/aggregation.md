@@ -2,94 +2,131 @@
 
 ## Overview
 
-The Rust preprocessing engine automatically aggregates nodes based on count thresholds to handle large projects (100k+ nodes) without performance degradation.
+The Rust preprocessing engine uses hybrid aggregation: some directories show file-level nodes while others are collapsed to directory nodes. This is controlled by the `expanded_dirs` parameter, which can be explicitly provided or auto-computed.
 
-## Aggregation Level Selection
+## Auto-Expansion Algorithm
+
+When `expanded_dirs` is not provided, the `compute_auto_expanded_dirs` function uses a budget algorithm:
 
 ```mermaid
 flowchart TD
-    Start[Input: node_count] --> Check1{node_count ≤ 1000?}
-    Check1 -->|Yes| File[File Level\nNo aggregation]
-    Check1 -->|No| Check2{node_count ≤ 5000?}
-    Check2 -->|Yes| Dir[Directory Level\nGroup by directory]
-    Check2 -->|No| Check3{node_count ≤ 20000?}
-    Check3 -->|Yes| Pkg[Package Level\nGroup by npm package]
-    Check3 -->|No| Root[Root Level\nSingle root node]
+    Start[Input: modules] --> Check{len ≤ 200?}
+    Check -->|Yes| All[Expand all directories]
+    Check -->|No| Build[Build directory tree]
+    Build --> Group[Group directories by depth]
+    Group --> Level1[Process depth 1]
+    Level1 --> Level2[Process depth 2]
+    Level2 --> More[Process deeper levels]
+    More --> Budget{Budget exceeded?}
+    Budget -->|Yes| Rollback[Rollback transaction]
+    Budget -->|No| Continue[Continue expansion]
+    All --> Result[Return expanded_dirs]
+    Rollback --> Result
+    Continue --> Result
 
-    style File fill:#dcfce7,stroke:#16a34a
-    style Dir fill:#e0f2fe,stroke:#0284c7
-    style Pkg fill:#fef9c3,stroke:#ca8a04
-    style Root fill:#fee2e2,stroke:#dc2626
+    style All fill:#dcfce7,stroke:#16a34a
+    style Rollback fill:#fee2e2,stroke:#dc2626
 ```
 
-| Level | Description | Node Count Range |
-|-------|-------------|-------------------|
-| `file` | No aggregation, show all files | ≤ 1000 |
-| `directory` | Group by parent directory | 1001 - 5000 |
-| `package` | Group by npm package | 5001 - 20000 |
-| `root` | Single root node | > 20000 |
+### Key Parameters
 
-## Selection Logic
+| Parameter | Value | Purpose |
+|-----------|-------|---------|
+| `TARGET_NODE_BUDGET` | 200 | Target max nodes in output |
+| `MAX_DIRECT_CHILDREN` | 50 | Max children before refusing expansion |
 
-The aggregation level is determined by node count thresholds (see table above). The logic is implemented in `select_aggregation_level` in `packages/rust/src/lib.rs`.
+### Level-by-Level Processing
 
-## Aggregation Rules
+1. Directories processed by depth (depth 1 first, then depth 2, etc.)
+2. Within each level, directories with more violations prioritized
+3. Each level is a "transaction" — if budget exceeded, rollback the level
+4. Directories with >50 direct children are skipped
 
-### Directory Aggregation
+## Hybrid Aggregation
 
-Multiple files are merged into a directory node:
+The `build_hybrid_nodes` function creates a graph where:
+
+- Directories in `expanded_dirs`: Show individual files as nodes
+- Directories not in `expanded_dirs`: Show as single directory nodes
 
 ```mermaid
-flowchart TB
-    subgraph Before["Before Aggregation"]
-        F1[src/components/Button.tsx]
-        F2[src/components/Input.tsx]
-        F3[src/components/List.tsx]
+flowchart LR
+    subgraph Expanded["Expanded Directory (src/components)"]
+        F1[Button.tsx]
+        F2[Input.tsx]
+        F3[List.tsx]
     end
 
-    subgraph After["After Aggregation"]
-        Dir["src/components\n(node with 3 children)"]
+    subgraph Collapsed["Collapsed Directory (src/utils)"]
+        Dir["utils/\n(aggregated)"]
     end
 
     F1 --> Dir
     F2 --> Dir
     F3 --> Dir
 
-    style Dir fill:#e0f2fe,stroke:#0284c7
+    style Expanded fill:#dcfce7,stroke:#16a34a
+    style Collapsed fill:#e0f2fe,stroke:#0284c7
 ```
 
-### Edge Compression
+## Combo Generation
 
-File-to-file edges become directory-to-directory edges:
+Combos (visual containers for G6) are generated with these rules:
+
+1. **Combo ID format**: `combo:` prefix (e.g., `combo:src/components`)
+2. **Single-child collapse**: A combo with only one child is collapsed — the child moves to the parent combo
+3. **Hierarchy**: Combos can nest via the `combo` field
+
+The aggregation level is derived from the expanded set:
+- All modules expanded → `file` level
+- Some directories expanded → `directory` level
+- No directories expanded → `package` level
+
+## Edge Aggregation
+
+When files are collapsed into directories, edges are merged:
 
 ```mermaid
 flowchart LR
-    subgraph Before["Before Compression"]
-        B1[Button.tsx] -->|weight 1| H1[utils/helpers.ts]
-        I1[Input.tsx] -->|weight 1| H2[utils/helpers.ts]
-        L1[List.tsx] -->|weight 1| F1[utils/format.ts]
+    subgraph Before["Before (file-level)"]
+        B1[Button.tsx] -->|1| H1[helpers.ts]
+        I1[Input.tsx] -->|1| H2[helpers.ts]
+        L1[List.tsx] -->|1| F1[format.ts]
     end
 
-    subgraph After["After Compression"]
-        Comp[components] -->|weight 3| Utils[utils]
+    subgraph After["After (collapsed)"]
+        Comp[components/] -->|weight: 2| Utils[utils/]
+        Comp -->|weight: 1| Utils
     end
 ```
 
-**Edge type is determined by majority vote.**
+**Edge properties:**
+- `weight`: Count of merged edges
+- `circular`: Set if any merged edge was circular
+- `edge_type`: Majority vote from merged edges
 
-### Violation Inheritance
+## Performance Characteristics
 
-When a child node has violations, the parent node displays a warning indicator:
+| Nodes | Expanded Dirs | Output Size | Load Time |
+|-------|--------------|-------------|-----------|
+| 100 | all | ~100 nodes | <100ms |
+| 5,000 | ~200 nodes worth | ~200 nodes | <500ms |
+| 20,000 | top-level only | ~50 nodes | <1s |
+| 100,000 | package-level | ~20 nodes | <3s |
+
+## Violation Display
+
+Violations are counted per module and aggregated:
 
 ```mermaid
 flowchart TB
     subgraph Before["Before"]
-        V1["src/components/Button.tsx\n(violation: error)"]
-        V2["src/components/Input.tsx\n(no violations)"]
+        V1["Button.tsx\n(violation: error)"]
+        V2["Input.tsx\n(no violations)"]
     end
 
-    subgraph After["After"]
-        Parent["src/components\n(warning indicator)"]
+    subgraph After["After (collapsed)"]
+        Parent["components/\n(violation_count: 1)"]
     end
 
     V1 --> Parent
@@ -98,6 +135,8 @@ flowchart TB
     style V1 fill:#fee2e2,stroke:#dc2626
     style Parent fill:#fef9c3,stroke:#ca8a04
 ```
+
+The `violation_count` field accumulates from all child modules.
 
 ## Edge Type Detection
 
@@ -126,7 +165,7 @@ flowchart TD
 
 ## Circular Dependencies
 
-Circular dependencies are preserved at aggregation boundaries:
+Circular dependencies are marked with the `circular` field on edges:
 
 ```mermaid
 flowchart LR
@@ -134,23 +173,12 @@ flowchart LR
         A --> B --> C --> A
     end
 
-    subgraph After["After (directory-level)"]
+    subgraph After["After (collapsed)"]
         D1[dir1] --> D2[dir2] --> D3[dir3] --> D1
     end
 
     style A fill:#fee2e2,stroke:#dc2626
     style D1 fill:#fee2e2,stroke:#dc2626
-    style D2 fill:#fee2e2,stroke:#dc2626
-    style D3 fill:#fee2e2,stroke:#dc2626
 ```
 
-The `children` array in each node allows drilling down to inspect the actual cycle.
-
-## Performance Characteristics
-
-| Nodes | Aggregation Level | Output Size | Load Time |
-|-------|------------------|-------------|-----------|
-| 100 | file | ~100 nodes | <100ms |
-| 5,000 | directory | ~500 nodes | <500ms |
-| 20,000 | package | ~100 nodes | <1s |
-| 100,000 | root | 1 node | <3s |
+The `circular: true` field is preserved when edges are aggregated.

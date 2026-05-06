@@ -18,11 +18,21 @@ The Rust preprocessing engine is the core of dependency-cruiser-reporter, respon
 packages/rust/
 ├── Cargo.toml
 ├── src/
-│   ├── lib.rs      # Core library (data structures + processing + tests)
-│   └── main.rs     # CLI entry point (dcr-aggregate binary)
+│   ├── lib.rs           # Library entry point, re-exports types
+│   ├── lib_test.rs      # Unit tests
+│   ├── types.rs         # Data structures (ProcessedGraph, GraphNode, etc.)
+│   ├── main.rs          # CLI entry point (dcr-aggregate binary)
+│   └── aggregate/       # Aggregation logic
+│       ├── mod.rs       # Module exports
+│       ├── edges.rs     # Edge extraction, aggregation, type detection
+│       ├── expand.rs    # Auto-compute expanded directories algorithm
+│       └── hybrid.rs    # Hybrid node building with combo generation
 ```
 
-All data structures, processing logic, and tests are in `lib.rs`. The binary in `main.rs` is a thin CLI wrapper.
+The codebase is organized into modules:
+- `types.rs`: All data structures and error types
+- `aggregate/`: Processing logic for node aggregation and edge handling
+- `lib_test.rs`: Comprehensive unit tests
 
 ## Processing Flow
 
@@ -30,24 +40,22 @@ All data structures, processing logic, and tests are in `lib.rs`. The binary in 
 flowchart TB
     Input[Read input file] --> Parse[Parse JSON\nserde_json::from_str]
     Parse --> Validate[Validate CruiseResult]
-    Validate --> Count[Count modules]
-    Count --> Select{Select aggregation\nlevel}
-    Select -->|File| FileBuild[build_file_nodes]
-    Select -->|Directory| DirBuild[build_directory_nodes]
-    Select -->|Package| PkgBuild[build_package_nodes]
-    Select -->|Root| RootBuild[build_root_nodes]
+    Validate --> Violations[Extract violations]
+    Violations --> ComputeExpanded{expanded_dirs\nprovided?}
+    ComputeExpanded -->|No| AutoExpand[compute_auto_expanded_dirs]
+    ComputeExpanded -->|Yes| UseProvided[Use provided set]
+    AutoExpand --> BuildHybrid[build_hybrid_nodes]
+    UseProvided --> BuildHybrid
 
-    FileBuild --> EdgeProc[aggregate_edges]
-    DirBuild --> EdgeProc
-    PkgBuild --> EdgeProc
-    RootBuild --> EdgeProc
-
-    EdgeProc --> Violations[Extract violations]
-    Violations --> Output[Serialize ProcessedGraph]
+    BuildHybrid --> Combos[Generate combos\nwith single-child collapse]
+    Combos --> EdgeProc[aggregate_edges]
+    EdgeProc --> Output[Serialize ProcessedGraph]
 
     style Input fill:#e0f2fe,stroke:#0284c7
     style Output fill:#dcfce7,stroke:#16a34a
 ```
+
+The hybrid aggregation approach allows mixing expanded (file-level) and collapsed (directory-level) nodes in the same graph.
 
 ## Entry Point
 
@@ -57,12 +65,21 @@ flowchart TB
 pub fn parse_and_aggregate(
     input: &Path,
     max_nodes: usize,
-    level: Option<AggregationLevel>,
-    _layout: bool,
+    expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, DcrError>
 ```
 
-Reads the input file, parses the JSON, determines aggregation level, builds nodes and edges, and returns the processed graph.
+Reads the input file, parses the JSON, determines which directories to expand, builds nodes/combos/edges, and returns the processed graph.
+
+**Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `input` | `&Path` | Path to dependency-cruiser JSON file |
+| `max_nodes` | `usize` | Maximum edges in output (default: 5000) |
+| `expanded_dirs` | `Option<Vec<String>>` | Directories to expand; `None` triggers auto-computation |
+
+When `expanded_dirs` is `None`, the `compute_auto_expanded_dirs` function determines which directories to expand based on a budget algorithm. Directories in this set show file-level nodes; others are collapsed to directory nodes.
 
 ### CLI (`main.rs`)
 
@@ -80,12 +97,13 @@ Uses clap derive API. Parses arguments, calls `parse_and_aggregate`, and writes 
 
 ### Aggregation Builders
 
-| Function | Level | Behavior |
-|----------|-------|----------|
-| `build_file_nodes` | File | No transformation, pass-through |
-| `build_directory_nodes` | Directory | Group by parent directory |
-| `build_package_nodes` | Package | Group by npm package name |
-| `build_root_nodes` | Root | Single node with all modules |
+| Function | Module | Purpose |
+|----------|--------|---------|
+| `build_hybrid_nodes` | `aggregate/hybrid.rs` | Build nodes and combos based on expanded_dirs set |
+| `compute_auto_expanded_dirs` | `aggregate/expand.rs` | Auto-compute expanded directories using budget algorithm |
+| `aggregate_edges` | `aggregate/edges.rs` | Aggregate and sort edges by weight |
+| `extract_edges` | `aggregate/edges.rs` | Extract raw edges from modules |
+| `compute_violation_counts` | `aggregate/edges.rs` | Count violations per module |
 
 ### Edge Processing
 
@@ -103,16 +121,15 @@ flowchart LR
 
 ### Helper Functions
 
-| Function | Purpose |
-|----------|---------|
-| `select_aggregation_level` | Determine level from node count thresholds |
-| `detect_edge_type` | Classify edge from `dependencyTypes` |
-| `get_parent_directory` | Extract parent directory from path |
-| `extract_package_name` | Extract npm package name from `node_modules/` path |
+| Function | Module | Purpose |
+|----------|--------|---------|
+| `detect_edge_type` | `aggregate/edges.rs` | Classify edge from `dependencyTypes` |
+| `is_path_expanded` | `aggregate/hybrid.rs` | Check if path should show files |
+| `find_closest_unexpanded_ancestor` | `aggregate/hybrid.rs` | Find collapsed ancestor for a path |
 
 ## Testing
 
-Tests are inline in `lib.rs` under `#[cfg(test)] mod tests`:
+Tests are in `lib_test.rs`:
 
 ```bash
 cargo test        # Run unit tests
@@ -124,9 +141,10 @@ cargo fmt         # Format
 
 | Test | Purpose |
 |------|---------|
-| `test_aggregation_level_selection` | Verify threshold logic |
+| `test_aggregation_level_selection` | Verify level determination from expanded_set |
 | `test_edge_type_detection` | Verify edge type classification |
-| `test_package_name_extraction` | Verify npm package parsing |
+| `test_violation_counts` | Verify violation counting |
+| `test_edge_aggregation` | Verify edge weight aggregation |
 
 ## Build Profiles
 

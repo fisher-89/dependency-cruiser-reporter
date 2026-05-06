@@ -9,7 +9,7 @@ flowchart LR
     JSON -->|HTTP server or\nfile upload| FE[React Frontend\nVisualization]
 ```
 
-**Key Design Decision**: Rust preprocessing engine runs as a **native binary** invoked by the CLI. When the binary is unavailable, a Node.js fallback converter handles processing. The frontend is a React SPA that loads data from the server API or accepts file uploads.
+**Key Design Decision**: Rust preprocessing engine uses hybrid aggregation — directories can be expanded (show files) or collapsed (show as single nodes). The `expanded_dirs` parameter controls this, with auto-computation when not provided. When the Rust binary is unavailable, a Node.js fallback converter handles processing. The frontend is a React SPA that loads data from the server API or accepts file uploads.
 
 ## Component Breakdown
 
@@ -55,15 +55,21 @@ flowchart TB
 **Responsibilities:**
 
 1. JSON parsing and validation
-2. Node aggregation by directory/package level
-3. Edge compression and deduplication
-4. Output `ProcessedGraph` JSON
+2. Hybrid node aggregation (expanded + collapsed directories)
+3. Combo generation with single-child collapse
+4. Edge aggregation and deduplication
+5. Output `ProcessedGraph` JSON
 
 **Key Files:**
 
 | File | Purpose |
 |------|---------|
-| `src/lib.rs` | Core library: data structures, processing logic, tests |
+| `src/lib.rs` | Library entry point, re-exports types |
+| `src/types.rs` | Data structures (ProcessedGraph, GraphNode, etc.) |
+| `src/aggregate/mod.rs` | Aggregation module exports |
+| `src/aggregate/expand.rs` | Auto-expand algorithm (budget-based) |
+| `src/aggregate/hybrid.rs` | Hybrid node building + combo generation |
+| `src/aggregate/edges.rs` | Edge extraction, aggregation, type detection |
 | `src/main.rs` | CLI entry point (`dcr-aggregate` binary) |
 
 ### CLI (`packages/cli/`)
@@ -71,15 +77,15 @@ flowchart TB
 **Responsibilities:**
 
 1. Run dependency-cruiser via API (`scan` command)
-2. Process JSON with Rust binary or Node.js fallback (`analyze` command)
-3. Serve frontend with Express (`open` command)
+2. Serve frontend with Express (`open` command)
+3. Process JSON with Rust binary or Node.js fallback on-demand
 4. Export programmatic server API
 
 **Key Files:**
 
 | File | Purpose |
 |------|---------|
-| `bin/cli.js` | CLI entry point (commander program) |
+| `src/bin/cli.ts` | CLI entry point (commander program) |
 | `src/commands/scan.ts` | Scan: runs dependency-cruiser on a project |
 | `src/commands/open.ts` | Open: starts HTTP server |
 | `src/utils/convert.ts` | Node.js fallback converter + `convertDcOutput` |
@@ -145,6 +151,6 @@ classDiagram
     note for ProcessedGraph "Serialized as JSON\nShared between Rust and TypeScript"
 ```
 
-TypeScript (`packages/frontend/src/types.ts`) and Rust (`packages/rust/src/lib.rs`) share the same data structure via JSON serialization.
+TypeScript (`packages/frontend/src/types.ts`) and Rust (`packages/rust/src/types.rs`) share the same data structure via JSON serialization.
 
 See [Data Structures](../backend/data-structures.md) for detailed definitions.

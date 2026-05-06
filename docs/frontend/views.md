@@ -18,21 +18,26 @@ Interactive dependency graph visualization.
 ### Features
 
 - AntV G6 canvas/SVG rendering
-- comboCombined layout with automatic node positioning
-- Edge rendering with weight-based stroke width (max 3px)
+- comboCombined layout with combo (group) support from pre-computed `combos` array
+- Edge rendering with weight-based stroke width
 - Node/edge counts display
-- Max 20 edges displayed
+- Circular dependency highlighting with `circular` field
 
 ### Layout Algorithm
 
-Layout uses AntV G6's `comboCombined` layout algorithm, which automatically positions nodes in a force-directed arrangement with combo (group) support for aggregated nodes.
+Layout uses AntV G6's `comboCombined` layout algorithm with pre-computed combos from the Rust backend:
+
+- **Combos**: Pre-computed hierarchy with single-child collapse applied
+- **comboCombined**: Force-directed layout with combo containment
+- Nodes reference parent via the `combo` field
 
 ### Data Rendering
 
 ```mermaid
 flowchart LR
     Data["ProcessedGraph"] --> Nodes["data.nodes\n→ G6 nodes"]
-    Data --> Edges["data.edges (max 20)\n→ G6 edges"]
+    Data --> Edges["data.edges\n→ G6 edges"]
+    Data --> Combos["data.combos\n→ G6 combos"]
     Data --> Meta["data.meta\n→ Info bar"]
 ```
 
@@ -40,8 +45,9 @@ flowchart LR
 
 | Element | Source |
 |---------|--------|
-| Nodes | `data.nodes` |
-| Edges | `data.edges` (max 20 shown) |
+| Nodes | `data.nodes` (with `combo` field for grouping) |
+| Edges | `data.edges` (with optional `circular` field) |
+| Combos | `data.combos` (pre-computed hierarchy) |
 | Counts | `data.meta` |
 
 ---

@@ -82,6 +82,7 @@ classDiagram
 | `node_type` | `NodeType` | Determines rendering style and whether node can be expanded |
 | `path` | `string?` | Original file path for drill-down navigation; omitted when node represents an aggregated group |
 | `violation_count` | `number` | Number of violations involving this node |
+| `orphan` | `boolean?` | Whether this module has no dependents |
 | `children` | `string[]?` | IDs of child nodes; only present when node is aggregated (directory/package level) |
 | `combo` | `string?` | ID of parent combo for visual grouping |
 
@@ -93,7 +94,7 @@ classDiagram
 | `label` | `string` | Display name (directory name) |
 | `combo` | `string?` | ID of parent combo; `null` for root combo |
 
-Combos are pre-computed by the Rust backend with single-child collapsing applied. This ensures G6 renders a clean hierarchy without overlapping containers.
+Combos are pre-computed by the Rust backend using hybrid aggregation. Single-child combos are collapsed — the child is reassigned to the nearest ancestor combo with multiple children. This ensures G6 renders a clean hierarchy without overlapping containers.
 
 ### GraphEdge
 
@@ -103,6 +104,7 @@ Combos are pre-computed by the Rust backend with single-child collapsing applied
 | `target` | `string` | Target node ID |
 | `edge_type` | `EdgeType` | Determines edge color and styling |
 | `weight` | `number` | Count of dependencies merged into this edge during aggregation |
+| `circular` | `boolean?` | Whether this edge is part of a circular dependency |
 
 ### GraphMeta
 
@@ -112,6 +114,7 @@ Combos are pre-computed by the Rust backend with single-child collapsing applied
 | `aggregated_node_count` | `number` | Nodes after aggregation |
 | `aggregation_level` | `AggregationLevel` | Controls the granularity of the entire graph |
 | `total_violations` | `number` | Total violation count |
+| `expanded_dirs` | `string[]?` | List of directories expanded in the graph |
 
 ### ViolationInfo
 
@@ -123,7 +126,7 @@ Combos are pre-computed by the Rust backend with single-child collapsing applied
 | `severity` | `'error' \| 'warn' \| 'info'` | Violation severity level |
 | `message` | `string?` | Optional violation message |
 
-> TypeScript: [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) | Rust: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
+> TypeScript: [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) | Rust: [packages/rust/src/types.rs](../../packages/rust/src/types.rs)
 
 ## Enums
 
@@ -176,12 +179,17 @@ classDiagram
 
 ### AggregationLevel
 
-| Value | Threshold |
-|-------|-----------|
-| `file` | <=1000 nodes |
-| `directory` | 1001-5000 nodes |
-| `package` | 5001-20000 nodes |
-| `root` | >20000 nodes |
+| Value | Description |
+|-------|-------------|
+| `file` | All directories expanded, showing individual files |
+| `directory` | Some directories expanded, others collapsed |
+| `package` | No directories expanded, package-level grouping |
+| `root` | Single root node |
+
+The aggregation level is derived from the `expanded_dirs` set:
+- All modules have expanded parents → `file`
+- Mixed expanded/collapsed → `directory`
+- No directories expanded → `package`
 
 ## Input Types
 
@@ -213,7 +221,7 @@ Edge detection in Rust (`detect_edge_type`):
 | `dependencyTypes` contains `"dynamic"` | `Dynamic` |
 | Otherwise | `Local` |
 
-> TypeScript input: [packages/cli/src/utils/convert.ts](../../packages/cli/src/utils/convert.ts) | Rust input: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
+> TypeScript input: [packages/cli/src/utils/convert.ts](../../packages/cli/src/utils/convert.ts) | Rust input: [packages/rust/src/types.rs](../../packages/rust/src/types.rs)
 
 ## Serialization Notes
 

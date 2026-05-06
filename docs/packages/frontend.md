@@ -52,18 +52,20 @@ The GraphView is now implemented as `DependencyGraph` component using AntV G6 v5
 
 The frontend supports two data loading paths:
 
-1. **Server mode**: On mount, fetches `/api/config` to check if a graph file is available, then loads it via `/api/graph`
+1. **Server mode**: On mount, fetches `/api/config` to check if a graph file is available, then loads it via `POST /api/graph`
 2. **File upload**: User drops or selects a `.json` file, which is parsed directly with `JSON.parse`
 
 ```mermaid
 flowchart TB
     Mount["App mounts"] --> Config["GET /api/config"]
-    Config -->|hasGraphFile: true| Load["GET /api/graph"]
+    Config -->|hasGraphFile: true| Load["POST /api/graph\nwith optional expandedDirs"]
     Config -->|hasGraphFile: false| Upload["Show upload area"]
-    Load --> Render["Render visualization"]
+    Load --> Render["Render visualization\nwith G6 combos"]
     Upload -->|File selected| Parse["JSON.parse(file.text())"]
     Parse --> Render
 ```
+
+The `POST /api/graph` endpoint accepts an optional body with `expandedDirs` to control which directories show file-level nodes.
 
 ## State Management
 

@@ -9,16 +9,13 @@ flowchart TB
     RawFile --> Server[HTTP Server]
     Server --> Detect{Format?}
     Detect -->|raw dc| Rust{Rust binary\navailable?}
-    Rust -->|Yes| Native[Native Rust\nparse_and_aggregate]
+    Rust -->|Yes| Native[Native Rust\nparse_and_aggregate\nwith hybrid aggregation]
     Rust -->|No| Node[Node.js\nconvertDcOutput]
-    Detect -->|ProcessedGraph| ReAgg{Too large?}
-    ReAgg -->|Yes| Aggregate[reAggregateProcessedGraph]
-    ReAgg -->|No| Direct[Return as-is]
-    Native --> Output[ProcessedGraph]
+    Detect -->|ProcessedGraph| Direct[Return as-is]
+    Native --> Output[ProcessedGraph\nnodes + combos + edges]
     Node --> Output
-    Aggregate --> Output
     Direct --> Output
-    Output --> Render[Frontend Render]
+    Output --> Render[Frontend Render\nwith G6 combos]
 
     style Input fill:#e0f2fe,stroke:#0284c7
     style Render fill:#dcfce7,stroke:#16a34a
@@ -40,16 +37,21 @@ flowchart LR
     end
 ```
 
-## Key Change: Deferred Conversion
+## Key Change: Deferred Conversion + Hybrid Aggregation
 
-**Before:** `scan` command converted raw dependency-cruiser output to ProcessedGraph immediately, losing original data structure.
+**Before:** `scan` command converted raw dependency-cruiser output to ProcessedGraph immediately, losing original data structure. Fixed aggregation levels (file/directory/package/root).
 
 **After:** `scan` preserves raw dependency-cruiser JSON. Conversion happens on-demand when frontend requests `/api/graph`:
 - Server detects file format (raw dc vs ProcessedGraph)
 - Raw format: converts using `convertWithFallback` (Rust preferred, Node.js fallback)
-- ProcessedGraph: re-aggregates if node count exceeds threshold
+- ProcessedGraph: uses as-is
 
-This enables future features like user-selectable aggregation levels.
+The Rust engine now uses **hybrid aggregation** controlled by `expanded_dirs`:
+- Directories in `expanded_dirs` show file-level nodes
+- Other directories are collapsed to single nodes
+- Auto-computed when not provided (budget algorithm targeting ~200 nodes)
+
+This enables interactive drill-down without rescanning.
 
 ## Input Format
 
@@ -95,16 +97,17 @@ sequenceDiagram
 
     User->>CLI: dep-report open --file raw-graph.json
     CLI->>Server: Start HTTP server
-    Browser->>Server: GET /api/graph
+    Browser->>Server: POST /api/graph
+    Note over Browser,Server: Body: { expandedDirs: [...] }
     Server->>Server: Read file, detect format
     alt Raw dc format
-        Server->>Convert: convertWithFallback(content)
-        Convert-->>Server: ProcessedGraph
+        Server->>Convert: convertWithFallback(content, expandedDirs)
+        Convert-->>Server: ProcessedGraph with combos
     else ProcessedGraph format
-        Server->>Server: Use as-is (or re-aggregate)
+        Server->>Server: Use as-is
     end
     Server-->>Browser: ProcessedGraph JSON
-    Browser->>Browser: Render visualization
+    Browser->>Browser: Render with G6 combos
 ```
 
 ## Frontend Interaction Flow

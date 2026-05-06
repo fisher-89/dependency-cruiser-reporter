@@ -18,17 +18,18 @@ It outputs JSON format with detailed reports, but its native HTML report capabil
 
 ```mermaid
 flowchart LR
-    DC[dependency-cruiser\nJSON output] --> CLI[CLI\ndep-report]
-    CLI -->|Rust binary or\nNode.js fallback| JSON[Lightweight JSON]
+    DC[dependency-cruiser\nJSON output] --> CLI[CLI\ndep-report scan]
+    CLI -->|Raw JSON\npreserved| Server[HTTP Server\ndep-report open]
+    Server -->|Rust binary or\nNode.js fallback\nwith hybrid aggregation| JSON[Lightweight JSON]
     JSON --> FE[React Frontend\nVisualization]
-    FE --> Graph[Graph View]
+    FE --> Graph[Graph View\nwith combos]
     FE --> Report[Report View]
     FE --> Metrics[Metrics View]
 ```
 
 ### Core Features
 
-1. **Dependency Graph** — Interactive graph with node/edge display
+1. **Dependency Graph** — Interactive graph with hybrid aggregation (expanded + collapsed directories)
 2. **Error Report** — Violations grouped by severity (error/warn/info)
 3. **Metrics Dashboard** — Summary statistics and edge type distribution
 
@@ -45,9 +46,10 @@ flowchart LR
 
 | Command | Description |
 |---------|-------------|
-| `dep-report scan` | Run dependency-cruiser on a project directory |
-| `dep-report analyze` | Process dependency-cruiser JSON output |
+| `dep-report scan` | Run dependency-cruiser on a project directory, save raw output |
 | `dep-report open` | Start web viewer with HTTP server |
+
+The `scan` command saves raw dependency-cruiser output. Aggregation happens on-demand when viewing via `open`.
 
 ## Target Users
 
@@ -70,8 +72,8 @@ flowchart TB
 flowchart LR
     subgraph P0["P0 - Must Have"]
         P0A[Rust Preprocessing]
-        P0B[Auto Aggregation]
-        P0C[Layout Pre-compute]
+        P0B[Hybrid Aggregation]
+        P0C[Combo Generation]
         P0D[Graph Display]
         P0E[Violation Report]
         P0F[Basic Metrics]
