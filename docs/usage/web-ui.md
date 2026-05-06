@@ -41,7 +41,7 @@ Click the upload area to open file picker, select a `.json` file.
 
 ### File Format
 
-Expected format: [`ProcessedGraph`](../backend/data-structures.md) JSON output from `dep-report analyze` or `dep-report scan`.
+Expected format: [`ProcessedGraph`](../backend/data-structures.md) JSON output from `dep-report analyze`.
 
 Uploaded files are parsed directly with `JSON.parse` — no server-side processing occurs.
 

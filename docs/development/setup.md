@@ -44,7 +44,6 @@ dependency-cruiser-reporter/
 │   │   │   ├── commands/
 │   │   │   │   ├── analyze.ts
 │   │   │   │   ├── convert.ts
-│   │   │   │   ├── scan.ts
 │   │   │   │   └── open.ts
 │   │   │   ├── server.ts
 │   │   │   └── index.ts
@@ -130,7 +129,7 @@ pnpm link --global
 # Run
 dep-report --help
 dep-report analyze --input input.json
-dep-report scan --path ./src
+dep-report analyze --path ./src
 dep-report open --file graph.json
 ```
 
@@ -154,7 +153,7 @@ pnpm test
 # Lint all packages
 pnpm lint
 
-# Run demo (scan demo project + open viewer)
+# Run demo (analyze demo project + open viewer)
 pnpm demo
 ```
 
@@ -175,7 +174,7 @@ pnpm demo
 ### CLI
 - **commander** — CLI framework
 - **express** — HTTP server (open command)
-- **dependency-cruiser** — Scan command integration
+- **dependency-cruiser** — Analyze command integration
 
 ## Testing
 

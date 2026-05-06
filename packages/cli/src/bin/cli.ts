@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { scan, open } from "../commands/index.js";
+import { analyze, open } from "../commands/index.js";
 
 program
 	.name("dep-report")
@@ -10,11 +10,11 @@ program
 program
 	.command("analyze")
 	.description("Analyze a project directory and generate visualization")
-	.requiredOption("-p, --path <dir>", "Project directory to Analyze")
+	.requiredOption("-p, --path <dir>", "Project directory to analyze")
 	.option("-o, --output <path>", "Output graph JSON file")
 	.option("-c, --config <path>", "dependency-cruiser config file")
 	.action(async (options) => {
-		const graphFile = await scan({
+		const graphFile = await analyze({
 			path: options.path,
 			output: options.output,
 			config: options.config,

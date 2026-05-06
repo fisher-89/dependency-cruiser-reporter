@@ -12,35 +12,35 @@ npx @dcr-reporter/cli --help
 
 ## Commands
 
-### `scan`
+### `analyze`
 
 Run dependency-cruiser on a project directory and save raw output.
 
 ```bash
-dep-report scan --path <dir> [options]
+dep-report analyze --path <dir> [options]
 ```
 
 **Options:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-p, --path <dir>` | (required) | Project directory to scan |
+| `-p, --path <dir>` | (required) | Project directory to analyze |
 | `-o, --output <path>` | `<dirname>-graph.json` | Output JSON file |
 | `-c, --config <path>` | auto-detect | dependency-cruiser config file |
 
 **Examples:**
 
 ```bash
-# Scan a project
-dep-report scan --path ./my-project
+# Analyze a project
+dep-report analyze --path ./my-project
 
 # Specify output and config
-dep-report scan -p ./my-project -o output/raw-graph.json -c .dependency-cruiser.json
+dep-report analyze -p ./my-project -o output/raw-graph.json -c .dependency-cruiser.json
 ```
 
-The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the scan directory or CWD. It also detects `tsconfig.json` for TypeScript support.
+The `analyze` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the target directory or CWD. It also detects `tsconfig.json` for TypeScript support.
 
-> **Note:** `scan` saves raw dependency-cruiser output. Aggregation happens on-demand when viewing via `open`.
+> **Note:** `analyze` saves raw dependency-cruiser output. Aggregation happens on-demand when viewing via `open`.
 
 ---
 
@@ -63,7 +63,7 @@ dep-report open [options]
 **Examples:**
 
 ```bash
-# Open with raw scan output
+# Open with raw analyze output
 dep-report open -f raw-graph.json
 
 # Custom port
@@ -104,8 +104,8 @@ The output JSON follows the [`ProcessedGraph`](../backend/data-structures.md) st
 ## Typical Workflow
 
 ```bash
-# 1. Scan a project (runs dependency-cruiser internally, saves raw output)
-dep-report scan --path ./my-project
+# 1. Analyze a project (runs dependency-cruiser internally, saves raw output)
+dep-report analyze --path ./my-project
 
 # 2. Open the result (aggregation happens on-demand)
 dep-report open -f my-project-graph.json
@@ -130,7 +130,7 @@ dep-report open -f cruise.json
 ```json
 {
   "scripts": {
-    "scan": "dep-report scan --path src",
+    "scan": "dep-report analyze --path src",
     "view": "dep-report open -f src-graph.json"
   }
 }
@@ -140,9 +140,9 @@ dep-report open -f cruise.json
 
 ```yaml
 # GitHub Actions
-- name: Scan dependencies
+- name: Analyze dependencies
   run: |
-    dep-report scan --path src -o artifacts/raw-graph.json
+    dep-report analyze --path src -o artifacts/raw-graph.json
 
 - name: Upload artifact
   uses: actions/upload-artifact@v4

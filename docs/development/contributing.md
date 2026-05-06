@@ -116,7 +116,7 @@ Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 Examples:
 
 ```
-feat: add scan command for running dependency-cruiser
+feat: add analyze command for running dependency-cruiser
 fix: correct edge type detection for dynamic imports
 docs: update API reference with new options
 ```

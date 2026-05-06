@@ -125,7 +125,7 @@ The hybrid aggregation approach supports mixing expanded directories (showing fi
 
 ## Integration with CLI
 
-The `dep-report scan` command invokes the Rust binary for aggregation:
+The `dep-report analyze` command invokes the Rust binary for aggregation:
 
 1. The server's `/api/graph` endpoint calls `convertWithFallback`
 2. If Rust binary available, spawn with `--input`, `--output`, `--max-nodes`

@@ -4,7 +4,7 @@
 
 The `packages/cli` package provides the command-line interface for dependency-cruiser-reporter. It handles:
 
-1. **`scan`** — Run dependency-cruiser on a project directory and save raw output
+1. **`analyze`** — Run dependency-cruiser on a project directory and save raw output
 2. **`open`** — Start HTTP server to view results (aggregation happens on-demand)
 
 Also exports a programmatic Express server via `createServer`.
@@ -20,7 +20,7 @@ packages/cli/
 │   │   └── cli.ts       # CLI entry point (commander program)
 │   ├── commands/
 │   │   ├── index.ts     # Command exports
-│   │   ├── scan.ts      # Scan command (runs dependency-cruiser API)
+│   │   ├── analyze.ts   # Analyze command (runs dependency-cruiser API)
 │   │   └── open.ts      # Open command (starts HTTP server)
 │   ├── utils/
 │   │   ├── convert.ts   # Node.js dependency-cruiser JSON converter
@@ -32,13 +32,13 @@ packages/cli/
 
 ## Commands
 
-### `dep-report scan`
+### `dep-report analyze`
 
 Run dependency-cruiser on a project and save raw output.
 
 ```mermaid
 flowchart LR
-    CLI["dep-report scan"] --> Find["Find .dependency-cruiser config"]
+    CLI["dep-report analyze"] --> Find["Find .dependency-cruiser config"]
     Find --> DC["dependency-cruiser API\ncruise()"]
     DC --> Write["Write raw-graph.json\n(raw dependency-cruiser output)"]
 ```
@@ -46,30 +46,30 @@ flowchart LR
 **Usage:**
 
 ```bash
-dep-report scan --path <dir> [options]
+dep-report analyze --path <dir> [options]
 ```
 
 **Options:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-p, --path <dir>` | (required) | Project directory to scan |
+| `-p, --path <dir>` | (required) | Project directory to analyze |
 | `-o, --output <path>` | `<dirname>-graph.json` | Output JSON file |
 | `-c, --config <path>` | auto-detect | dependency-cruiser config file |
 
-The `scan` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the scan directory or current working directory. It also detects `tsconfig.json` for TypeScript support.
+The `analyze` command auto-detects `.dependency-cruiser.json` or `.dependency-cruiser.js` in the target directory or current working directory. It also detects `tsconfig.json` for TypeScript support.
 
 **Example:**
 
 ```bash
-# Scan current project
-dep-report scan --path ./my-project
+# Analyze current project
+dep-report analyze --path ./my-project
 
 # Specify output and config
-dep-report scan -p ./my-project -o output/raw-graph.json -c .dependency-cruiser.json
+dep-report analyze -p ./my-project -o output/raw-graph.json -c .dependency-cruiser.json
 ```
 
-> **Note:** The `scan` command saves raw dependency-cruiser output. Aggregation happens on-demand when the frontend requests `/api/graph`.
+> **Note:** The `analyze` command saves raw dependency-cruiser output. Aggregation happens on-demand when the frontend requests `/api/graph`.
 
 ---
 
@@ -176,7 +176,7 @@ The graph endpoint accepts an optional JSON body:
 }
 ```
 
-This allows the frontend to request different expansion configurations without rescanning.
+This allows the frontend to request different expansion configurations without re-analyzing.
 
 ### Programmatic API
 

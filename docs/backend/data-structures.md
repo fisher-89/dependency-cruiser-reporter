@@ -195,9 +195,9 @@ The aggregation level is derived from the `expanded_dirs` set:
 
 The CLI handles two input structures:
 
-### TypeScript Input (used by `scan` command via dependency-cruiser API)
+### TypeScript Input (used by `analyze` command via dependency-cruiser API)
 
-The `scan` command receives a nested structure: a `modules` array where each module has a `source` path and nested `dependencies` array. Each dependency includes `resolved` path, `coreModule` flag, `dependencyTypes`, and optional `rules` violations.
+The `analyze` command receives a nested structure: a `modules` array where each module has a `source` path and nested `dependencies` array. Each dependency includes `resolved` path, `coreModule` flag, `dependencyTypes`, and optional `rules` violations.
 
 Edge classification in TypeScript (`classifyEdge`):
 

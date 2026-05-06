@@ -4,7 +4,7 @@
 
 ```mermaid
 flowchart TB
-    Input[dependency-cruiser JSON] --> Scan[dep-report scan]
+    Input[dependency-cruiser JSON] --> Scan[dep-report analyze]
     Scan --> RawFile[Raw JSON file]
     RawFile --> Server[HTTP Server]
     Server --> Detect{Format?}
@@ -25,7 +25,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    subgraph Scan["Scan Mode (dep-report scan)"]
+    subgraph Scan["Analyze Mode (dep-report analyze)"]
         Path["Project directory"] --> DC["dependency-cruiser\nAPI (cruise)"]
         DC --> RawFile1["raw-graph.json\n(raw dc output)"]
     end
@@ -39,9 +39,9 @@ flowchart LR
 
 ## Key Change: Deferred Conversion + Hybrid Aggregation
 
-**Before:** `scan` command converted raw dependency-cruiser output to ProcessedGraph immediately, losing original data structure. Fixed aggregation levels (file/directory/package/root).
+**Before:** `analyze` command converted raw dependency-cruiser output to ProcessedGraph immediately, losing original data structure. Fixed aggregation levels (file/directory/package/root).
 
-**After:** `scan` preserves raw dependency-cruiser JSON. Conversion happens on-demand when frontend requests `/api/graph`:
+**After:** `analyze` preserves raw dependency-cruiser JSON. Conversion happens on-demand when frontend requests `/api/graph`:
 - Server detects file format (raw dc vs ProcessedGraph)
 - Raw format: converts using `convertWithFallback` (Rust preferred, Node.js fallback)
 - ProcessedGraph: uses as-is
@@ -51,13 +51,13 @@ The Rust engine now uses **hybrid aggregation** controlled by `expanded_dirs`:
 - Other directories are collapsed to single nodes
 - Auto-computed when not provided (budget algorithm targeting ~200 nodes)
 
-This enables interactive drill-down without rescanning.
+This enables interactive drill-down without re-analyzing.
 
 ## Input Format
 
 dependency-cruiser outputs JSON. The CLI supports two input structures:
 
-### Raw dependency-cruiser format (saved by `scan`)
+### Raw dependency-cruiser format (saved by `analyze`)
 
 Modules with nested dependencies array. Each module has `source`, `dependencies`, `valid`, optional `rules`.
 
@@ -69,7 +69,7 @@ Nodes/edges/meta structure. Backward compatible - server handles both formats.
 
 > See [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) for type definitions.
 
-## Scan Mode Flow
+## Analyze Mode Flow
 
 ```mermaid
 sequenceDiagram
@@ -77,7 +77,7 @@ sequenceDiagram
     participant CLI
     participant DC as dependency-cruiser
 
-    User->>CLI: dep-report scan --path ./project
+    User->>CLI: dep-report analyze --path ./project
     CLI->>CLI: Find .dependency-cruiser config
     CLI->>DC: cruise([path], options)
     DC-->>CLI: CruiseResult (raw JSON)

@@ -5,18 +5,18 @@ import { cruise } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
 
-export interface ScanOptions {
+export interface AnalyzeOptions {
   path: string;
   output?: string;
   config?: string;
 }
 
-export async function scan(options: ScanOptions): Promise<string> {
-  const { path: scanPath, output, config } = options;
+export async function analyze(options: AnalyzeOptions): Promise<string> {
+  const { path: analyzePath, output, config } = options;
 
   // Resolve absolute path
-  const absScanPath = resolve(cwd(), scanPath);
-  const outputPath = output || resolve(cwd(), `${basename(absScanPath)}-graph.json`);
+  const absAnalyzePath = resolve(cwd(), analyzePath);
+  const outputPath = output || resolve(cwd(), `${basename(absAnalyzePath)}-graph.json`);
 
   // Ensure output directory exists
   const parentDir = dirname(outputPath);
@@ -29,9 +29,9 @@ export async function scan(options: ScanOptions): Promise<string> {
   if (config) {
     configPath = resolve(cwd(), config);
   } else {
-    configPath = resolve(absScanPath, '.dependency-cruiser.json');
+    configPath = resolve(absAnalyzePath, '.dependency-cruiser.json');
     if (!existsSync(configPath)) {
-      configPath = resolve(absScanPath, '.dependency-cruiser.js');
+      configPath = resolve(absAnalyzePath, '.dependency-cruiser.js');
     }
     if (!existsSync(configPath)) {
       configPath = resolve(cwd(), '.dependency-cruiser.json');
@@ -57,7 +57,7 @@ export async function scan(options: ScanOptions): Promise<string> {
   }
 
   // Find and extract tsconfig.json for TypeScript support
-  const tsConfigPath = resolve(absScanPath, 'tsconfig.json');
+  const tsConfigPath = resolve(absAnalyzePath, 'tsconfig.json');
   const transpilerOptions: { tsConfig?: object } = {};
 
   if (existsSync(tsConfigPath)) {
@@ -69,11 +69,11 @@ export async function scan(options: ScanOptions): Promise<string> {
     }
   }
 
-  console.log(`Scanning: ${absScanPath}`);
+  console.log(`Analyzing: ${absAnalyzePath}`);
 
   // Run dependency-cruiser via API
   const cruiseResult = await cruise(
-    [absScanPath],
+    [absAnalyzePath],
     cruiseOptions,
     undefined, // resolveOptions (webpack)
     transpilerOptions
@@ -96,4 +96,4 @@ export async function scan(options: ScanOptions): Promise<string> {
   return outputPath;
 }
 
-export default scan;
+export default analyze;

@@ -6,7 +6,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 
 ### Project Overview
 - [Project Overview](overview/project-overview.md) — Core features, edge types, roadmap
-  - `dep-report` `scan` `open` `circular dependencies` `unused dependencies` `rule violations` `edge types: local/npm/core/dynamic` `ProcessedGraph` `Rust preprocessing` `hybrid aggregation` `Node.js fallback`
+  - `dep-report` `analyze` `open` `circular dependencies` `unused dependencies` `rule violations` `edge types: local/npm/core/dynamic` `ProcessedGraph` `Rust preprocessing` `hybrid aggregation` `Node.js fallback`
 
 ### Architecture
 - [Architecture Overview](architecture/overview.md) — Three-component system, key files, design decisions
@@ -26,7 +26,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 
 ### CLI
 - [CLI Package](packages/cli.md) — Commands, options, HTTP server, programmatic API
-  - `@dcr-reporter/cli` `dep-report scan: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs`
+  - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs`
 - [CLI Reference](usage/cli.md) — Full command reference, CI/CD integration
   - `npm install -g @dcr-reporter/cli` `npx @dcr-reporter/cli` `hybrid aggregation` `expanded_dirs` `GitHub Actions` `actions/upload-artifact`
 
@@ -41,7 +41,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 ### Usage
 - [Web UI](usage/web-ui.md) — Server startup, upload, views
   - `dep-report open` `-f` `-p` `drag-and-drop` `.json file upload`
-- [Scenarios](usage/scenarios.md) — Quick scan, CI/CD, monorepo, pre-commit
+- [Scenarios](usage/scenarios.md) — Quick analysis, CI/CD, monorepo, pre-commit
   - `CI/CD` `GitHub Actions` `monorepo` `drill-down` `pre-commit hook` `husky` `npx dependency-cruiser`
 
 ### Development
@@ -59,7 +59,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 | `ProcessedGraph`, `GraphNode`, `GraphEdge`, type contracts | [Data Structures](backend/data-structures.md) |
 | `parse_and_aggregate`, `dcr-aggregate`, `expanded_dirs` | [Rust Engine](backend/rust-engine.md) |
 | `convertDcOutput`, Node.js fallback | [CLI Package](packages/cli.md) |
-| `dep-report scan/open`, CLI options | [CLI Reference](usage/cli.md) |
+| `dep-report analyze/open`, CLI options | [CLI Reference](usage/cli.md) |
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Aggregation Strategy](architecture/aggregation.md) |
 | `EdgeType`, `NodeType`, `AggregationLevel` | [Data Structures](backend/data-structures.md) |
 | `createServer`, `/api/config`, `POST /api/graph` | [CLI Package](packages/cli.md) |

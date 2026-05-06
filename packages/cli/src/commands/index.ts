@@ -1,2 +1,2 @@
-export { scan } from './scan.js';
+export { analyze } from './analyze.js';
 export { open } from './open.js';

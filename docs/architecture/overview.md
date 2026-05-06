@@ -16,7 +16,7 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph CLI["CLI (packages/cli/)"]
-        Scan["scan command\nRuns dependency-cruiser"]
+        Scan["analyze command\nRuns dependency-cruiser"]
         Analyze["analyze command\nRust binary / Node.js fallback"]
         Open["open command\nExpress HTTP server"]
         Convert["convert.ts\nNode.js JSON converter"]
@@ -76,7 +76,7 @@ flowchart TB
 
 **Responsibilities:**
 
-1. Run dependency-cruiser via API (`scan` command)
+1. Run dependency-cruiser via API (`analyze` command)
 2. Serve frontend with Express (`open` command)
 3. Process JSON with Rust binary or Node.js fallback on-demand
 4. Export programmatic server API
@@ -86,7 +86,7 @@ flowchart TB
 | File | Purpose |
 |------|---------|
 | `src/bin/cli.ts` | CLI entry point (commander program) |
-| `src/commands/scan.ts` | Scan: runs dependency-cruiser on a project |
+| `src/commands/analyze.ts` | Analyze: runs dependency-cruiser on a project |
 | `src/commands/open.ts` | Open: starts HTTP server |
 | `src/utils/convert.ts` | Node.js fallback converter + `convertDcOutput` |
 | `src/utils/server.ts` | Express server with API endpoints |

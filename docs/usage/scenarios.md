@@ -5,7 +5,7 @@
 ```mermaid
 flowchart TB
     subgraph Local["Local Development"]
-        L1["dep-report scan"] --> L2["dep-report open"]
+        L1["dep-report analyze"] --> L2["dep-report open"]
     end
 
     subgraph CI["CI/CD Integration"]
@@ -14,16 +14,16 @@ flowchart TB
     end
 
     subgraph Mono["Monorepo Analysis"]
-        M1[Scan all packages] --> M2[Package overview]
+        M1[Analyze all packages] --> M2[Package overview]
         M2 --> M3[Drill-down per package]
     end
 ```
 
 ---
 
-## Scenario A: Quick Local Scan
+## Scenario A: Quick Local Analysis
 
-The simplest workflow — scan and view in two commands.
+The simplest workflow — analyze and view in two commands.
 
 ```mermaid
 sequenceDiagram
@@ -31,7 +31,7 @@ sequenceDiagram
     participant CLI as dep-report
     participant Browser
 
-    Dev->>CLI: dep-report scan --path ./project
+    Dev->>CLI: dep-report analyze --path ./project
     CLI->>CLI: Run dependency-cruiser + convert
     CLI-->>Dev: graph.json written
     Dev->>CLI: dep-report open -f graph.json
@@ -40,8 +40,8 @@ sequenceDiagram
 ```
 
 ```bash
-# 1. Scan the project
-dep-report scan --path ./my-project
+# 1. Analyze the project
+dep-report analyze --path ./my-project
 
 # 2. Open the result
 dep-report open -f my-project-graph.json
@@ -80,11 +80,11 @@ steps:
       path: graph.json
 ```
 
-Or use the `scan` command directly:
+Or use the `analyze` command directly:
 
 ```bash
-- name: Scan and generate report
-  run: dep-report scan -p ./src -o graph.json
+- name: Analyze and generate report
+  run: dep-report analyze -p ./src -o graph.json
 ```
 
 ---
@@ -95,19 +95,19 @@ Analyze multiple packages in a monorepo.
 
 ```mermaid
 flowchart TB
-    Scan["dep-report scan"] --> Overview[Package-level overview]
+    Scan["dep-report analyze"] --> Overview[Package-level overview]
     Overview --> Core[Drill-down: packages/core]
     Overview --> Utils[Drill-down: packages/utils]
     Overview --> Web[Drill-down: packages/web]
 ```
 
 ```bash
-# Scan entire monorepo (auto-selects package-level aggregation for large repos)
-dep-report scan --path ./packages -o overview-graph.json
+# Analyze entire monorepo (auto-selects package-level aggregation for large repos)
+dep-report analyze --path ./packages -o overview-graph.json
 dep-report open -f overview-graph.json
 
 # Drill-down on a specific package
-dep-report scan --path ./packages/core -o core-graph.json
+dep-report analyze --path ./packages/core -o core-graph.json
 dep-report open -f core-graph.json
 ```
 
@@ -133,12 +133,12 @@ Block commits with new violations.
 # .husky/pre-commit
 #!/bin/sh
 
-# Scan for violations
-dep-report scan -p ./src -o .tmp/graph.json
+# Analyze for violations
+dep-report analyze -p ./src -o .tmp/graph.json
 
-# Check if the scan succeeded
+# Check if the analysis succeeded
 if [ $? -ne 0 ]; then
-  echo "dependency-cruiser scan failed"
+  echo "dependency-cruiser analysis failed"
   exit 1
 fi
 ```
@@ -149,7 +149,7 @@ fi
 
 | Role | Workflow |
 |------|----------|
-| Developer | `dep-report scan` + `dep-report open` before commit |
+| Developer | `dep-report analyze` + `dep-report open` before commit |
 | Tech Lead | Review architecture compliance in PR reviews |
 | DevOps | CI/CD pipeline with `dep-report analyze` + artifact upload |
 | Architect | Generate package-level overview for documentation |
@@ -158,7 +158,7 @@ fi
 
 ## Tips
 
-1. **Start with scan**: Use `dep-report scan` for the simplest workflow
+1. **Start with analyze**: Use `dep-report analyze` for the simplest workflow
 2. **Focus on errors**: Check Report view for `error` severity violations
 3. **Use explicit levels**: Override aggregation level with `-l` for specific views
 4. **Integrate early**: Add to CI before issues accumulate

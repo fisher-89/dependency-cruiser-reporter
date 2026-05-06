@@ -1,6 +1,6 @@
 # Project Overview
 
-dependency-cruiser-reporter is a visualization tool for [dependency-cruiser](https://github.com/sverrejo/nmc-dependency-cruiser) scan results.
+dependency-cruiser-reporter is a visualization tool for [dependency-cruiser](https://github.com/sverrejo/nmc-dependency-cruiser) analysis results.
 
 ## Problem Statement
 
@@ -18,7 +18,7 @@ It outputs JSON format with detailed reports, but its native HTML report capabil
 
 ```mermaid
 flowchart LR
-    DC[dependency-cruiser\nJSON output] --> CLI[CLI\ndep-report scan]
+    DC[dependency-cruiser\nJSON output] --> CLI[CLI\ndep-report analyze]
     CLI -->|Raw JSON\npreserved| Server[HTTP Server\ndep-report open]
     Server -->|Rust binary or\nNode.js fallback\nwith hybrid aggregation| JSON[Lightweight JSON]
     JSON --> FE[React Frontend\nVisualization]
@@ -46,10 +46,10 @@ flowchart LR
 
 | Command | Description |
 |---------|-------------|
-| `dep-report scan` | Run dependency-cruiser on a project directory, save raw output |
+| `dep-report analyze` | Run dependency-cruiser on a project directory, save raw output |
 | `dep-report open` | Start web viewer with HTTP server |
 
-The `scan` command saves raw dependency-cruiser output. Aggregation happens on-demand when viewing via `open`.
+The `analyze` command saves raw dependency-cruiser output. Aggregation happens on-demand when viewing via `open`.
 
 ## Target Users
 
