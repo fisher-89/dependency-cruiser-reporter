@@ -190,7 +190,7 @@ Edge detection in Rust (`detect_edge_type`):
 | `dependencyTypes` contains `"dynamic"` | `Dynamic` |
 | Otherwise | `Local` |
 
-> TypeScript input: [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) | Rust input: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
+> TypeScript input: [packages/cli/src/utils/convert.ts](../../packages/cli/src/utils/convert.ts) | Rust input: [packages/rust/src/lib.rs](../../packages/rust/src/lib.rs)
 
 ## Serialization Notes
 

@@ -59,7 +59,7 @@ dependency-cruiser outputs JSON. The CLI supports two input structures:
 
 Modules with nested dependencies array. Each module has `source`, `dependencies`, `valid`, optional `rules`.
 
-> See [packages/cli/src/commands/convert.ts](../../packages/cli/src/commands/convert.ts) for full type definitions.
+> See [packages/cli/src/utils/convert.ts](../../packages/cli/src/utils/convert.ts) for full type definitions.
 
 ### ProcessedGraph format (already converted)
 

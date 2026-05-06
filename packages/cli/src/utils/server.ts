@@ -38,7 +38,7 @@ export class DcrServer {
   private setupRoutes(): void {
     // Get frontend dist directory
     const cliDir = dirname(fileURLToPath(import.meta.url));
-    const frontendDist = resolve(cliDir, '../../frontend/dist');
+    const frontendDist = resolve(cliDir, '../../../frontend/dist');
 
     // API: Get config
     this.app.get('/api/config', (_req: Request, res: Response) => {

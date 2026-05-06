@@ -138,7 +138,6 @@ pub fn compute_auto_expanded_dirs(
         }
 
         // === CHECK BUDGET: stop if exceeded ===
-        print!("depth {} , node_count {}\n", depth, current_node_count);
         if depth > 2 && current_node_count > TARGET_NODE_BUDGET {
             expanded = saved_expanded;
             break;

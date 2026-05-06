@@ -81,10 +81,9 @@ flowchart TB
 |------|---------|
 | `bin/cli.js` | CLI entry point (commander program) |
 | `src/commands/scan.ts` | Scan: runs dependency-cruiser on a project |
-| `src/commands/analyze.ts` | Analyze: processes JSON with Rust binary |
-| `src/commands/convert.ts` | Node.js fallback converter + `convertDcOutput` |
 | `src/commands/open.ts` | Open: starts HTTP server |
-| `src/server.ts` | Express server with API endpoints |
+| `src/utils/convert.ts` | Node.js fallback converter + `convertDcOutput` |
+| `src/utils/server.ts` | Express server with API endpoints |
 
 ### React Frontend (`packages/frontend/`)
 

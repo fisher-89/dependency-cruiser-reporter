@@ -1,4 +1,4 @@
-import { type ServerOptions, createServer } from '../server.js';
+import { type ServerOptions, createServer } from '../utils/server.js';
 
 export interface OpenOptions {
   file?: string;

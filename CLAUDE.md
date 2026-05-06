@@ -10,7 +10,7 @@
 [dependency-cruiser JSON] → [Rust preprocessing] → [Lightweight JSON] → [React visualization]
 ```
 
-- **CLI** (`packages/cli/`): Command-line tool (`dep-report`) with three commands: `analyze` (process dependency-cruiser JSON via Rust binary or Node.js fallback), `scan` (run dependency-cruiser on a project), `open` (serve web viewer). Also exports a programmatic Express server. The `convert.ts` module provides a Node.js fallback (`convertDcOutput`) when the Rust binary is unavailable.
+- **CLI** (`packages/cli/`): Command-line tool (`dep-report`) with two commands: `analyze` (process dependency-cruiser JSON via Rust binary or Node.js fallback), `open` (serve web viewer). Also exports a programmatic Express server. The `convert.ts` module provides a Node.js fallback (`convertDcOutput`) when the Rust binary is unavailable.
 - **Rust backend** (`packages/rust/`): Native binary (`dcr-aggregate`) that parses dependency-cruiser output, aggregates nodes by count thresholds, computes layout coordinates
 - **React frontend** (`packages/frontend/`): Interactive visualization with graph/report/metrics views
 - **E2E tests** (`packages/e2e/`): Integration tests using Node.js built-in test runner. Tests CLI commands and Rust binary with fixture data.

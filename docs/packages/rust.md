@@ -126,7 +126,7 @@ The `dep-report analyze` command locates and invokes the `dcr-aggregate` binary:
 
 1. Search `target/release/dcr-aggregate` then `target/debug/dcr-aggregate` relative to CLI dist
 2. If found, spawn the binary with `--input`, `--output`, `--max-nodes`, `--level` arguments
-3. If binary fails or is not found, fall back to Node.js `convertDcOutput` in `packages/cli/src/commands/convert.ts`
+3. If binary fails or is not found, fall back to Node.js `convertDcOutput` in `packages/cli/src/utils/convert.ts`
 
 See [CLI Package](./cli.md) for details.
 

@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 import { program } from "commander";
-import { scan, open } from "../dist/index.js";
-
-//TODO 将cli.js整合到源码，构建后生成dist/bin
+import { scan, open } from "../commands/index.js";
 
 program
 	.name("dep-report")

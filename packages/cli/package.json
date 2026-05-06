@@ -4,7 +4,7 @@
   "type": "module",
   "description": "CLI and HTTP server for dependency-cruiser-reporter",
   "bin": {
-    "dep-report": "./bin/cli.js"
+    "dep-report": "./dist/bin/cli.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,11 +15,10 @@
     }
   },
   "files": [
-    "bin/",
     "dist/"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/postbuild.js",
     "build:rust": "cd ../rust && cargo build --release",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",

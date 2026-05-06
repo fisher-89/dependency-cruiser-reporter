@@ -26,7 +26,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 
 ### CLI
 - [CLI Package](packages/cli.md) — Commands, options, HTTP server, programmatic API
-  - `@dcr-reporter/cli` `dep-report scan: --path/--output/--config` `dep-report analyze: --input/--output/--level/--max-nodes` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `.dependency-cruiser.json`
+  - `@dcr-reporter/cli` `dep-report analyze: --input/--output/--level/--max-nodes` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `.dependency-cruiser.json`
 - [CLI Reference](usage/cli.md) — Full command reference, CI/CD integration
   - `npm install -g @dcr-reporter/cli` `npx @dcr-reporter/cli` `aggregation levels` `GitHub Actions` `actions/upload-artifact`
 

@@ -44,9 +44,9 @@ function findDcrAggregateBinary(): string | null {
   // Try relative path from CLI dist directory
   try {
     const thisDir = dirname(fileURLToPath(import.meta.url));
-    const releaseBin = resolve(thisDir, `../../rust/target/release/dcr-aggregate${ext}`);
+    const releaseBin = resolve(thisDir, `../../../rust/target/release/dcr-aggregate${ext}`);
     if (existsSync(releaseBin)) return releaseBin;
-    const debugBin = resolve(thisDir, `../../rust/target/debug/dcr-aggregate${ext}`);
+    const debugBin = resolve(thisDir, `../../../rust/target/debug/dcr-aggregate${ext}`);
     if (existsSync(debugBin)) return debugBin;
   } catch { }
 
