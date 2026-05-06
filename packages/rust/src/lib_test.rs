@@ -1,6 +1,5 @@
 use super::*;
-use super::aggregate::{self, detect_edge_type, RawEdge, TARGET_NODE_BUDGET};
-use super::violations::EdgeViolationCounts;
+use super::aggregate::{self, detect_edge_type, TARGET_NODE_BUDGET};
 use std::collections::HashMap;
 use std::io::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -423,20 +422,17 @@ fn test_real_world_scale() {
     let violation_counts = HashMap::new();
     let dirs = aggregate::compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    // With correct cost calculation:
-    // - "src" has 412 descendants, cost = 411 > budget (297), should NOT expand
-    // - "lib" has 250 children > 50, should NOT expand
-    // - "vendor" has 100 children > 50, should NOT expand
-    // Only small directories that fit budget should expand
-    assert!(!dirs.contains(&"src".to_string()), "src has 412 descendants, cost exceeds budget");
+    // Algorithm uses direct children count for cost estimation:
+    // - "src" has 4 direct children (components, utils, index.ts, App.tsx) <= 50, can expand
+    // - "lib" has 250 direct children > 50, should NOT expand
+    // - "vendor" has 100 direct children > 50, should NOT expand
+    assert!(dirs.contains(&"src".to_string()), "src has 4 direct children <= 50, should expand");
     assert!(!dirs.contains(&"lib".to_string()), "lib has 250 direct children > 50");
     assert!(!dirs.contains(&"vendor".to_string()), "vendor has 100 direct children > 50");
 
     // Verify final node count stays under budget by simulating build_hybrid_nodes
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
-    let all_edges: Vec<RawEdge> = vec![];
-    let edge_violations: HashMap<(String, String), EdgeViolationCounts> = HashMap::new();
-    let (nodes, _, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set, &edge_violations);
+    let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
     assert!(
         nodes.len() <= TARGET_NODE_BUDGET + 50,
         "Final node count {} should be close to budget {}",
@@ -499,9 +495,7 @@ fn test_relative_path_with_single_top_level_dir() {
 
     // Verify node count stays under budget
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
-    let all_edges: Vec<RawEdge> = vec![];
-    let edge_violations: HashMap<(String, String), EdgeViolationCounts> = HashMap::new();
-    let (nodes, _, _, _) = build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set, &edge_violations);
+    let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
 
     // Node count should be: 1 for ".." + expanded dirs' file nodes
     // Should NOT create intermediate directory nodes

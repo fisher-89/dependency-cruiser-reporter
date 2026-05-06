@@ -122,11 +122,18 @@ export function DependencyGraph({ data, onToggleDir }: Props) {
         },
       },
       edge: {
-        style: (d: { data?: { edge_type?: EdgeType } }) => {
+        style: (d: {
+          data?: { edge_type?: EdgeType; error_count?: number; warn_count?: number };
+        }) => {
           const edgeType = d.data?.edge_type ?? 'local';
           const s = EDGE_STYLES[edgeType] ?? EDGE_STYLES.local;
+          const stroke = d.data?.error_count
+            ? '#f1280d'
+            : d.data?.warn_count
+              ? '#ffe100'
+              : '#6a839bba';
           return {
-            stroke: s.stroke,
+            stroke: stroke,
             lineWidth: 1.5,
             lineDash: s.lineDash,
             endArrow: true,

@@ -253,10 +253,6 @@ pub fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
     false
 }
 
-fn get_parent_directory(path: &str) -> String {
-    path.rsplitn(2, '/').nth(1).unwrap_or("").to_string()
-}
-
 /// Find the lowest ancestor directory that is NOT expanded but whose parent IS expanded.
 fn find_closest_unexpanded_ancestor(path: &str, expanded_set: &HashSet<&str>) -> String {
     let parts: Vec<&str> = path.split('/').collect();

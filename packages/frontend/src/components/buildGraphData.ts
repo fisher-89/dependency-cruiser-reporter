@@ -32,6 +32,9 @@ export function buildGraphData(data: ProcessedGraph) {
     data: {
       edge_type: e.edge_type,
       weight: e.weight,
+      error_count: e.error_count,
+      warn_count: e.warn_count,
+      info_count: e.info_count,
     },
   }));
 

@@ -42,8 +42,17 @@ pub fn compute_auto_expanded_dirs(
     for m in modules {
         let parts: Vec<&str> = m.source.split('/').collect();
 
+        // Add file as direct child of its parent directory
+        if parts.len() > 1 {
+            let parent = parts[..parts.len() - 1].join("/");
+            dir_direct_children
+                .entry(parent)
+                .or_default()
+                .insert(m.source.clone());
+        }
+
         // Add subdirectories as children of ancestor directories
-        for i in 1..parts.len() - 1 {
+        for i in 1..parts.len() {
             let ancestor = parts[..i - 1].join("/");
             let child_dir = parts[..i].join("/");
             dir_direct_children
@@ -137,8 +146,8 @@ pub fn compute_auto_expanded_dirs(
             current_node_count += children_count;
         }
 
-        // === CHECK BUDGET: stop if exceeded ===
-        if depth > 2 && current_node_count > TARGET_NODE_BUDGET {
+        // === CHECK BUDGET: rollback if exceeded ===
+        if current_node_count > TARGET_NODE_BUDGET {
             expanded = saved_expanded;
             break;
         }

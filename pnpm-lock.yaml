@@ -39,6 +39,9 @@ importers:
       '@dcr-reporter/frontend':
         specifier: workspace:*
         version: link:../frontend
+      '@dcr-reporter/rust-wasm':
+        specifier: workspace:*
+        version: link:../rust/pkg
       commander:
         specifier: ^12.0.0
         version: 12.1.0
@@ -52,18 +55,11 @@ importers:
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.25
-      '@types/node':
-        specifier: ^20.14.0
-        version: 20.19.39
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
 
-  packages/e2e:
-    devDependencies:
-      '@types/node':
-        specifier: ^20.14.0
-        version: 20.19.39
+  packages/e2e: {}
 
   packages/frontend:
     dependencies:
@@ -101,6 +97,8 @@ importers:
       vite-plus:
         specifier: 'catalog:'
         version: 0.1.19(@types/node@20.19.39)(@voidzero-dev/vite-plus-core@0.1.19(@types/node@20.19.39)(terser@5.46.2)(typescript@5.9.3))(terser@5.46.2)(typescript@5.9.3)
+
+  packages/rust/pkg: {}
 
 packages:
 

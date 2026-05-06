@@ -13,18 +13,15 @@ use violations::{build_edge_violations, compute_violation_counts, parse_violatio
 // Re-export for tests
 pub use aggregate::is_path_expanded;
 
-/// Parse dependency-cruiser JSON and aggregate graph
+/// Core aggregation logic - parses JSON string and produces aggregated graph
 ///
-/// When `expanded_dirs` is provided, directories in that set are expanded (show files),
-/// while directories not in that set are collapsed (show as single directory node).
-/// When `expanded_dirs` is None, it's auto-computed based on module count thresholds.
-pub fn parse_and_aggregate(
-    input: &Path,
+/// This is the shared implementation used by both WASM and binary targets.
+fn aggregate_from_str(
+    content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, DcrError> {
-    let content = std::fs::read_to_string(input)?;
-    let cruise: CruiseResult = serde_json::from_str(&content)
+    let cruise: CruiseResult = serde_json::from_str(content)
         .map_err(|e| DcrError::InvalidInput(format!("Invalid JSON: {}", e)))?;
 
     // Collect all modules
@@ -77,6 +74,20 @@ pub fn parse_and_aggregate(
         meta,
         violations,
     })
+}
+
+/// Parse dependency-cruiser JSON and aggregate graph (file-based, for binary target)
+///
+/// When `expanded_dirs` is provided, directories in that set are expanded (show files),
+/// while directories not in that set are collapsed (show as single directory node).
+/// When `expanded_dirs` is None, it's auto-computed based on module count thresholds.
+pub fn parse_and_aggregate(
+    input: &Path,
+    max_nodes: usize,
+    expanded_dirs: Option<Vec<String>>,
+) -> Result<ProcessedGraph, DcrError> {
+    let content = std::fs::read_to_string(input)?;
+    aggregate_from_str(&content, max_nodes, expanded_dirs)
 }
 
 #[cfg(test)]

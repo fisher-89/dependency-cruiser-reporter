@@ -48,7 +48,7 @@ export class DcrServer {
     });
 
     // API: Get graph data (auto-converts raw dependency-cruiser JSON)
-    this.app.post('/api/graph', (req: Request, res: Response) => {
+    this.app.post('/api/graph', async (req: Request, res: Response) => {
       if (!this.graphFile) {
         res.status(404).json({ error: 'No graph file specified' });
         return;
@@ -67,7 +67,7 @@ export class DcrServer {
           : undefined;
 
         if (parsed.modules && Array.isArray(parsed.modules)) {
-          const graph = convertWithFallback(content, this.maxNodes, expandedDirs);
+          const graph = await convertWithFallback(content, this.maxNodes, expandedDirs);
           res.json(graph);
           return;
         }
