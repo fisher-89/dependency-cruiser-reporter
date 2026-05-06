@@ -1,4 +1,5 @@
 use crate::types::{AggregationLevel, GraphCombo, GraphNode, Module, NodeType};
+use crate::violations::EdgeViolationCounts;
 use std::collections::{HashMap, HashSet};
 
 use super::edges::RawEdge;
@@ -9,6 +10,9 @@ pub struct EdgeInfo {
     pub dep_types: Vec<String>,
     pub count: u32,
     pub has_circular: bool,
+    pub error_count: u32,
+    pub warn_count: u32,
+    pub info_count: u32,
 }
 
 /// Build nodes and combos using hybrid aggregation: directories in expanded_set show files,
@@ -22,6 +26,7 @@ pub fn build_hybrid_nodes(
     edges: &[RawEdge],
     violation_counts: &HashMap<String, u32>,
     expanded_set: &HashSet<&str>,
+    edge_violations: &HashMap<(String, String), EdgeViolationCounts>,
 ) -> (
     Vec<GraphNode>,
     Vec<GraphCombo>,
@@ -274,15 +279,24 @@ pub fn build_hybrid_nodes(
             .cloned()
             .unwrap_or_else(|| e.to.clone());
         if src_node != tgt_node {
-            let info = edge_map.entry((src_node, tgt_node)).or_insert(EdgeInfo {
+            let info = edge_map.entry((src_node.clone(), tgt_node.clone())).or_insert(EdgeInfo {
                 dep_types: Vec::new(),
                 count: 0,
                 has_circular: false,
+                error_count: 0,
+                warn_count: 0,
+                info_count: 0,
             });
             info.dep_types.extend(e.dep_types.clone());
             info.count += 1;
             if e.circular {
                 info.has_circular = true;
+            }
+            // Aggregate violations from file-level edge to directory-level edge
+            if let Some(viol_counts) = edge_violations.get(&(e.from.clone(), e.to.clone())) {
+                info.error_count += viol_counts.error_count;
+                info.warn_count += viol_counts.warn_count;
+                info.info_count += viol_counts.info_count;
             }
         }
     }

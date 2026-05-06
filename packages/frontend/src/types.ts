@@ -29,6 +29,9 @@ export interface GraphEdge {
   edge_type: EdgeType;
   weight: number;
   circular?: boolean;
+  error_count?: number;
+  warn_count?: number;
+  info_count?: number;
 }
 
 export interface GraphMeta {

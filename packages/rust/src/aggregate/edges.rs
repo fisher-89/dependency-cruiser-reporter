@@ -43,6 +43,9 @@ pub fn aggregate_edges(
                 edge_type,
                 weight: info.count,
                 circular: if info.has_circular { Some(true) } else { None },
+                error_count: if info.error_count > 0 { Some(info.error_count) } else { None },
+                warn_count: if info.warn_count > 0 { Some(info.warn_count) } else { None },
+                info_count: if info.info_count > 0 { Some(info.info_count) } else { None },
             }
         })
         .collect();

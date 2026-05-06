@@ -8,7 +8,7 @@ use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs,
 use std::collections::HashSet;
 use std::path::Path;
 
-use violations::{compute_violation_counts, parse_violations};
+use violations::{compute_violation_counts, build_edge_violations, parse_violations};
 
 // Re-export for tests
 pub use aggregate::is_path_expanded;
@@ -48,13 +48,17 @@ pub fn parse_and_aggregate(
     // Count violation per module
     let violation_counts = compute_violation_counts(&violations);
 
+    // Build edge-to-violations mapping
+    let edge_violations = build_edge_violations(&violations);
+
     // Determine expanded directories - either provided or auto-computed
-    let expanded = expanded_dirs.unwrap_or_else(|| compute_auto_expanded_dirs(&modules, &violation_counts));
+    let expanded =
+        expanded_dirs.unwrap_or_else(|| compute_auto_expanded_dirs(&modules, &violation_counts));
     let expanded_set: HashSet<&str> = expanded.iter().map(|s| s.as_str()).collect();
 
     // Build nodes using hybrid aggregation based on expanded_dirs
     let (nodes, combos, edge_map, agg_level) =
-        build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set);
+        build_hybrid_nodes(&modules, &all_edges, &violation_counts, &expanded_set, &edge_violations);
 
     // Aggregate edges
     let edges = aggregate_edges(&edge_map, max_nodes);

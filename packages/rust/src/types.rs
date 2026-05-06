@@ -52,6 +52,12 @@ pub struct GraphEdge {
     pub weight: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub circular: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub warn_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub info_count: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

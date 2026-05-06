@@ -34,3 +34,26 @@ pub fn compute_violation_counts(violations: &[ViolationInfo]) -> HashMap<String,
     }
     counts
 }
+
+/// Violation counts by severity for an edge.
+#[derive(Default, Clone)]
+pub struct EdgeViolationCounts {
+    pub error_count: u32,
+    pub warn_count: u32,
+    pub info_count: u32,
+}
+
+/// Build a map from (from, to) edge key to violation severity counts.
+pub fn build_edge_violations(violations: &[ViolationInfo]) -> HashMap<(String, String), EdgeViolationCounts> {
+    let mut map: HashMap<(String, String), EdgeViolationCounts> = HashMap::new();
+    for v in violations {
+        let counts = map.entry((v.from.clone(), v.to.clone())).or_default();
+        match v.severity.as_str() {
+            "error" => counts.error_count += 1,
+            "warn" => counts.warn_count += 1,
+            "info" => counts.info_count += 1,
+            _ => counts.warn_count += 1,
+        }
+    }
+    map
+}

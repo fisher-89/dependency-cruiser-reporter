@@ -21,6 +21,9 @@ interface ProcessedGraph {
     edge_type: 'local' | 'npm' | 'core' | 'dynamic';
     weight: number;
     circular?: boolean;
+    error_count?: number;
+    warn_count?: number;
+    info_count?: number;
   }[];
   combos: {
     id: string;
