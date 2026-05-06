@@ -11,7 +11,7 @@ const sampleCruise = resolve(fixturesDir, "sample-cruise.json");
 const outputDir = resolve(__dirname, ".output");
 
 // Resolve CLI binary with absolute path
-const cliBinary = resolve(__dirname, "../cli/bin/cli.js");
+const cliBinary = resolve(__dirname, "../cli/dist/bin/cli.js");
 const monorepoRoot = resolve(__dirname, "../..");
 
 // Check for Rust binary
