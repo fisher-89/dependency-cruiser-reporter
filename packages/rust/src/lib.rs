@@ -22,20 +22,16 @@ use wasm_bindgen::prelude::*;
 /// @param expandedDirs - optional list of directory paths to expand (show files)
 /// @returns ProcessedGraph with nodes, edges, combos, meta, and violations
 
-#[wasm_bindgen(js_name = aggregate)]
-pub fn wasm_aggregate(
+#[wasm_bindgen]
+pub fn aggregate(
     content: &str,
     #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
     #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Array>,
-) -> Result<JsValue, JsValue> {
+) -> Result<ProcessedGraph, JsError> {
     let expanded =
         expanded_dirs.map(|arr| arr.iter().filter_map(|v| v.as_string()).collect::<Vec<_>>());
 
     aggregate_from_str(content, max_nodes, expanded)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
-        .and_then(|result| {
-            serde_wasm_bindgen::to_value(&result).map_err(|e| JsValue::from_str(&e.to_string()))
-        })
 }
 
 /// Core aggregation logic - parses JSON string and produces aggregated graph
@@ -45,9 +41,9 @@ pub fn aggregate_from_str(
     content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
-) -> Result<ProcessedGraph, DcrError> {
+) -> Result<ProcessedGraph, JsError> {
     let cruise: CruiseResult = serde_json::from_str(content)
-        .map_err(|e| DcrError::InvalidInput(format!("Invalid JSON: {}", e)))?;
+        .map_err(|e: serde_json::Error| JsError::new(&format!("Invalid JSON: {}", e)))?;
 
     // Collect all modules
     let modules = cruise.modules.unwrap_or_default();

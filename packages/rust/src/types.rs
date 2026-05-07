@@ -1,17 +1,9 @@
+use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
+use tsify::Tsify;
 
-#[derive(Error, Debug)]
-pub enum DcrError {
-    #[error("Failed to read file: {0}")]
-    IoError(#[from] std::io::Error),
-    #[error("Failed to parse JSON: {0}")]
-    JsonError(#[from] serde_json::Error),
-    #[error("Invalid input: {0}")]
-    InvalidInput(String),
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi)] 
 pub struct ProcessedGraph {
     pub nodes: Vec<GraphNode>,
     pub edges: Vec<GraphEdge>,
@@ -20,7 +12,7 @@ pub struct ProcessedGraph {
     pub violations: Vec<ViolationInfo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
 pub struct GraphNode {
     pub id: String,
     pub label: String,
@@ -36,7 +28,7 @@ pub struct GraphNode {
     pub combo: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
 pub struct GraphCombo {
     pub id: String,
     pub label: String,
@@ -44,7 +36,7 @@ pub struct GraphCombo {
     pub combo: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
 pub struct GraphEdge {
     pub source: String,
     pub target: String,
@@ -60,7 +52,7 @@ pub struct GraphEdge {
     pub info_count: Option<u32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
 pub struct GraphMeta {
     pub original_node_count: usize,
     pub aggregated_node_count: usize,
@@ -69,7 +61,7 @@ pub struct GraphMeta {
     pub expanded_dirs: Option<Vec<String>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
 pub struct ViolationInfo {
     pub from: String,
     pub to: String,

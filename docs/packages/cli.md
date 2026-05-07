@@ -112,13 +112,19 @@ dep-report open -f graph.json -p 8080
 
 ## Node.js Converter (`convert.ts`)
 
-When the Rust binary is unavailable, `convertDcOutput` provides a pure Node.js fallback:
+When the WASM module is unavailable, `convertDcOutput` provides a pure Node.js fallback:
 
 ```typescript
 export function convertDcOutput(dcJson: string): ProcessedGraph
 ```
 
 It parses dependency-cruiser JSON (with `DcModule`, `DcDependency` types), classifies edges (`local` | `npm` | `core` | `dynamic`), extracts violations, and determines the aggregation level based on node count thresholds.
+
+**Type imports from WASM:**
+
+```typescript
+import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
+```
 
 Edge classification logic:
 
@@ -129,7 +135,7 @@ Edge classification logic:
 | `dep.dependencyTypes` includes `npm`/`npm-dev`/`npm-optional`/`npm-peer` | `npm` |
 | Otherwise | `local` |
 
-The `analyzeWithFallback` function in `convert.ts` provides the flow used by `/api/graph`: find the Rust binary, spawn it, or fall back to Node.js processing.
+The `analyzeWithFallback` function in `convert.ts` provides the flow used by `/api/graph`: load WASM module, call `aggregate`, or fall back to Node.js processing.
 
 ## HTTP Server
 
@@ -192,15 +198,15 @@ server.stop();
 
 > See [packages/cli/package.json](../../packages/cli/package.json) for current package configuration.
 
-## Integration with Rust Binary
+## Integration with WASM Module
 
 The server's `/api/graph` endpoint uses `convertWithFallback`:
 
-1. Search for `dcr-aggregate` binary in `packages/rust/target/release/` or `target/debug/`
-2. If found, spawn the binary with appropriate arguments
-3. If binary fails or is not found, fall back to `convertDcOutput` in Node.js
+1. Load WASM module from `@dcr-reporter/wasm`
+2. If successful, call `aggregate` with content, maxNodes, and expandedDirs
+3. If WASM fails or is unavailable, fall back to `convertDcOutput` in Node.js
 
-The Node.js fallback maintains feature parity for basic aggregation.
+The Node.js fallback maintains feature parity for basic aggregation. TypeScript types are imported directly from the WASM module for type safety.
 
 ## Build Process
 

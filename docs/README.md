@@ -18,15 +18,15 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 
 ### Backend
 - [Rust Engine](backend/rust-engine.md) — WASM module design, modules, error handling, build
-  - `aggregate_from_str` `wasm_aggregate` `DcrError: IoError/JsonError/InvalidInput` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `cargo test` `cargo clippy`
+  - `aggregate` `aggregate_from_str` `JsError` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `tsify` `cargo test` `cargo clippy`
 - [Data Structures](backend/data-structures.md) — Shared type contracts (Rust ↔ TypeScript)
   - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/orphan/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight/circular` `GraphMeta: expanded_dirs` `ViolationInfo` `NodeType` `EdgeType` `DcModule` `DcDependency`
-- [Rust Package](packages/rust.md) — Library API, CLI binary, Cargo config
-  - `dcr-aggregate` `--input` `--output` `--max-nodes` `expanded_dirs` `parse_and_aggregate` `target/release/dcr-aggregate` `cargo build --release` `test_aggregation_level_selection`
+- [Rust Package](packages/rust.md) — Library API, WASM exports, Cargo config
+  - `aggregate` `aggregate_from_str` `expanded_dirs` `tsify` `#[derive(Tsify)]` `wasm-pack build` `test_aggregation_level_selection`
 
 ### CLI
 - [CLI Package](packages/cli.md) — Commands, options, HTTP server, programmatic API
-  - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs`
+  - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs` `@dcr-reporter/wasm`
 - [CLI Reference](usage/cli.md) — Full command reference, CI/CD integration
   - `npm install -g @dcr-reporter/cli` `npx @dcr-reporter/cli` `hybrid aggregation` `expanded_dirs` `GitHub Actions` `actions/upload-artifact`
 
@@ -57,7 +57,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 | Looking for... | Go to |
 |---|---|
 | `ProcessedGraph`, `GraphNode`, `GraphEdge`, type contracts | [Data Structures](backend/data-structures.md) |
-| `aggregate_from_str`, `wasm_aggregate`, `expanded_dirs` | [Rust Engine](backend/rust-engine.md) |
+| `aggregate`, `aggregate_from_str`, `expanded_dirs`, `tsify` | [Rust Engine](backend/rust-engine.md) |
 | `convertDcOutput`, Node.js fallback | [CLI Package](packages/cli.md) |
 | `dep-report analyze/open`, CLI options | [CLI Reference](usage/cli.md) |
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Aggregation Strategy](architecture/aggregation.md) |

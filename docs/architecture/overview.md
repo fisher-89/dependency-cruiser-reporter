@@ -64,13 +64,12 @@ flowchart TB
 
 | File | Purpose |
 |------|---------|
-| `src/lib.rs` | Library entry point, re-exports types |
-| `src/types.rs` | Data structures (ProcessedGraph, GraphNode, etc.) |
+| `src/lib.rs` | Library entry point, WASM exports |
+| `src/types.rs` | Data structures (ProcessedGraph, GraphNode, etc.) with `#[derive(Tsify)]` |
 | `src/aggregate/mod.rs` | Aggregation module exports |
 | `src/aggregate/expand.rs` | Auto-expand algorithm (budget-based) |
 | `src/aggregate/hybrid.rs` | Hybrid node building + combo generation |
 | `src/aggregate/edges.rs` | Edge extraction, aggregation, type detection |
-| `src/main.rs` | CLI entry point (`dcr-aggregate` binary) |
 
 ### CLI (`packages/cli/`)
 
@@ -110,21 +109,20 @@ flowchart TB
 
 ## Design Decisions
 
-### Why Rust native binary instead of WASM?
+### Why WASM with tsify?
 
-| Aspect | Native Binary | WASM Approach |
-|--------|---------------|---------------|
-| Deployment | Bundled with CLI package | Ships with frontend bundle |
-| User Experience | CLI-driven workflow | Browser-only workflow |
+| Aspect | Previous (CLI Binary) | Current (WASM + tsify) |
+|--------|----------------------|----------------------|
+| Deployment | CLI spawn of native binary | WASM module loaded via JS bindings |
+| Type Safety | Manual type definitions in `convert.ts` | Auto-generated TypeScript types via `tsify` |
 | Performance | Native speed | Near-native (WASM) |
-| Complexity | Simple CLI spawn | Requires wasm-bindgen, wasm-pack, browser init |
-| Fallback | Node.js converter available | No fallback |
+| Consistency | Manual sync between Rust and TS types | Single source of truth from Rust structs |
 
 ### Why Node.js fallback?
 
-- Rust binary may not be built on user's machine
+- WASM module may fail to load in some environments
 - Provides graceful degradation
-- Core logic (edge classification, aggregation level) is duplicated in `convert.ts`
+- Core logic (edge classification, aggregation) is duplicated in `convert.ts`
 
 ### Why React + AntV G6?
 
@@ -151,6 +149,6 @@ classDiagram
     note for ProcessedGraph "Serialized as JSON\nShared between Rust and TypeScript"
 ```
 
-TypeScript (`packages/frontend/src/types.ts`) and Rust (`packages/rust/src/types.rs`) share the same data structure via JSON serialization.
+TypeScript (`packages/frontend/src/types.ts`) and Rust (`packages/rust/src/types.rs`) share the same data structure via JSON serialization. TypeScript types are also auto-generated from Rust via `tsify`, allowing direct imports from `@dcr-reporter/wasm`.
 
 See [Data Structures](../backend/data-structures.md) for detailed definitions.

@@ -276,7 +276,7 @@ mod wasm_tests {
             .collect();
         let json = make_json(modules);
 
-        let result = wasm_aggregate(&json, 200, None);
+        let result = aggregate(&json, 200, None);
         assert!(result.is_ok(), "wasm_aggregate should succeed with valid input");
 
         let value = result.unwrap();
@@ -285,7 +285,7 @@ mod wasm_tests {
 
     #[wasm_bindgen_test]
     fn test_wasm_aggregate_invalid_json() {
-        let result = wasm_aggregate("invalid json", 200, None);
+        let result = aggregate("invalid json", 200, None);
         assert!(result.is_err(), "wasm_aggregate should return error for invalid JSON");
     }
 
@@ -306,7 +306,7 @@ mod wasm_tests {
         let expanded = Array::new();
         expanded.push(&JsValue::from_str("src"));
 
-        let result = wasm_aggregate(&json, 200, Some(expanded));
+        let result = aggregate(&json, 200, Some(expanded));
         assert!(result.is_ok(), "wasm_aggregate with expandedDirs should succeed");
     }
 
@@ -352,14 +352,14 @@ mod wasm_tests {
         ];
         let json = make_json(modules);
 
-        let result = wasm_aggregate(&json, 200, None);
+        let result = aggregate(&json, 200, None);
         assert!(result.is_ok(), "wasm_aggregate with dependencies should succeed");
     }
 
     #[wasm_bindgen_test]
     fn test_wasm_aggregate_empty_modules() {
         let json = make_json(vec![]);
-        let result = wasm_aggregate(&json, 200, None);
+        let result = aggregate(&json, 200, None);
         assert!(result.is_ok(), "wasm_aggregate should handle empty modules");
     }
 }

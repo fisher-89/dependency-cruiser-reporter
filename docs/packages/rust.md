@@ -39,17 +39,17 @@ flowchart TB
 
 ## Library API (`lib.rs`)
 
-### `wasm_aggregate`
+### `aggregate`
 
 WASM entry point called from JavaScript:
 
 ```rust
-#[wasm_bindgen(js_name = aggregate)]
-pub fn wasm_aggregate(
+#[wasm_bindgen]
+pub fn aggregate(
     content: &str,
-    max_nodes: usize,
-    expanded_dirs: Option<Array>,
-) -> Result<JsValue, JsValue>
+    #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
+    #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Array>,
+) -> Result<ProcessedGraph, JsError>
 ```
 
 **Parameters:**
@@ -60,7 +60,9 @@ pub fn wasm_aggregate(
 | `max_nodes` | `usize` | Maximum edges in output |
 | `expanded_dirs` | `Option<Array>` | JS array of directory paths to expand |
 
-**Returns:** `Result<JsValue, JsValue>` — ProcessedGraph as a JS object, or error string
+**Returns:** `Result<ProcessedGraph, JsError>` — ProcessedGraph with type-safe bindings, or error
+
+The `#[tsify]` attribute enables automatic TypeScript type generation for type-safe imports.
 
 ### `aggregate_from_str`
 
@@ -71,7 +73,7 @@ pub fn aggregate_from_str(
     content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
-) -> Result<ProcessedGraph, DcrError>
+) -> Result<ProcessedGraph, JsError>
 ```
 
 **Parameters:**
@@ -82,16 +84,13 @@ pub fn aggregate_from_str(
 | `max_nodes` | `usize` | Maximum edges in output |
 | `expanded_dirs` | `Option<Vec<String>>` | Directories to expand; `None` triggers auto-computation |
 
-**Returns:** `Result<ProcessedGraph, DcrError>`
+**Returns:** `Result<ProcessedGraph, JsError>`
 
 When `expanded_dirs` is `None`, the function calls `compute_auto_expanded_dirs` to determine which directories should show file-level nodes versus collapsed directory nodes. This uses a budget algorithm targeting ~200 nodes.
 
 ### Error Handling
 
-`DcrError` has three variants:
-- **IoError** — file I/O failures (for compatibility)
-- **JsonError** — JSON parse failures (auto-converted from `serde_json::Error`)
-- **InvalidInput** — malformed input data (with descriptive message)
+Uses `JsError` for WASM-compatible error handling. JSON parse failures return `JsError::new("Invalid JSON: ...")`.
 
 ## Cargo Configuration
 
@@ -100,7 +99,7 @@ When `expanded_dirs` is `None`, the function calls `compute_auto_expanded_dirs` 
 | Crate | Purpose |
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
-| `thiserror` | Error handling |
+| `tsify` | TypeScript type generation from Rust structs |
 | `wasm-bindgen` | JavaScript/WASM interop |
 | `serde-wasm-bindgen` | Serde integration for WASM |
 | `js-sys` | JavaScript standard library bindings |
@@ -140,8 +139,14 @@ The hybrid aggregation approach supports mixing expanded directories (showing fi
 The `dep-report open` command uses the WASM module for aggregation:
 
 1. The server's `/api/graph` endpoint calls `convertWithFallback`
-2. If WASM module available, calls `wasm_aggregate` via JS bindings
+2. If WASM module available, calls `aggregate` via JS bindings with type-safe imports
 3. If WASM unavailable or fails, falls back to Node.js `convertDcOutput`
+
+TypeScript types are imported directly from WASM:
+
+```typescript
+import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
+```
 
 See [CLI Package](./cli.md) for details.
 
@@ -180,3 +185,7 @@ cargo fmt --check
 | `test_relative_path_with_single_top_level_dir` | Verify relative path handling |
 
 Tests are defined in `lib_test.rs`.
+
+## Type Generation
+
+The `tsify` crate automatically generates TypeScript types for all exported data structures. This eliminates the need for manual type definitions in `convert.ts` and ensures type consistency between Rust and TypeScript.

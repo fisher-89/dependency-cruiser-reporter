@@ -9,7 +9,7 @@ flowchart TB
     RawFile --> Server[HTTP Server]
     Server --> Detect{Format?}
     Detect -->|raw dc| WASM{WASM module\navailable?}
-    WASM -->|Yes| Native[WASM aggregate_from_str\nwith hybrid aggregation]
+    WASM -->|Yes| Native[WASM aggregate\nwith hybrid aggregation]
     WASM -->|No| Node[Node.js\nconvertDcOutput]
     Detect -->|ProcessedGraph| Direct[Return as-is]
     Native --> Output[ProcessedGraph\nnodes + combos + edges]
@@ -46,7 +46,7 @@ flowchart LR
 - Raw format: converts using `convertWithFallback` (WASM preferred, Node.js fallback)
 - ProcessedGraph: uses as-is
 
-The WASM engine now uses **hybrid aggregation** controlled by `expanded_dirs`:
+The WASM engine uses **hybrid aggregation** controlled by `expanded_dirs`:
 - Directories in `expanded_dirs` show file-level nodes
 - Other directories are collapsed to single nodes
 - Auto-computed when not provided (budget algorithm targeting ~200 nodes)

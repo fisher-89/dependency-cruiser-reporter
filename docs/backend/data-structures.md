@@ -124,7 +124,7 @@ Combos are pre-computed by the Rust backend using hybrid aggregation. Single-chi
 | `severity` | `'error' \| 'warn' \| 'info'` | Violation severity level |
 | `message` | `string?` | Optional violation message |
 
-> TypeScript: [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) | Rust: [packages/rust/src/types.rs](../../packages/rust/src/types.rs)
+> TypeScript: [packages/frontend/src/types.ts](../../packages/frontend/src/types.ts) & `@dcr-reporter/wasm` (auto-generated) | Rust: [packages/rust/src/types.rs](../../packages/rust/src/types.rs)
 
 ## Enums
 
@@ -208,9 +208,17 @@ The snake_case convention is critical because it defines the JSON contract betwe
 #[serde(rename_all = "lowercase")]  // NodeType, EdgeType
 #[serde(skip_serializing_if = "Option::is_none")]  // Optional fields
 #[serde(default)]  // Missing fields use default values
+#[derive(Tsify)]  // Auto-generate TypeScript type definitions
+#[tsify(into_wasm_abi)]  // Enable WASM ABI conversion for ProcessedGraph
 ```
 
 ### TypeScript
+
+Types are auto-generated from Rust via `tsify` and imported directly from the WASM module:
+
+```typescript
+import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
+```
 
 Use snake_case to match JSON output:
 

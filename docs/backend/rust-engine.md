@@ -9,10 +9,11 @@ The Rust preprocessing engine is the core of dependency-cruiser-reporter, respon
 | Crate | Purpose |
 |-------|---------|
 | `serde` + `serde_json` | JSON serialization/deserialization |
-| `thiserror` | Error handling |
+| `tsify` | TypeScript type generation from Rust structs |
 | `wasm-bindgen` | JavaScript/WASM interop |
 | `serde-wasm-bindgen` | Serde integration for WASM |
 | `js-sys` | JavaScript standard library bindings |
+| `wasm-bindgen-test` | WASM test framework (optional, `wasm-test` feature) |
 
 ## Module Structure
 
@@ -65,12 +66,12 @@ The hybrid aggregation approach allows mixing expanded (file-level) and collapse
 ### WASM API (`lib.rs`)
 
 ```rust
-#[wasm_bindgen(js_name = aggregate)]
-pub fn wasm_aggregate(
+#[wasm_bindgen]
+pub fn aggregate(
     content: &str,
-    max_nodes: usize,
-    expanded_dirs: Option<Array>,
-) -> Result<JsValue, JsValue>
+    #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
+    #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Array>,
+) -> Result<ProcessedGraph, JsError>
 ```
 
 WASM entry point called from JavaScript. Parses dependency-cruiser JSON string and returns the aggregated graph as a JavaScript object.
@@ -83,6 +84,10 @@ WASM entry point called from JavaScript. Parses dependency-cruiser JSON string a
 | `max_nodes` | `usize` | Maximum edges in output |
 | `expanded_dirs` | `Option<Array>` | JS array of directory paths to expand |
 
+**Returns:** `Result<ProcessedGraph, JsError>` — ProcessedGraph with type-safe bindings, or error
+
+The `#[tsify]` attribute on `ProcessedGraph` automatically generates TypeScript type definitions, enabling type-safe imports in the CLI.
+
 ### Core Logic (`lib.rs`)
 
 ```rust
@@ -90,7 +95,7 @@ pub fn aggregate_from_str(
     content: &str,
     max_nodes: usize,
     expanded_dirs: Option<Vec<String>>,
-) -> Result<ProcessedGraph, DcrError>
+) -> Result<ProcessedGraph, JsError>
 ```
 
 Core aggregation logic used by both WASM and test targets. Parses JSON string and produces the aggregated graph.
@@ -107,10 +112,7 @@ When `expanded_dirs` is `None`, the `compute_auto_expanded_dirs` function determ
 
 ## Error Handling
 
-`DcrError` has three variants:
-- **IoError** — file I/O failures (for compatibility, though not used in WASM mode)
-- **JsonError** — JSON parse failures (auto-converted from `serde_json::Error`)
-- **InvalidInput** — malformed input data (with descriptive message)
+Uses `JsError` for WASM-compatible error handling. JSON parse failures return `JsError::new("Invalid JSON: ...")`.
 
 ## Core Functions
 
@@ -162,7 +164,24 @@ WASM-specific tests use `wasm-bindgen-test` and run via `wasm-pack test --node`:
 wasm-pack test --node  # Run WASM tests in Node.js
 ```
 
-### Test Coverage
+### Type Generation
+
+The `tsify` crate automatically generates TypeScript type definitions for all exported types. Types decorated with `#[derive(Tsify)]` include:
+
+- `ProcessedGraph`
+- `GraphNode`
+- `GraphEdge`
+- `GraphCombo`
+- `GraphMeta`
+- `ViolationInfo`
+
+This enables the CLI to import types directly from the WASM module:
+
+```typescript
+import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
+```
+
+## Test Coverage
 
 | Test | Purpose |
 |------|---------|
