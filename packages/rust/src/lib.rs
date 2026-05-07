@@ -3,11 +3,13 @@ use wasm_bindgen::prelude::*;
 use std::collections::HashSet;
 
 mod aggregate;
+mod layout;
 mod types;
 mod violations;
 
 use types::*;
 use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, extract_edges};
+use layout::compute_layout;
 use violations::{build_edge_violations, compute_violation_counts, parse_violations};
 
 /// WASM entry point: aggregate dependency-cruiser JSON output
@@ -56,8 +58,11 @@ pub fn aggregate(
     let expanded_set: HashSet<&str> = expanded.iter().map(|s| s.as_str()).collect();
 
     // Build nodes using hybrid aggregation based on expanded_dirs
-    let (nodes, combos, node_lookup) =
+    let (mut nodes, mut combos, node_lookup) =
         build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
+
+    // Compute layout coordinates
+    compute_layout(&mut nodes, &mut combos);
 
     // Aggregate edges
     let edges = aggregate_edges(&all_edges, &node_lookup, &edge_violations, max_nodes);

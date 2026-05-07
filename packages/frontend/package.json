@@ -23,6 +23,7 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
+    "@dcr-reporter/wasm": "workspace:*",
     "@playwright/test": "^1.45.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

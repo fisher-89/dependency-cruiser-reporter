@@ -3,7 +3,15 @@ use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
-#[tsify(into_wasm_abi)] 
+pub struct Rect {
+    pub top: f32,
+    pub left: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
+#[tsify(into_wasm_abi)]
 pub struct ProcessedGraph {
     pub nodes: Vec<GraphNode>,
     pub edges: Vec<GraphEdge>,
@@ -26,6 +34,8 @@ pub struct GraphNode {
     pub children: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub combo: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rect: Option<Rect>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
@@ -34,6 +44,8 @@ pub struct GraphCombo {
     pub label: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub combo: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub rect: Option<Rect>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Tsify)]

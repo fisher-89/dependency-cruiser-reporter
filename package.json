@@ -18,8 +18,9 @@
   },
   "scripts": {
     "init": "pnpm run build:rust && pnpm i",
-    "build": "pnpm run build:rust && pnpm -r build",
+    "build": "pnpm run build:rust && pnpm run build:ts",
     "build:rust": "node scripts/build-rust.js",
+    "build:ts": "pnpm -r build",
     "demo": "node packages/cli/dist/bin/cli.js analyze -p demo && node packages/cli/dist/bin/cli.js open -f demo-graph.json",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",

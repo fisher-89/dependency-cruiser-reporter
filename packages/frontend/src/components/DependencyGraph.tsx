@@ -1,8 +1,8 @@
-import type { Element as G6Element, IPointerEvent } from '@antv/g6';
-import type { GraphData } from '@antv/g6';
-import { ForceLayout, Graph } from '@antv/g6';
+import type { Element as G6Element, GraphData, IPointerEvent } from '@antv/g6';
+import { Graph } from '@antv/g6';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import type { EdgeType, NodeType, ProcessedGraph } from '../types';
+import type { G6NodeData } from './buildGraphData';
 import { buildGraphData } from './buildGraphData';
 
 interface Props {
@@ -10,10 +10,10 @@ interface Props {
   onToggleDir?: (dir: string) => void;
 }
 
-const NODE_STYLES: Record<NodeType, { fill: string; stroke: string; size: number }> = {
-  file: { fill: '#C6E5FF', stroke: '#5B8FF9', size: 20 },
-  directory: { fill: '#FFD591', stroke: '#FA8C16', size: 28 },
-  package: { fill: '#B7EB8F', stroke: '#52C41A', size: 24 },
+const NODE_STYLES: Record<NodeType, { fill: string; stroke: string }> = {
+  file: { fill: '#C6E5FF', stroke: '#5B8FF9' },
+  directory: { fill: '#FFD591', stroke: '#FA8C16' },
+  package: { fill: '#B7EB8F', stroke: '#52C41A' },
 };
 
 const EDGE_STYLES: Record<EdgeType, { stroke: string; lineDash: number[] }> = {
@@ -89,35 +89,27 @@ export function DependencyGraph({ data, onToggleDir }: Props) {
           degree: 1,
         },
       ],
-      layout: {
-        type: 'combo-combined',
-        outerLayout: new ForceLayout({
-          preventOverlap: true,
-          nodeSpacing: 50,
-        }),
-        comboPadding: 20,
-        sortByCombo: true,
-      },
       node: {
-        style: (d: { data?: { node_type?: NodeType; label?: string } }) => {
-          const nodeType = d.data?.node_type ?? 'file';
+        style: (d) => {
+          const nodeData = d.data as G6NodeData;
+          const nodeType = nodeData.node_type ?? 'file';
           const s = NODE_STYLES[nodeType] ?? NODE_STYLES.file;
           return {
-            size: s.size,
             fill: s.fill,
             stroke: s.stroke,
             lineWidth: 2,
-            labelText: d.data?.label ?? '',
+            labelText: nodeData.label ?? '',
             labelPlacement: 'bottom',
           };
         },
       },
       combo: {
         type: 'rect',
-        style: (d: { level: number; label: string }) => {
+        style: (d: { label?: string; style?: { width?: number; height?: number } }) => {
           return {
             labelText: d.label ?? '',
             labelPlacement: 'top',
+            padding: 20,
           };
         },
       },

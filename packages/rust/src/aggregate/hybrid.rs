@@ -44,6 +44,7 @@ pub(crate) fn build_hybrid_nodes(
             id: root_combo_id.clone(),
             label: "/".to_string(),
             combo: None,
+            rect: None,
         },
     );
 
@@ -77,6 +78,7 @@ pub(crate) fn build_hybrid_nodes(
                             } else {
                                 Some(root_combo_id.clone())
                             },
+                            rect: None,
                         },
                     );
                 }
@@ -91,6 +93,7 @@ pub(crate) fn build_hybrid_nodes(
                 orphan: m.orphan,
                 children: None,
                 combo: Some(combo_id),
+                rect: None,
             });
         }
     }
@@ -135,6 +138,7 @@ pub(crate) fn build_hybrid_nodes(
                         } else {
                             Some(root_combo_id.clone())
                         },
+                        rect: None,
                     },
                 );
             }
@@ -149,6 +153,7 @@ pub(crate) fn build_hybrid_nodes(
             orphan: None,
             children: Some(children.clone()),
             combo: Some(combo_id),
+            rect: None,
         });
     }
 
