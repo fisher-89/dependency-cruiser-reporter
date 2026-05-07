@@ -1,19 +1,14 @@
+#![warn(unreachable_pub)]
+use wasm_bindgen::prelude::*;
+use std::collections::HashSet;
+
 mod aggregate;
 mod types;
 mod violations;
 
-pub use types::*;
-
+use types::*;
 use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, extract_edges};
-use std::collections::HashSet;
-
 use violations::{build_edge_violations, compute_violation_counts, parse_violations};
-
-// Re-export for tests
-pub use aggregate::is_path_expanded;
-
-use js_sys::Array;
-use wasm_bindgen::prelude::*;
 
 /// WASM entry point: aggregate dependency-cruiser JSON output
 ///
@@ -26,21 +21,7 @@ use wasm_bindgen::prelude::*;
 pub fn aggregate(
     content: &str,
     #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
-    #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Array>,
-) -> Result<ProcessedGraph, JsError> {
-    let expanded =
-        expanded_dirs.map(|arr| arr.iter().filter_map(|v| v.as_string()).collect::<Vec<_>>());
-
-    aggregate_from_str(content, max_nodes, expanded)
-}
-
-/// Core aggregation logic - parses JSON string and produces aggregated graph
-///
-/// This is the shared implementation used by both WASM and binary targets.
-pub fn aggregate_from_str(
-    content: &str,
-    max_nodes: usize,
-    expanded_dirs: Option<Vec<String>>,
+    #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, JsError> {
     let cruise: CruiseResult = serde_json::from_str(content)
         .map_err(|e: serde_json::Error| JsError::new(&format!("Invalid JSON: {}", e)))?;
@@ -98,4 +79,5 @@ pub fn aggregate_from_str(
 }
 
 #[cfg(test)]
+#[path = "lib_test.rs"]
 mod lib_test;

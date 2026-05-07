@@ -70,7 +70,7 @@ pub struct ViolationInfo {
     pub message: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Tsify)]
 #[serde(rename_all = "lowercase")]
 pub enum NodeType {
     File,
@@ -78,7 +78,7 @@ pub enum NodeType {
     Package,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Tsify)]
 #[serde(rename_all = "lowercase")]
 pub enum EdgeType {
     Local,

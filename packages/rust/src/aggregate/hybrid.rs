@@ -9,7 +9,7 @@ const COMBO_PREFIX: &str = "combo:";
 /// Combo IDs use a "combo:" prefix to avoid collision with node IDs.
 /// Single-child combos are collapsed — the child is reassigned to the nearest
 /// ancestor combo that has multiple children (or root).
-pub fn build_hybrid_nodes(
+pub(crate) fn build_hybrid_nodes(
     modules: &[Module],
     violation_counts: &HashMap<String, u32>,
     expanded_set: &HashSet<&str>,
@@ -241,7 +241,7 @@ pub fn build_hybrid_nodes(
 }
 
 /// Check if a module path should be expanded (its parent dir or any ancestor is in expanded_set).
-pub fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
+fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
     if expanded_set.contains("") {
         return true;
     }
@@ -268,3 +268,7 @@ fn find_closest_unexpanded_ancestor(path: &str, expanded_set: &HashSet<&str>) ->
     }
     "root".to_string()
 }
+
+#[cfg(test)]
+#[path = "hybrid_test.rs"]
+mod hybrid_test;

@@ -157,3 +157,7 @@ pub fn compute_auto_expanded_dirs(
     result.sort();
     result
 }
+
+#[cfg(test)]
+#[path = "expand_test.rs"]
+mod expand_test;

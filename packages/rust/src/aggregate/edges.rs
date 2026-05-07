@@ -112,3 +112,7 @@ pub fn detect_edge_type(dep_types: &[String]) -> EdgeType {
         EdgeType::Local
     }
 }
+
+#[cfg(test)]
+#[path = "edges_test.rs"]
+mod edges_test;
