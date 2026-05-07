@@ -24,6 +24,8 @@ packages/rust/
 │   ├── lib.rs           # Library entry point, WASM exports
 │   ├── lib_test.rs      # Unit tests
 │   ├── types.rs         # Data structures (ProcessedGraph, GraphNode, etc.)
+│   ├── layout.rs        # Force-directed layout algorithm
+│   ├── layout_test.rs   # Layout unit tests
 │   └── aggregate/       # Aggregation logic
 │       ├── mod.rs       # Module exports
 │       ├── edges.rs     # Edge extraction, aggregation, type detection
@@ -34,6 +36,7 @@ packages/rust/
 
 The codebase is organized into modules:
 - `types.rs`: All data structures and error types
+- `layout.rs`: Force-directed layout for combo positioning without overlap
 - `aggregate/`: Processing logic for node aggregation and edge handling
 - `violations.rs`: Violation parsing and counting
 - `lib_test.rs`: Comprehensive unit tests
@@ -189,6 +192,51 @@ import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
 | `test_wasm_aggregate_*` | Verify WASM bindings (wasm32 target only) |
 | `test_edge_type_detection` | Verify edge type classification |
 | `test_smart_expansion_*` | Verify auto-expand budget algorithm |
+| `test_top_level_combos_no_overlap` | Verify force layout prevents combo overlap |
+| `test_nested_combos` | Verify combo containment hierarchy |
+
+## Layout Algorithm
+
+The `layout.rs` module implements a three-phase force-directed layout algorithm that guarantees no combo overlap:
+
+### Phase 1: Bottom-up Sizing
+
+Compute combo sizes from children using grid layout:
+1. Sort combos by depth (deepest first)
+2. For each combo, compute size to enclose all children + padding
+3. Grid layout determines minimum bounding box
+
+### Phase 2: Force Layout for Top-level Combos
+
+Position top-level combos (those without parent) using force simulation:
+1. Initialize positions in a circle
+2. Apply repulsion forces between overlapping combos (inverse square law)
+3. Apply attraction to center (keeps layout compact)
+4. Temperature annealing for convergence
+
+**Force parameters:**
+- `REPULSION_STRENGTH = 1000.0` — Base repulsion between combos
+- `ATTRACTION_STRENGTH = 0.01` — Center attraction
+- `ITERATIONS = 100` — Simulation steps
+- `COOLING_FACTOR = 0.95` — Temperature decay per iteration
+
+### Phase 3: Grid Positioning within Combos
+
+Position children within each combo using deterministic grid layout:
+1. Process combos top-down (root to leaves)
+2. Arrange children in grid: `cols = ceil(sqrt(n))`
+3. Offset sub-combo subtrees to maintain relative positions
+
+**Layout constants:**
+- `NODE_SIZE = 20.0` — Node height (width is `2 * NODE_SIZE`)
+- `COMBO_PADDING = 20.0` — Padding around combo children
+- `GAP = 30.0` — Spacing between grid cells
+
+### Guarantees
+
+1. **No sibling combo overlap**: Force simulation ensures top-level combos don't overlap
+2. **Containment**: Each combo fully contains its children
+3. **Deterministic**: Same input produces same output (sorted by ID)
 
 ## Build Profiles
 

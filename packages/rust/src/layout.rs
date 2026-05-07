@@ -4,193 +4,358 @@ const NODE_SIZE: f32 = 20.0;
 const COMBO_PADDING: f32 = 20.0;
 const GAP: f32 = 30.0;
 
+/// Force layout parameters
+const ITERATIONS: usize = 100;
+const REPULSION_STRENGTH: f32 = 1000.0;
+const ATTRACTION_STRENGTH: f32 = 0.01;
+const COOLING_FACTOR: f32 = 0.95;
+
 /// Compute layout for all nodes and combos.
 ///
-/// Arranges children of each combo in a grid, bottom-up (deepest first).
-/// Nodes are sized NODE_SIZE×NODE_SIZE; combos enclose children + COMBO_PADDING.
+/// Three-phase algorithm:
+/// 1. Bottom-up sizing: compute combo sizes from children
+/// 2. Force layout: position top-level combos without overlap
+/// 3. Grid positioning: position children within each combo
 pub(crate) fn compute_layout(nodes: &mut [GraphNode], combos: &mut [GraphCombo]) {
     if nodes.is_empty() && combos.is_empty() {
         return;
     }
 
-    // Build index: combo_id -> Vec of child node indices
-    let mut node_children: std::collections::HashMap<String, Vec<usize>> =
-        std::collections::HashMap::new();
+    // Build indexes
+    let node_children = build_node_children_index(nodes);
+    let combo_children = build_combo_children_index(combos);
+
+    // Phase 1: Compute combo sizes bottom-up (deepest first)
+    let sorted_indices = sort_combos_by_depth(combos);
+    for combo_idx in &sorted_indices {
+        compute_combo_size(*combo_idx, &node_children, &combo_children, nodes, combos);
+    }
+
+    // Phase 2: Force layout for top-level combos
+    let top_level_combos: Vec<usize> = combos
+        .iter()
+        .enumerate()
+        .filter(|(_, c)| c.combo.is_none())
+        .map(|(i, _)| i)
+        .collect();
+
+    if !top_level_combos.is_empty() {
+        apply_force_layout(&top_level_combos, combos);
+    }
+
+    // Phase 3: Position children within each combo using grid (top-down)
+    // Reverse sorted_indices to process from root to leaves
+    let mut top_down_indices = sorted_indices.clone();
+    top_down_indices.reverse();
+
+    for combo_idx in &top_down_indices {
+        position_children_in_combo(*combo_idx, &node_children, &combo_children, nodes, combos);
+    }
+}
+
+/// Build index: combo_id -> Vec of child node indices
+fn build_node_children_index(nodes: &[GraphNode]) -> std::collections::HashMap<String, Vec<usize>> {
+    let mut index: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
     for (i, n) in nodes.iter().enumerate() {
         if let Some(ref combo_id) = n.combo {
-            node_children
-                .entry(combo_id.clone())
-                .or_default()
-                .push(i);
+            index.entry(combo_id.clone()).or_default().push(i);
         }
     }
+    index
+}
 
-    // Build index: combo_id -> Vec of child combo indices
-    let mut combo_children: std::collections::HashMap<String, Vec<usize>> =
-        std::collections::HashMap::new();
+/// Build index: combo_id -> Vec of child combo indices
+fn build_combo_children_index(combos: &[GraphCombo]) -> std::collections::HashMap<String, Vec<usize>> {
+    let mut index: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
     for (i, c) in combos.iter().enumerate() {
         if let Some(ref parent_id) = c.combo {
-            combo_children
-                .entry(parent_id.clone())
-                .or_default()
-                .push(i);
+            index.entry(parent_id.clone()).or_default().push(i);
         }
     }
+    index
+}
 
-    // Sort combos by depth (deepest first) for bottom-up processing
-    // Depth = number of path segments after "combo:" prefix
-    // Special case: "combo:root" has depth 0
+/// Sort combos by depth (deepest first) for bottom-up processing
+fn sort_combos_by_depth(combos: &[GraphCombo]) -> Vec<usize> {
     fn combo_depth(id: &str) -> usize {
         id.strip_prefix("combo:")
             .map(|s| if s == "root" { 0 } else { s.split('/').count() })
             .unwrap_or(0)
     }
-    let mut sorted_indices: Vec<usize> = (0..combos.len()).collect();
-    sorted_indices.sort_by(|&a, &b| {
+
+    let mut indices: Vec<usize> = (0..combos.len()).collect();
+    indices.sort_by(|&a, &b| {
         let depth_a = combo_depth(&combos[a].id);
         let depth_b = combo_depth(&combos[b].id);
         depth_b.cmp(&depth_a) // deepest first
     });
+    indices
+}
 
-    // Process each combo bottom-up
-    for combo_idx in &sorted_indices {
-        let combo_id = combos[*combo_idx].id.clone();
+/// Compute combo size from its children (grid layout)
+fn compute_combo_size(
+    combo_idx: usize,
+    node_children: &std::collections::HashMap<String, Vec<usize>>,
+    combo_children: &std::collections::HashMap<String, Vec<usize>>,
+    nodes: &[GraphNode],
+    combos: &mut [GraphCombo],
+) {
+    let combo_id = combos[combo_idx].id.clone();
 
-        // Collect direct children: (index, width, height)
-        // Nodes first, then sub-combos — sorted by id for determinism
-        let mut child_nodes: Vec<usize> = node_children
-            .get(&combo_id)
-            .cloned()
-            .unwrap_or_default();
-        let mut child_combos: Vec<usize> = combo_children
-            .get(&combo_id)
-            .cloned()
-            .unwrap_or_default();
+    let mut child_nodes: Vec<usize> = node_children.get(&combo_id).cloned().unwrap_or_default();
+    let mut child_combos: Vec<usize> = combo_children.get(&combo_id).cloned().unwrap_or_default();
 
-        // Sort by id for deterministic layout
-        child_nodes.sort_by(|&a, &b| nodes[a].id.cmp(&nodes[b].id));
-        child_combos.sort_by(|&a, &b| combos[a].id.cmp(&combos[b].id));
+    child_nodes.sort_by(|&a, &b| nodes[a].id.cmp(&nodes[b].id));
+    child_combos.sort_by(|&a, &b| combos[a].id.cmp(&combos[b].id));
 
-        let total_children = child_nodes.len() + child_combos.len();
-        if total_children == 0 {
-            // Empty combo: still give it a minimal rect
-            combos[*combo_idx].rect = Some(Rect {
-                top: 0.0,
-                left: 0.0,
-                width: 2.0 * COMBO_PADDING,
-                height: 2.0 * COMBO_PADDING,
-            });
-            continue;
+    let total_children = child_nodes.len() + child_combos.len();
+    if total_children == 0 {
+        combos[combo_idx].rect = Some(Rect {
+            top: 0.0,
+            left: 0.0,
+            width: 2.0 * COMBO_PADDING,
+            height: 2.0 * COMBO_PADDING,
+        });
+        return;
+    }
+
+    // Grid layout
+    let cols = (total_children as f32).sqrt().ceil() as usize;
+    let rows = (total_children + cols - 1) / cols;
+
+    // Compute child sizes
+    let mut child_sizes: Vec<(f32, f32)> = Vec::with_capacity(total_children);
+    for _ in &child_nodes {
+        child_sizes.push((NODE_SIZE * 2.0, NODE_SIZE));
+    }
+    for &ci in &child_combos {
+        let (w, h) = combos[ci]
+            .rect
+            .as_ref()
+            .map(|r| (r.width, r.height))
+            .unwrap_or((NODE_SIZE * 2.0, NODE_SIZE));
+        child_sizes.push((w, h));
+    }
+
+    // Compute column widths and row heights
+    let mut col_widths = vec![0.0f32; cols];
+    let mut row_heights = vec![0.0f32; rows];
+
+    for (i, &(w, h)) in child_sizes.iter().enumerate() {
+        let col = i % cols;
+        let row = i / cols;
+        col_widths[col] = col_widths[col].max(w);
+        row_heights[row] = row_heights[row].max(h);
+    }
+
+    let total_width: f32 = col_widths.iter().sum::<f32>() + (cols.saturating_sub(1)) as f32 * GAP;
+    let total_height: f32 = row_heights.iter().sum::<f32>() + (rows.saturating_sub(1)) as f32 * GAP;
+
+    combos[combo_idx].rect = Some(Rect {
+        top: 0.0,
+        left: 0.0,
+        width: total_width + 2.0 * COMBO_PADDING,
+        height: total_height + 2.0 * COMBO_PADDING,
+    });
+}
+
+/// Apply force-directed layout to position combos without overlap
+fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
+    if combo_indices.len() <= 1 {
+        // Single combo: position at origin
+        for &idx in combo_indices {
+            if let Some(ref mut rect) = combos[idx].rect {
+                rect.left = 0.0;
+                rect.top = 0.0;
+            }
         }
+        return;
+    }
 
-        // Grid layout: ceil(sqrt(n)) columns
-        let cols = (total_children as f32).sqrt().ceil() as usize;
-        let rows = (total_children + cols - 1) / cols;
-
-        // Compute max child size per column/row for non-uniform children
-        // First pass: determine child widths and heights
-        let mut child_sizes: Vec<(f32, f32)> = Vec::with_capacity(total_children);
-
-        for _ni in &child_nodes {
-            child_sizes.push((NODE_SIZE, NODE_SIZE));
+    // Initialize positions in a circle
+    let n = combo_indices.len();
+    let radius = 100.0 * n as f32;
+    for (i, &idx) in combo_indices.iter().enumerate() {
+        if let Some(ref mut rect) = combos[idx].rect {
+            let angle = 2.0 * std::f32::consts::PI * i as f32 / n as f32;
+            rect.left = radius * angle.cos();
+            rect.top = radius * angle.sin();
         }
-        for &ci in &child_combos {
-            let (w, h) = if let Some(ref rect) = combos[ci].rect {
-                (rect.width, rect.height)
-            } else {
-                (NODE_SIZE, NODE_SIZE)
-            };
-            child_sizes.push((w, h));
-        }
+    }
 
-        // Compute column widths and row heights
-        let mut col_widths = vec![0.0f32; cols];
-        let mut row_heights = vec![0.0f32; rows];
+    // Force simulation
+    let mut temperature = 100.0;
+    for _ in 0..ITERATIONS {
+        // Compute forces
+        let mut forces: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
 
-        for (i, &(w, h)) in child_sizes.iter().enumerate() {
-            let col = i % cols;
-            let row = i / cols;
-            col_widths[col] = col_widths[col].max(w);
-            row_heights[row] = row_heights[row].max(h);
-        }
-
-        let total_width: f32 = col_widths.iter().sum::<f32>() + (cols.saturating_sub(1)) as f32 * GAP;
-        let total_height: f32 =
-            row_heights.iter().sum::<f32>() + (rows.saturating_sub(1)) as f32 * GAP;
-
-        let combo_width = total_width + 2.0 * COMBO_PADDING;
-        let combo_height = total_height + 2.0 * COMBO_PADDING;
-
-        // We need the combo's position first. For the root combo, it's (0, 0).
-        // For others, we'll set children relative positions and fix combo position later.
-        // Use (0, 0) as combo top-left for now; parent will offset later.
-        let combo_left = 0.0f32;
-        let combo_top = 0.0f32;
-
-        // Position children
-        let mut child_idx = 0;
-
-        for row in 0..rows {
-            let y_offset = combo_top + COMBO_PADDING
-                + (0..row).map(|r| row_heights[r]).sum::<f32>()
-                + row as f32 * GAP;
-
-            for col in 0..cols {
-                if child_idx >= total_children {
-                    break;
+        for i in 0..n {
+            for j in 0..n {
+                if i == j {
+                    continue;
                 }
 
-                let child_left = combo_left + COMBO_PADDING
-                    + (0..col).map(|c| col_widths[c]).sum::<f32>()
-                    + col as f32 * GAP;
+                let ri = combos[combo_indices[i]].rect.as_ref().unwrap();
+                let rj = combos[combo_indices[j]].rect.as_ref().unwrap();
 
-                let (w, h) = child_sizes[child_idx];
+                // Centers
+                let xi = ri.left + ri.width / 2.0;
+                let yi = ri.top + ri.height / 2.0;
+                let xj = rj.left + rj.width / 2.0;
+                let yj = rj.top + rj.height / 2.0;
 
-                let node_count = child_nodes.len();
-                if child_idx < node_count {
-                    // It's a node
-                    let ni = child_nodes[child_idx];
-                    nodes[ni].rect = Some(Rect {
-                        top: y_offset,
-                        left: child_left,
-                        width: w,
-                        height: h,
-                    });
+                let dx = xi - xj;
+                let dy = yi - yj;
+                let dist = (dx * dx + dy * dy).sqrt().max(1.0);
+
+                // Repulsion force (inverse square law)
+                // Check if overlapping
+                let overlap = is_overlapping(ri, rj);
+                let repulsion = if overlap {
+                    REPULSION_STRENGTH * 10.0 / (dist * dist) // Stronger if overlapping
                 } else {
-                    // It's a sub-combo
-                    let ci = child_combos[child_idx - node_count];
-                    let (old_left, old_top) = combos[ci]
-                        .rect
-                        .as_ref()
-                        .map(|r| (r.left, r.top))
-                        .unwrap_or((0.0, 0.0));
-                    let dx = child_left - old_left;
-                    let dy = y_offset - old_top;
-                    if let Some(ref mut sub_rect) = combos[ci].rect {
-                        sub_rect.left = child_left;
-                        sub_rect.top = y_offset;
-                    } else {
-                        combos[ci].rect = Some(Rect {
-                            top: y_offset,
-                            left: child_left,
-                            width: w,
-                            height: h,
-                        });
-                    }
-                    // Also offset all nodes and combos inside this sub-combo
-                    offset_subtree(ci, dx, dy, nodes, combos);
-                }
+                    REPULSION_STRENGTH / (dist * dist)
+                };
 
-                child_idx += 1;
+                let fx = repulsion * dx / dist;
+                let fy = repulsion * dy / dist;
+                forces[i].0 += fx;
+                forces[i].1 += fy;
+            }
+
+            // Attraction to center (keeps layout compact)
+            let ri = combos[combo_indices[i]].rect.as_ref().unwrap();
+            forces[i].0 -= ATTRACTION_STRENGTH * ri.left;
+            forces[i].1 -= ATTRACTION_STRENGTH * ri.top;
+        }
+
+        // Apply forces with temperature annealing
+        for (i, &idx) in combo_indices.iter().enumerate() {
+            if let Some(ref mut rect) = combos[idx].rect {
+                rect.left += forces[i].0 * temperature;
+                rect.top += forces[i].1 * temperature;
             }
         }
 
-        combos[*combo_idx].rect = Some(Rect {
-            top: combo_top,
-            left: combo_left,
-            width: combo_width,
-            height: combo_height,
-        });
+        temperature *= COOLING_FACTOR;
+    }
+}
+
+/// Check if two rectangles overlap
+fn is_overlapping(a: &Rect, b: &Rect) -> bool {
+    a.left < b.left + b.width
+        && a.left + a.width > b.left
+        && a.top < b.top + b.height
+        && a.top + a.height > b.top
+}
+
+/// Position children within a combo using grid layout
+fn position_children_in_combo(
+    combo_idx: usize,
+    node_children: &std::collections::HashMap<String, Vec<usize>>,
+    combo_children: &std::collections::HashMap<String, Vec<usize>>,
+    nodes: &mut [GraphNode],
+    combos: &mut [GraphCombo],
+) {
+    let combo_id = combos[combo_idx].id.clone();
+    let combo_rect = combos[combo_idx].rect.clone().unwrap();
+
+    let mut child_nodes: Vec<usize> = node_children.get(&combo_id).cloned().unwrap_or_default();
+    let mut child_combos: Vec<usize> = combo_children.get(&combo_id).cloned().unwrap_or_default();
+
+    child_nodes.sort_by(|&a, &b| nodes[a].id.cmp(&nodes[b].id));
+    child_combos.sort_by(|&a, &b| combos[a].id.cmp(&combos[b].id));
+
+    let total_children = child_nodes.len() + child_combos.len();
+    if total_children == 0 {
+        return;
+    }
+
+    // Collect child sizes
+    let mut child_sizes: Vec<(f32, f32)> = Vec::with_capacity(total_children);
+    for _ in &child_nodes {
+        child_sizes.push((NODE_SIZE * 2.0, NODE_SIZE));
+    }
+    for &ci in &child_combos {
+        let (w, h) = combos[ci]
+            .rect
+            .as_ref()
+            .map(|r| (r.width, r.height))
+            .unwrap_or((NODE_SIZE * 2.0, NODE_SIZE));
+        child_sizes.push((w, h));
+    }
+
+    // Grid layout
+    let cols = (total_children as f32).sqrt().ceil() as usize;
+    let rows = (total_children + cols - 1) / cols;
+
+    // Compute column widths and row heights
+    let mut col_widths = vec![0.0f32; cols];
+    let mut row_heights = vec![0.0f32; rows];
+
+    for (i, &(w, h)) in child_sizes.iter().enumerate() {
+        let col = i % cols;
+        let row = i / cols;
+        col_widths[col] = col_widths[col].max(w);
+        row_heights[row] = row_heights[row].max(h);
+    }
+
+    // Position children in grid
+    let mut child_idx = 0;
+    let node_count = child_nodes.len();
+
+    for row in 0..rows {
+        let y_offset = combo_rect.top
+            + COMBO_PADDING
+            + (0..row).map(|r| row_heights[r]).sum::<f32>()
+            + row as f32 * GAP;
+
+        for col in 0..cols {
+            if child_idx >= total_children {
+                break;
+            }
+
+            let x_offset = combo_rect.left
+                + COMBO_PADDING
+                + (0..col).map(|c| col_widths[c]).sum::<f32>()
+                + col as f32 * GAP;
+
+            let (w, h) = child_sizes[child_idx];
+
+            if child_idx < node_count {
+                // It's a node
+                let ni = child_nodes[child_idx];
+                nodes[ni].rect = Some(Rect {
+                    top: y_offset,
+                    left: x_offset,
+                    width: w,
+                    height: h,
+                });
+            } else {
+                // It's a sub-combo
+                let ci = child_combos[child_idx - node_count];
+
+                // Get old position and compute delta
+                let (old_left, old_top) = combos[ci]
+                    .rect
+                    .as_ref()
+                    .map(|r| (r.left, r.top))
+                    .unwrap_or((0.0, 0.0));
+                let dx = x_offset - old_left;
+                let dy = y_offset - old_top;
+
+                // Set new position for this combo
+                if let Some(ref mut rect) = combos[ci].rect {
+                    rect.left = x_offset;
+                    rect.top = y_offset;
+                }
+
+                // Offset all nodes and combos inside this sub-combo
+                offset_subtree(ci, dx, dy, nodes, combos);
+            }
+
+            child_idx += 1;
+        }
     }
 }
 
@@ -204,7 +369,6 @@ fn offset_subtree(
 ) {
     let combo_id = combos[combo_idx].id.clone();
 
-    // Offset all nodes in this combo
     for n in nodes.iter_mut() {
         if n.combo.as_ref() == Some(&combo_id) {
             if let Some(ref mut rect) = n.rect {
@@ -214,7 +378,6 @@ fn offset_subtree(
         }
     }
 
-    // Collect sub-combo indices first to avoid borrow conflicts
     let sub_indices: Vec<usize> = combos
         .iter()
         .enumerate()

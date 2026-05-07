@@ -34,15 +34,15 @@ fn test_single_node_in_root_combo() {
     compute_layout(&mut nodes, &mut combos);
 
     let node_rect = nodes[0].rect.as_ref().unwrap();
-    assert_eq!(node_rect.width, 20.0);
-    assert_eq!(node_rect.height, 20.0);
+    assert_eq!(node_rect.width, NODE_SIZE * 2.0);
+    assert_eq!(node_rect.height, NODE_SIZE);
     assert_eq!(node_rect.left, COMBO_PADDING);
     assert_eq!(node_rect.top, COMBO_PADDING);
 
     let combo_rect = combos[0].rect.as_ref().unwrap();
     assert_eq!(combo_rect.left, 0.0);
     assert_eq!(combo_rect.top, 0.0);
-    assert_eq!(combo_rect.width, 2.0 * COMBO_PADDING + NODE_SIZE);
+    assert_eq!(combo_rect.width, 2.0 * COMBO_PADDING + NODE_SIZE * 2.0);
     assert_eq!(combo_rect.height, 2.0 * COMBO_PADDING + NODE_SIZE);
 }
 
@@ -159,4 +159,66 @@ fn test_nested_combos() {
     assert!(src_rect.top >= root_rect.top);
     assert!(src_rect.left + src_rect.width <= root_rect.left + root_rect.width);
     assert!(src_rect.top + src_rect.height <= root_rect.top + root_rect.height);
+}
+
+#[test]
+fn test_top_level_combos_no_overlap() {
+    use crate::types::NodeType;
+
+    // Two top-level combos, each with a node
+    let mut nodes = vec![
+        GraphNode {
+            id: "src/a.ts".to_string(),
+            label: "a.ts".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/a.ts".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphNode {
+            id: "lib/b.ts".to_string(),
+            label: "b.ts".to_string(),
+            node_type: NodeType::File,
+            path: Some("lib/b.ts".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:lib".to_string()),
+            rect: None,
+        },
+    ];
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:lib".to_string(),
+            label: "lib".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    // Sibling combos (src and lib) should not overlap
+    let src_rect = combos[1].rect.as_ref().unwrap();
+    let lib_rect = combos[2].rect.as_ref().unwrap();
+    let overlap = src_rect.left < lib_rect.left + lib_rect.width
+        && src_rect.left + src_rect.width > lib_rect.left
+        && src_rect.top < lib_rect.top + lib_rect.height
+        && src_rect.top + src_rect.height > lib_rect.top;
+    assert!(!overlap, "Sibling combos 'src' and 'lib' overlap");
 }

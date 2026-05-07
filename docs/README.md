@@ -18,7 +18,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 
 ### Backend
 - [Rust Engine](backend/rust-engine.md) — WASM module design, modules, error handling, build
-  - `aggregate` `aggregate_from_str` `JsError` `build_hybrid_nodes` `compute_auto_expanded_dirs` `aggregate_edges` `detect_edge_type` `expanded_dirs` `tsify` `cargo test` `cargo clippy`
+  - `aggregate` `aggregate_from_str` `JsError` `build_hybrid_nodes` `compute_auto_expanded_dirs` `compute_layout` `aggregate_edges` `detect_edge_type` `expanded_dirs` `tsify` `cargo test` `cargo clippy` `force-directed layout` `combo overlap`
 - [Data Structures](backend/data-structures.md) — Shared type contracts (Rust ↔ TypeScript)
   - `ProcessedGraph` `GraphNode: id/label/node_type/path/violation_count/orphan/children/combo` `GraphCombo: id/label/combo` `GraphEdge: source/target/edge_type/weight/circular` `GraphMeta: expanded_dirs` `ViolationInfo` `NodeType` `EdgeType` `DcModule` `DcDependency`
 - [Rust Package](packages/rust.md) — Library API, WASM exports, Cargo config
@@ -63,6 +63,7 @@ Single-source index for dependency-cruiser-reporter documentation. Each entry li
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Aggregation Strategy](architecture/aggregation.md) |
 | `EdgeType`, `NodeType` | [Data Structures](backend/data-structures.md) |
 | `createServer`, `/api/config`, `POST /api/graph` | [CLI Package](packages/cli.md) |
+| `compute_layout`, force-directed layout, combo positioning | [Rust Engine](backend/rust-engine.md) |
 | `AntV G6`, `DependencyGraph`, layout | [Frontend Package](packages/frontend.md) |
 | Graph/Report/Metrics views | [Views](frontend/views.md) |
 | CI/CD, GitHub Actions, pre-commit | [Scenarios](usage/scenarios.md) |

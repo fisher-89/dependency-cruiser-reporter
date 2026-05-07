@@ -58,7 +58,7 @@ export function buildGraphData(data: ProcessedGraph): G6GraphData {
       ? {
           x: n.rect ? n.rect.left + n.rect.width / 2 : undefined,
           y: n.rect ? n.rect.top + n.rect.height / 2 : undefined,
-          size: n.rect.width,
+          size: n.rect.height,
         }
       : undefined,
   }));
