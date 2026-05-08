@@ -2,7 +2,7 @@ use crate::types::Module;
 use std::collections::{HashMap, HashSet};
 
 /// Target maximum number of nodes to display
-pub const TARGET_NODE_BUDGET: usize = 200;
+pub(self) const TARGET_NODE_BUDGET: usize = 200;
 /// Maximum direct children per directory before we refuse to expand it
 const MAX_DIRECT_CHILDREN: usize = 50;
 
@@ -11,7 +11,7 @@ const MAX_DIRECT_CHILDREN: usize = 50;
 /// - Each level is a "transaction": try all candidates, rollback if budget exceeded
 /// - Guarantees total node count stays within TARGET_NODE_BUDGET
 /// - Prioritizes directories with violations within each level
-pub fn compute_auto_expanded_dirs(
+pub(crate) fn compute_auto_expanded_dirs(
     modules: &[Module],
     violation_counts: &HashMap<String, u32>,
 ) -> Vec<String> {

@@ -102,13 +102,13 @@ pub enum EdgeType {
 // dependency-cruiser JSON input structures
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct CruiseResult {
+pub(super) struct CruiseResult {
     pub modules: Option<Vec<Module>>,
     pub summary: Option<Summary>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Module {
+pub(super) struct Module {
     pub source: String,
     #[serde(default)]
     pub dependencies: Vec<Dependency>,
@@ -123,7 +123,7 @@ pub struct Module {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Dependency {
+pub(super) struct Dependency {
     pub module: String,
     #[serde(rename = "moduleSystem")]
     pub module_system: String,
@@ -144,7 +144,7 @@ pub struct Dependency {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Rule {
+pub(super) struct Rule {
     #[serde(rename = "severity", default)]
     pub severity: Option<String>,
     #[serde(rename = "name", default)]
@@ -152,7 +152,7 @@ pub struct Rule {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Summary {
+pub(super) struct Summary {
     #[serde(default)]
     pub violations: Option<Vec<RawViolation>>,
     #[serde(default)]
@@ -168,7 +168,7 @@ pub struct Summary {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct RawViolation {
+pub(super) struct RawViolation {
     #[serde(rename = "type", default)]
     pub violation_type: Option<String>,
     #[serde(rename = "from", default)]

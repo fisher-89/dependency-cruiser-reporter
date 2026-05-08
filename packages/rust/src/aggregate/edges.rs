@@ -3,7 +3,7 @@ use crate::violations::EdgeViolationCounts;
 use std::collections::HashMap;
 
 /// Aggregated edge information for building GraphEdge.
-pub struct EdgeInfo {
+pub(crate) struct EdgeInfo {
     pub dep_types: Vec<String>,
     pub count: u32,
     pub has_circular: bool,
@@ -14,7 +14,7 @@ pub struct EdgeInfo {
 
 /// Internal representation of a raw edge extracted from dependency-cruiser data.
 #[cfg_attr(test, allow(dead_code))]
-pub struct RawEdge {
+pub(crate) struct RawEdge {
     pub from: String,
     pub to: String,
     pub dep_types: Vec<String>,
@@ -22,7 +22,7 @@ pub struct RawEdge {
 }
 
 /// Extract edges from modules' dependencies.
-pub fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
+pub(crate) fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
     let mut edges = Vec::new();
     for m in modules {
         for dep in &m.dependencies {
@@ -38,7 +38,7 @@ pub fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
 }
 
 /// Aggregate edges from raw edges using node_lookup, producing sorted, truncated GraphEdge list.
-pub fn aggregate_edges(
+pub(crate) fn aggregate_edges(
     raw_edges: &[RawEdge],
     node_lookup: &HashMap<String, String>,
     edge_violations: &HashMap<(String, String), EdgeViolationCounts>,
@@ -101,7 +101,7 @@ pub fn aggregate_edges(
     all_edges
 }
 
-pub fn detect_edge_type(dep_types: &[String]) -> EdgeType {
+fn detect_edge_type(dep_types: &[String]) -> EdgeType {
     if dep_types.iter().any(|t| t == "npm" || t == "node_modules") {
         EdgeType::Npm
     } else if dep_types.iter().any(|t| t == "core") {
