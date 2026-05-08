@@ -957,3 +957,110 @@ fn test_mixed_nodes_and_combos_nested() {
     assert!(utils_rect.left >= src_rect.left);
     assert!(utils_rect.top >= src_rect.top);
 }
+
+#[test]
+fn test_child_combos_clamped_to_parent_boundary() {
+    use crate::types::NodeType;
+
+    // Create a scenario where multiple large sibling combos stress the parent boundary
+    // after overlap resolution: root -> src -> (largeA, largeB, largeC)
+    // Each large combo has many nodes to make them bigger
+    let mut nodes: Vec<GraphNode> = vec![];
+
+    // Create 3 large sibling combos with many nodes each to stress boundaries
+    for combo_name in ["largeA", "largeB", "largeC"] {
+        for i in 0..15 {
+            nodes.push(GraphNode {
+                id: format!("src/{}/file{}.ts", combo_name, i),
+                label: format!("file{}.ts", i),
+                node_type: NodeType::File,
+                path: Some(format!("src/{}/file{}.ts", combo_name, i)),
+                violation_count: 0,
+                orphan: None,
+                children: None,
+                combo: Some(format!("combo:src/{}", combo_name)),
+                rect: None,
+            });
+        }
+    }
+
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/largeA".to_string(),
+            label: "largeA".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/largeB".to_string(),
+            label: "largeB".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/largeC".to_string(),
+            label: "largeC".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    // Verify all child combos are clamped within parent (src) boundary
+    let src_rect = combos[1].rect.as_ref().unwrap();
+    let inner_left = src_rect.left + COMBO_PADDING;
+    let inner_top = src_rect.top + COMBO_PADDING;
+    let inner_right = src_rect.left + src_rect.width - COMBO_PADDING;
+    let inner_bottom = src_rect.top + src_rect.height - COMBO_PADDING;
+
+    for combo in combos.iter().skip(2) {
+        let rect = combo.rect.as_ref().unwrap();
+        // Position must be clamped to parent inner area
+        assert!(
+            rect.left >= inner_left - 1e-3,
+            "Combo {} left {} is outside parent inner left {}",
+            combo.id,
+            rect.left,
+            inner_left
+        );
+        assert!(
+            rect.top >= inner_top - 1e-3,
+            "Combo {} top {} is outside parent inner top {}",
+            combo.id,
+            rect.top,
+            inner_top
+        );
+        // For right/bottom: position is clamped, but size may cause overflow.
+        // The clamp ensures left <= effective_max_x, so right = left + width <= effective_max_x + width.
+        // Overflow is only due to child being wider/taller than parent inner area.
+        let effective_max_x = inner_right.max(inner_left + rect.width) - rect.width;
+        let effective_max_y = inner_bottom.max(inner_top + rect.height) - rect.height;
+        assert!(
+            rect.left <= effective_max_x + 1e-3,
+            "Combo {} left {} exceeds clamp max {}",
+            combo.id,
+            rect.left,
+            effective_max_x
+        );
+        assert!(
+            rect.top <= effective_max_y + 1e-3,
+            "Combo {} top {} exceeds clamp max {}",
+            combo.id,
+            rect.top,
+            effective_max_y
+        );
+    }
+}

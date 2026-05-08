@@ -1,6 +1,5 @@
 import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
 
-
 // WASM module state
 let wasmAggregate: typeof aggregate | null = null;
 let wasmInitPromise: Promise<void> | null = null;
@@ -34,9 +33,8 @@ export async function convert(
   expandedDirs?: string[]
 ): Promise<ProcessedGraph> {
   await initWasm();
-  return wasmAggregate!(
-    dcJson,
-    maxNodes,
-    expandedDirs || null
-  );
+  if (!wasmAggregate) {
+    throw new Error('WASM module init failed');
+  }
+  return wasmAggregate(dcJson, maxNodes, expandedDirs || null);
 }

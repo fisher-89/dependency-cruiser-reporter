@@ -263,6 +263,8 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
 
 /// Resolve overlaps between sibling combos by iteratively separating overlapping rectangles.
 /// Works on a subset of combos identified by `combo_indices`.
+///
+/// Uses nearest-neighbor coordinate for tension calculation to reduce oscillation probability.
 fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
     let n = combo_indices.len();
     if n <= 1 {
@@ -285,8 +287,40 @@ fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                     let xj = rj.left + rj.width / 2.0;
                     let yj = rj.top + rj.height / 2.0;
 
-                    let dx = xi - xj;
-                    let dy = yi - yj;
+                    // Calculate tension using nearest-neighbor edge distance for magnitude,
+                    // with direction from center-to-center to ensure correct separation sign.
+                    // This reduces oscillation by using the closest edge distance as the
+                    // effective separation metric, while keeping the direction unambiguous.
+                    let center_dx = xi - xj;
+                    let center_dy = yi - yj;
+
+                    let nearest_dist_x = if xi < xj {
+                        // i is left of j: gap from right edge of i to left edge of j
+                        // Negative when overlapping (right edge of i extends past left edge of j)
+                        rj.left - (ri.left + ri.width)
+                    } else {
+                        // i is right of j: gap from right edge of j to left edge of i
+                        ri.left - (rj.left + rj.width)
+                    };
+                    let nearest_dist_y = if yi < yj {
+                        // i is above j: gap from bottom edge of i to top edge of j
+                        rj.top - (ri.top + ri.height)
+                    } else {
+                        // i is below j: gap from bottom edge of j to top edge of i
+                        ri.top - (rj.top + rj.height)
+                    };
+
+                    // Use nearest-neighbor distance for magnitude, center-to-center for direction
+                    let dx = if nearest_dist_x.abs() > 1e-6 {
+                        center_dx.signum() * nearest_dist_x.abs()
+                    } else {
+                        center_dx
+                    };
+                    let dy = if nearest_dist_y.abs() > 1e-6 {
+                        center_dy.signum() * nearest_dist_y.abs()
+                    } else {
+                        center_dy
+                    };
                     let dist = (dx * dx + dy * dy).sqrt().max(1.0);
 
                     let min_dist_x = (ri.width + rj.width) / 2.0 + GAP;
@@ -511,6 +545,23 @@ fn position_children_in_combo(
             .collect();
 
         resolve_overlaps(&child_combo_indices, combos);
+
+        // Re-clamp child combos to parent boundary after overlap resolution.
+        // In extreme cases (multiple large siblings), overlap resolution can push
+        // children outside the parent container.
+        let min_x = combo_rect.left + COMBO_PADDING;
+        let min_y = combo_rect.top + COMBO_PADDING;
+        let max_x = combo_rect.left + combo_rect.width - COMBO_PADDING;
+        let max_y = combo_rect.top + combo_rect.height - COMBO_PADDING;
+
+        for &ci in &child_combo_indices {
+            if let Some(ref mut rect) = combos[ci].rect {
+                let effective_max_x = max_x.max(min_x + rect.width) - rect.width;
+                let effective_max_y = max_y.max(min_y + rect.height) - rect.height;
+                rect.left = rect.left.clamp(min_x, effective_max_x);
+                rect.top = rect.top.clamp(min_y, effective_max_y);
+            }
+        }
 
         for (i, &ci) in child_combo_indices.iter().enumerate() {
             let (old_left, old_top) = positions_before[i];
