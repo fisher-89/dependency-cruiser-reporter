@@ -226,20 +226,15 @@ pub(crate) fn build_hybrid_nodes(
     (nodes, combos, node_lookup)
 }
 
-/// Check if a module path should be expanded (any ancestor directory is in expanded_set).
-/// If expanded_set contains "", all paths are expanded.
-/// Otherwise, check the direct parent and all ancestor directories.
+/// Check if a module path should be expanded (its parent dir or any ancestor is in expanded_set).
 fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
     if expanded_set.contains("") {
         return true;
     }
     let parts: Vec<&str> = path.split('/').collect();
-    // Check all ancestor directories from root down to direct parent
-    for i in 1..parts.len() {
-        let ancestor = parts[..i].join("/");
-        if expanded_set.contains(ancestor.as_str()) {
-            return true;
-        }
+    let dir: String = parts[..parts.len() - 1].join("/");
+    if expanded_set.contains(dir.as_str()) {
+        return true;
     }
     false
 }

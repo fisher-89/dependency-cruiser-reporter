@@ -22,7 +22,6 @@ pub(crate) fn compute_auto_expanded_dirs(
     // If total modules fit within budget, expand everything
     if modules.len() <= TARGET_NODE_BUDGET {
         let mut dirs: HashSet<String> = HashSet::new();
-        dirs.insert("".to_string());
         for m in modules {
             let parts: Vec<&str> = m.source.split('/').collect();
             for i in 1..parts.len() {
