@@ -9,13 +9,13 @@ const COMBO_PREFIX: &str = "combo:";
 /// Combo IDs use a "combo:" prefix to avoid collision with node IDs.
 /// Single-child combos are collapsed — the child is reassigned to the nearest
 /// ancestor combo that has multiple children (or root).
+///
+/// No root combo is created — top-level nodes and combos have `combo: None`.
 pub(crate) fn build_hybrid_nodes(
     modules: &[Module],
     violation_counts: &HashMap<String, u32>,
     expanded_set: &HashSet<&str>,
 ) -> (Vec<GraphNode>, Vec<GraphCombo>, HashMap<String, String>) {
-    let root_combo_id = format!("{}root", COMBO_PREFIX);
-
     // Map each module source to its node ID (file path or directory path)
     let mut node_lookup: HashMap<String, String> = HashMap::new();
     let mut dir_groups: HashMap<String, Vec<String>> = HashMap::new();
@@ -37,17 +37,6 @@ pub(crate) fn build_hybrid_nodes(
     let mut nodes: Vec<GraphNode> = Vec::new();
     let mut combo_map: HashMap<String, GraphCombo> = HashMap::new();
 
-    // Ensure root combo exists
-    combo_map.insert(
-        root_combo_id.clone(),
-        GraphCombo {
-            id: root_combo_id.clone(),
-            label: "/".to_string(),
-            combo: None,
-            rect: None,
-        },
-    );
-
     // File nodes (expanded directories)
     let mut file_sources: HashSet<String> = HashSet::new();
     for m in modules {
@@ -59,9 +48,9 @@ pub(crate) fn build_hybrid_nodes(
             let path_parts: Vec<&str> = m.source.split('/').collect();
             let dir_parts: Vec<&str> = path_parts[..path_parts.len() - 1].to_vec();
             let combo_id = if dir_parts.is_empty() {
-                root_combo_id.clone()
+                None
             } else {
-                format!("{}{}", COMBO_PREFIX, dir_parts.join("/"))
+                Some(format!("{}{}", COMBO_PREFIX, dir_parts.join("/")))
             };
 
             // Register all ancestor combos
@@ -76,7 +65,7 @@ pub(crate) fn build_hybrid_nodes(
                             combo: if i > 1 {
                                 Some(format!("{}{}", COMBO_PREFIX, dir_parts[..i - 1].join("/")))
                             } else {
-                                Some(root_combo_id.clone())
+                                None // Top-level combo has no parent
                             },
                             rect: None,
                         },
@@ -92,7 +81,7 @@ pub(crate) fn build_hybrid_nodes(
                 violation_count: violation_counts.get(&m.source).copied().unwrap_or(0),
                 orphan: m.orphan,
                 children: None,
-                combo: Some(combo_id),
+                combo: combo_id,
                 rect: None,
             });
         }
@@ -108,14 +97,14 @@ pub(crate) fn build_hybrid_nodes(
         // Compute combo for this directory node
         let path_parts: Vec<&str> = dir.split('/').collect();
         let combo_id = if path_parts.is_empty() || dir == "root" {
-            root_combo_id.clone()
+            None
         } else {
             // Directory node goes into its parent directory's combo
             let parent_parts: Vec<&str> = path_parts[..path_parts.len() - 1].to_vec();
             if parent_parts.is_empty() {
-                root_combo_id.clone()
+                None
             } else {
-                format!("{}{}", COMBO_PREFIX, parent_parts.join("/"))
+                Some(format!("{}{}", COMBO_PREFIX, parent_parts.join("/")))
             }
         };
 
@@ -136,7 +125,7 @@ pub(crate) fn build_hybrid_nodes(
                         combo: if i > 1 {
                             Some(format!("{}{}", COMBO_PREFIX, dir_parts[..i - 1].join("/")))
                         } else {
-                            Some(root_combo_id.clone())
+                            None // Top-level combo has no parent
                         },
                         rect: None,
                     },
@@ -152,7 +141,7 @@ pub(crate) fn build_hybrid_nodes(
             violation_count: vc,
             orphan: None,
             children: Some(children.clone()),
-            combo: Some(combo_id),
+            combo: combo_id,
             rect: None,
         });
     }
@@ -183,9 +172,6 @@ pub(crate) fn build_hybrid_nodes(
     });
 
     for combo_id in sorted_combo_ids {
-        if combo_id == root_combo_id {
-            continue;
-        }
         if collapsed_combos.contains(&combo_id) {
             continue;
         }
@@ -201,41 +187,36 @@ pub(crate) fn build_hybrid_nodes(
             continue;
         }
 
-        // Collapse: move nodes and sub-combos to parent
-        let parent_id = combo.combo.clone().unwrap_or_else(|| root_combo_id.clone());
+        // Collapse: move nodes and sub-combos to parent (or None if top-level)
+        let parent_id = combo.combo.clone();
         collapsed_combos.insert(combo_id.clone());
 
         // Reassign nodes
         for n in &mut nodes {
             if n.combo.as_ref() == Some(&combo_id) {
-                n.combo = Some(parent_id.clone());
+                n.combo = parent_id.clone();
             }
         }
 
         // Reassign sub-combos' parent
         for c in combo_map.values_mut() {
             if c.combo.as_ref() == Some(&combo_id) {
-                c.combo = Some(parent_id.clone());
+                c.combo = parent_id.clone();
             }
         }
 
         // Update child counts
-        *child_counts.entry(parent_id.clone()).or_insert(0) += count.saturating_sub(1);
+        if let Some(ref pid) = parent_id {
+            *child_counts.entry(pid.clone()).or_insert(0) += count.saturating_sub(1);
+        }
     }
 
-    // Filter out collapsed combos, sorted so parents appear before children
+    // Filter out collapsed combos, sorted by path depth (shallower first)
     let mut combos: Vec<GraphCombo> = combo_map
         .into_values()
         .filter(|c| !collapsed_combos.contains(&c.id))
         .collect();
     combos.sort_by(|a, b| {
-        // Root has no parent, must come first
-        if a.id == root_combo_id {
-            return std::cmp::Ordering::Less;
-        }
-        if b.id == root_combo_id {
-            return std::cmp::Ordering::Greater;
-        }
         // Sort by path depth: fewer segments = shallower = first
         let depth_a = a.id[COMBO_PREFIX.len()..].split('/').count();
         let depth_b = b.id[COMBO_PREFIX.len()..].split('/').count();

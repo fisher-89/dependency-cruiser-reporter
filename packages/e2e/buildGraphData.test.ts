@@ -4,15 +4,16 @@ import { buildGraphData } from "../frontend/src/components/buildGraphData.ts";
 import type { ProcessedGraph } from "../frontend/src/types.ts";
 
 const COMBO_PREFIX = "combo:";
-const rootComboId = `${COMBO_PREFIX}root`;
 
 /** Validate that all node->combo and combo->parent references are consistent */
 function validateGraphData(result: ReturnType<typeof buildGraphData>) {
   const comboIds = new Set(result.combos.map((c) => c.id));
 
-  // Every node's combo must exist
+  // Every node's combo must exist (if set)
   for (const n of result.nodes) {
-    assert.ok(comboIds.has(n.combo), `node ${n.id} references missing combo ${n.combo}`);
+    if (n.combo) {
+      assert.ok(comboIds.has(n.combo), `node ${n.id} references missing combo ${n.combo}`);
+    }
   }
 
   // Every combo's parent must exist (if set)
@@ -31,9 +32,8 @@ function validateGraphData(result: ReturnType<typeof buildGraphData>) {
     seenCombos.add(c.id);
   }
 
-  // No single-child combos (except root)
+  // No single-child combos
   for (const c of result.combos) {
-    if (c.id === rootComboId) continue;
     const childNodes = result.nodes.filter((n) => n.combo === c.id).length;
     const childCombos = result.combos.filter((cc) => cc.combo === c.id).length;
     assert.ok(
@@ -55,22 +55,19 @@ function makeGraph(overrides: Partial<ProcessedGraph> = {}): ProcessedGraph {
 }
 
 describe("buildGraphData", () => {
-  test("root-level nodes all go into combo:root", () => {
+  test("root-level nodes have no combo", () => {
     const data = makeGraph({
       nodes: [
-        { id: "index.ts", label: "index.ts", node_type: "file", path: "index.ts", violation_count: 0, combo: rootComboId },
-        { id: "app.ts", label: "app.ts", node_type: "file", path: "app.ts", violation_count: 0, combo: rootComboId },
+        { id: "index.ts", label: "index.ts", node_type: "file", path: "index.ts", violation_count: 0, combo: undefined },
+        { id: "app.ts", label: "app.ts", node_type: "file", path: "app.ts", violation_count: 0, combo: undefined },
       ],
-      combos: [
-        { id: rootComboId, label: "/" },
-      ],
+      combos: [],
     });
     const result = buildGraphData(data);
     validateGraphData(result);
-    assert.strictEqual(result.combos.length, 1);
-    assert.strictEqual(result.combos[0].id, rootComboId);
+    assert.strictEqual(result.combos.length, 0);
     for (const n of result.nodes) {
-      assert.strictEqual(n.combo, rootComboId);
+      assert.strictEqual(n.combo, undefined);
     }
   });
 
@@ -81,8 +78,7 @@ describe("buildGraphData", () => {
         { id: "src/b.ts", label: "b.ts", node_type: "file", path: "src/b.ts", violation_count: 0, combo: "combo:src" },
       ],
       combos: [
-        { id: rootComboId, label: "/" },
-        { id: "combo:src", label: "src", combo: rootComboId },
+        { id: "combo:src", label: "src", combo: undefined },
       ],
     });
     const result = buildGraphData(data);
@@ -95,34 +91,30 @@ describe("buildGraphData", () => {
   });
 
   test("single-child combos are collapsed", () => {
-    // Single file in demo/src/ — all intermediate combos collapse to root
+    // Single file in demo/src/ — all intermediate combos collapse to top-level
     const data = makeGraph({
       nodes: [
-        { id: "demo/src/main.ts", label: "main.ts", node_type: "file", path: "demo/src/main.ts", violation_count: 0, combo: rootComboId },
+        { id: "demo/src/main.ts", label: "main.ts", node_type: "file", path: "demo/src/main.ts", violation_count: 0, combo: undefined },
       ],
-      combos: [
-        { id: rootComboId, label: "/" },
-      ],
+      combos: [],
     });
     const result = buildGraphData(data);
     validateGraphData(result);
-    assert.strictEqual(result.combos.length, 1);
-    assert.strictEqual(result.combos[0].id, rootComboId);
-    assert.strictEqual(result.nodes[0].combo, rootComboId);
+    assert.strictEqual(result.combos.length, 0);
+    assert.strictEqual(result.nodes[0].combo, undefined);
   });
 
   test("cascading collapse: parent and grandparent both single-child", () => {
     // combo:demo/src/deep collapses (1 node) -> into combo:demo/src
     // combo:demo/src has 2 nodes now, stays
-    // combo:demo has 1 child (combo:demo/src) -> collapses into root
+    // combo:demo has 1 child (combo:demo/src) -> collapses to top-level
     const data = makeGraph({
       nodes: [
         { id: "demo/src/a.ts", label: "a.ts", node_type: "file", path: "demo/src/a.ts", violation_count: 0, combo: "combo:demo/src" },
         { id: "demo/src/deep/solo.ts", label: "solo.ts", node_type: "file", path: "demo/src/deep/solo.ts", violation_count: 0, combo: "combo:demo/src" },
       ],
       combos: [
-        { id: rootComboId, label: "/" },
-        { id: "combo:demo/src", label: "src", combo: rootComboId },
+        { id: "combo:demo/src", label: "src", combo: undefined },
       ],
     });
     const result = buildGraphData(data);
@@ -142,8 +134,7 @@ describe("buildGraphData", () => {
       ],
       edges: [{ source: "demo/src", target: "demo/lib", edge_type: "local", weight: 1 }],
       combos: [
-        { id: rootComboId, label: "/" },
-        { id: "combo:demo", label: "demo", combo: rootComboId },
+        { id: "combo:demo", label: "demo", combo: undefined },
       ],
     });
     const result = buildGraphData(data);
@@ -154,16 +145,14 @@ describe("buildGraphData", () => {
   test("single directory-type node collapses correctly", () => {
     const data = makeGraph({
       nodes: [
-        { id: "demo/src", label: "src", node_type: "directory", path: "demo/src", violation_count: 0, combo: rootComboId },
+        { id: "demo/src", label: "src", node_type: "directory", path: "demo/src", violation_count: 0, combo: undefined },
       ],
-      combos: [
-        { id: rootComboId, label: "/" },
-      ],
+      combos: [],
     });
     const result = buildGraphData(data);
     validateGraphData(result);
-    assert.strictEqual(result.combos.length, 1);
-    assert.strictEqual(result.nodes[0].combo, rootComboId);
+    assert.strictEqual(result.combos.length, 0);
+    assert.strictEqual(result.nodes[0].combo, undefined);
   });
 
   test("combo:demo/src survives when it has multiple children (demo-graph case)", () => {
@@ -183,8 +172,7 @@ describe("buildGraphData", () => {
         { source: "demo/src/index.js", target: "demo/src/services/auth.js", edge_type: "local", weight: 1 },
       ],
       combos: [
-        { id: rootComboId, label: "/" },
-        { id: "combo:demo/src", label: "src", combo: rootComboId },
+        { id: "combo:demo/src", label: "src", combo: undefined },
         { id: "combo:demo/src/services", label: "services", combo: "combo:demo/src" },
       ],
     });
@@ -206,8 +194,7 @@ describe("buildGraphData", () => {
         { source: "src/b.ts", target: "src/a.ts", edge_type: "local", weight: 2 },
       ],
       combos: [
-        { id: rootComboId, label: "/" },
-        { id: "combo:src", label: "src", combo: rootComboId },
+        { id: "combo:src", label: "src", combo: undefined },
       ],
     });
     const result = buildGraphData(data);
