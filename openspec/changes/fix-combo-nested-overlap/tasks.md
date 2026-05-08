@@ -22,3 +22,10 @@
 - [x] 4.1 运行 `pnpm build` 构建全部
 - [x] 4.2 运行 `pnpm demo` 并在浏览器验证嵌套 combo 显示正确
 - [x] 4.3 更新 `openspec/specs/backend/spec.md` 的布局保证描述
+
+## 5. Code Review 警告修复
+
+- [x] 5.1 [WARN-1] 添加注释说明 move_amount 中额外 GAP 的设计意图（防止浮点误差和视觉合并）
+- [x] 5.2 [WARN-3] 使用动态迭代上限 `n * 2` 替代硬编码 10，并添加 `debug_assert!` 检测未收敛情况
+- [x] 5.3 [WARN-4] 优化 `offset_subtree` 使用预构建索引，复杂度从 O(n*m) 降为 O(size_of_subtree)
+- [ ] 5.4 [WARN-2] 待讨论：resolve_overlaps 后是否需要 re-clamp 子 combo 到父边界（极端情况：多个大型 sibling 可能溢出父容器）

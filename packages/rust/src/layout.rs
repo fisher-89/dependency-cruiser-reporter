@@ -269,7 +269,8 @@ fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
         return;
     }
 
-    for _ in 0..10 {
+    let max_iterations = n * 2;
+    for iter in 0..max_iterations {
         let mut has_overlap = false;
         for i in 0..n {
             for j in (i + 1)..n {
@@ -292,6 +293,8 @@ fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                     let min_dist_y = (ri.height + rj.height) / 2.0 + GAP;
                     let min_dist = min_dist_x.max(min_dist_y);
 
+                    // Extra GAP ensures safety margin against floating-point rounding errors
+                    // and prevents "touching" rectangles that could visually appear merged
                     let move_amount = (min_dist - dist) / 2.0 + GAP;
                     let idx_i = combo_indices[i];
                     let idx_j = combo_indices[j];
@@ -310,6 +313,12 @@ fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
         if !has_overlap {
             break;
         }
+        debug_assert!(
+            iter + 1 < max_iterations,
+            "resolve_overlaps did not converge after {} iterations for {} combos",
+            max_iterations,
+            n
+        );
     }
 }
 
@@ -484,7 +493,7 @@ fn position_children_in_combo(
         }
 
         if dx.abs() > 1e-6 || dy.abs() > 1e-6 {
-            offset_subtree(idx, dx, dy, nodes, combos);
+            offset_subtree(idx, dx, dy, nodes, combos, node_children, combo_children);
         }
     }
 
@@ -513,7 +522,7 @@ fn position_children_in_combo(
             let dx = new_left - old_left;
             let dy = new_top - old_top;
             if dx.abs() > 1e-6 || dy.abs() > 1e-6 {
-                offset_subtree(ci, dx, dy, nodes, combos);
+                offset_subtree(ci, dx, dy, nodes, combos, node_children, combo_children);
             }
         }
     }
@@ -521,37 +530,40 @@ fn position_children_in_combo(
 
 /// Offset all nodes and combos within a combo by (dx, dy).
 /// Uses iteration instead of recursion to avoid stack overflow in WASM.
+/// Uses pre-built indexes for O(size_of_subtree) instead of O(size_of_graph) per call.
 fn offset_subtree(
     combo_idx: usize,
     dx: f32,
     dy: f32,
     nodes: &mut [GraphNode],
     combos: &mut [GraphCombo],
+    node_children: &std::collections::HashMap<String, Vec<usize>>,
+    combo_children: &std::collections::HashMap<String, Vec<usize>>,
 ) {
     // Use a Vec as a work queue to process combos iteratively
     let mut queue: Vec<usize> = vec![combo_idx];
 
     while let Some(current_idx) = queue.pop() {
-        let current_id = combos[current_idx].id.clone();
+        let current_id = &combos[current_idx].id;
 
-        // Offset nodes in this combo
-        for n in nodes.iter_mut() {
-            if n.combo.as_ref() == Some(&current_id) {
-                if let Some(ref mut rect) = n.rect {
+        // Offset nodes in this combo using pre-built index (O(1) lookup)
+        if let Some(child_indices) = node_children.get(current_id) {
+            for &ni in child_indices {
+                if let Some(ref mut rect) = nodes[ni].rect {
                     rect.left += dx;
                     rect.top += dy;
                 }
             }
         }
 
-        // Find and offset child combos, add them to queue
-        for (i, c) in combos.iter_mut().enumerate() {
-            if c.combo.as_ref() == Some(&current_id) {
-                if let Some(ref mut rect) = c.rect {
+        // Offset child combos and add them to queue using pre-built index (O(1) lookup)
+        if let Some(child_indices) = combo_children.get(current_id) {
+            for &ci in child_indices {
+                if let Some(ref mut rect) = combos[ci].rect {
                     rect.left += dx;
                     rect.top += dy;
                 }
-                queue.push(i);
+                queue.push(ci);
             }
         }
     }
