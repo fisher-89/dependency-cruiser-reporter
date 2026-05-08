@@ -1,8 +1,9 @@
-# CLAUDE.md
+# AGENTS.md
 
 ## Core Principle
 
 **`docs/README.md` is the single source of truth.** Read it before implementing anything. Update it after making changes.
+**Never run `pnpm demo` or `dep-report open` in the background.** These commands start Express servers that bind to ports 3000-3002. Running them in the background leaves orphaned processes that block ports for subsequent runs.
 
 ## Architecture
 
@@ -46,6 +47,16 @@ After each meaningful change, commit the code to ensure every commit is complete
 3. **Commit per logical unit**: One commit per task or coherent change set. Do not batch unrelated changes.
 4. **Complete commits**: Each commit must leave the project in a working state — no broken builds, no partial features that crash.
 5. **Commit message**: Use conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`).
+
+## Visual Verification
+
+Before every commit, you MUST:
+
+1. Run `pnpm run build && pnpm run demo` to build and launch the viewer.
+2. Open the viewer URL in the browser and confirm the page renders without errors (no console errors, no blank page, no crash).
+3. Only after visual verification, create a git commit.
+
+Do NOT commit code that has not been verified via the demo viewer.
 
 ## Stack
 
