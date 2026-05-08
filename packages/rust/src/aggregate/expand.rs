@@ -88,6 +88,10 @@ pub(crate) fn compute_auto_expanded_dirs(
         let depth = dir.matches('/').count() + 1;
         dirs_by_depth.entry(depth).or_default().push(dir.clone());
     }
+    // Sort each depth bucket for deterministic iteration order
+    for dirs in dirs_by_depth.values_mut() {
+        dirs.sort();
+    }
 
     let max_depth = dirs_by_depth.keys().max().copied().unwrap_or(0);
 
@@ -135,7 +139,7 @@ pub(crate) fn compute_auto_expanded_dirs(
                 (dir.clone(), violations)
             })
             .collect();
-        sorted_candidates.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted_candidates.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
 
         // === BEGIN TRANSACTION: save current state ===
         let saved_expanded = expanded.clone();

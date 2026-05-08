@@ -82,7 +82,7 @@ pub struct ViolationInfo {
     pub message: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Tsify)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Tsify)]
 #[serde(rename_all = "lowercase")]
 pub enum NodeType {
     File,

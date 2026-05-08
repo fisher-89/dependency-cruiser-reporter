@@ -168,7 +168,7 @@ pub(crate) fn build_hybrid_nodes(
     sorted_combo_ids.sort_by(|a, b| {
         let depth_a = a.matches('/').count();
         let depth_b = b.matches('/').count();
-        depth_b.cmp(&depth_a)
+        depth_b.cmp(&depth_a).then_with(|| a.cmp(b))
     });
 
     for combo_id in sorted_combo_ids {
@@ -220,21 +220,26 @@ pub(crate) fn build_hybrid_nodes(
         // Sort by path depth: fewer segments = shallower = first
         let depth_a = a.id[COMBO_PREFIX.len()..].split('/').count();
         let depth_b = b.id[COMBO_PREFIX.len()..].split('/').count();
-        depth_a.cmp(&depth_b)
+        depth_a.cmp(&depth_b).then_with(|| a.id.cmp(&b.id))
     });
 
     (nodes, combos, node_lookup)
 }
 
-/// Check if a module path should be expanded (its parent dir or any ancestor is in expanded_set).
+/// Check if a module path should be expanded (any ancestor directory is in expanded_set).
+/// If expanded_set contains "", all paths are expanded.
+/// Otherwise, check the direct parent and all ancestor directories.
 fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
     if expanded_set.contains("") {
         return true;
     }
     let parts: Vec<&str> = path.split('/').collect();
-    let dir: String = parts[..parts.len() - 1].join("/");
-    if expanded_set.contains(dir.as_str()) {
-        return true;
+    // Check all ancestor directories from root down to direct parent
+    for i in 1..parts.len() {
+        let ancestor = parts[..i].join("/");
+        if expanded_set.contains(ancestor.as_str()) {
+            return true;
+        }
     }
     false
 }

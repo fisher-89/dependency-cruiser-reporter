@@ -249,6 +249,139 @@ fn test_aggregate_with_explicit_expanded_dirs() {
     assert_eq!(expanded, vec!["src".to_string()]);
 }
 
+#[test]
+fn test_aggregate_expanded_dirs_produces_file_nodes() {
+    // Test that expandedDirs actually causes files to be shown as file nodes
+    let modules = vec![
+        Module {
+            source: "src/index.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Button.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Input.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "lib/utils.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    let json = make_json(modules);
+
+    // With expandedDirs = ["src"], files under src should be file nodes
+    let result = aggregate(&json, 200, Some(vec!["src".to_string()])).unwrap();
+
+    // Check that src files are file nodes
+    let src_index = result.nodes.iter().find(|n| n.id == "src/index.ts");
+    let src_button = result.nodes.iter().find(|n| n.id == "src/components/Button.tsx");
+    let src_input = result.nodes.iter().find(|n| n.id == "src/components/Input.tsx");
+    let lib_node = result.nodes.iter().find(|n| n.id == "lib");
+
+    assert!(
+        src_index.is_some(),
+        "src/index.ts should be present as file node"
+    );
+    assert_eq!(src_index.unwrap().node_type, NodeType::File);
+
+    assert!(
+        src_button.is_some(),
+        "src/components/Button.tsx should be present as file node"
+    );
+    assert_eq!(src_button.unwrap().node_type, NodeType::File);
+
+    assert!(
+        src_input.is_some(),
+        "src/components/Input.tsx should be present as file node"
+    );
+    assert_eq!(src_input.unwrap().node_type, NodeType::File);
+
+    // lib should be collapsed to a directory node (not expanded)
+    assert!(lib_node.is_some(), "lib should be present as directory node");
+    assert_eq!(lib_node.unwrap().node_type, NodeType::Directory);
+}
+
+#[test]
+fn test_aggregate_expanded_dirs_nested() {
+    // Test expanding a nested directory (src/components)
+    let modules = vec![
+        Module {
+            source: "src/index.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Button.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/utils/format.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    let json = make_json(modules);
+
+    // Expand only src/components, not src
+    let result = aggregate(
+        &json,
+        200,
+        Some(vec!["src/components".to_string()]),
+    )
+    .unwrap();
+
+    // src/components/Button.tsx should be a file node
+    let button = result.nodes.iter().find(|n| n.id == "src/components/Button.tsx");
+    assert!(
+        button.is_some(),
+        "src/components/Button.tsx should be a file node"
+    );
+    assert_eq!(button.unwrap().node_type, NodeType::File);
+
+    // src/index.ts should NOT be a file node (src is not expanded)
+    let src_index = result.nodes.iter().find(|n| n.id == "src/index.ts");
+    assert!(
+        src_index.is_none(),
+        "src/index.ts should not be a separate node when src is not expanded"
+    );
+
+    // src should be a directory node
+    let src_dir = result.nodes.iter().find(|n| n.id == "src");
+    assert!(src_dir.is_some(), "src should be a directory node");
+    assert_eq!(src_dir.unwrap().node_type, NodeType::Directory);
+}
+
 // --- wasm_aggregate tests ---
 // These tests only run on wasm32 target (via wasm-pack test --node)
 

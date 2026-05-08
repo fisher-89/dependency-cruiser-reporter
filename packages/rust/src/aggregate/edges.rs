@@ -95,7 +95,12 @@ pub(crate) fn aggregate_edges(
         })
         .collect();
 
-    all_edges.sort_by(|a, b| b.weight.cmp(&a.weight));
+    all_edges.sort_by(|a, b| {
+        b.weight
+            .cmp(&a.weight)
+            .then_with(|| a.source.cmp(&b.source))
+            .then_with(|| a.target.cmp(&b.target))
+    });
     all_edges.truncate(max_nodes.min(10000));
 
     all_edges
