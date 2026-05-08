@@ -14,6 +14,7 @@ serde_json = "1.0"
 wasm-bindgen = "0.2"
 serde-wasm-bindgen = "0.6"
 js-sys = "0.3"
+web-sys = { version = "0.3", features = ["console"] }
 wasm-bindgen-test = { version = "0.3", optional = true }
 tsify = { version = "0.4.5", features = ["js"] }
 

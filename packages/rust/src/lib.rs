@@ -2,6 +2,14 @@
 use wasm_bindgen::prelude::*;
 use std::collections::HashSet;
 
+// Set up panic hook for better error messages in WASM
+fn init_panic_hook() {
+    std::panic::set_hook(Box::new(|info| {
+        let msg = info.to_string();
+        web_sys::console::error_1(&msg.into());
+    }));
+}
+
 mod aggregate;
 mod layout;
 mod types;
@@ -25,6 +33,8 @@ pub fn aggregate(
     #[wasm_bindgen(js_name = maxNodes)] max_nodes: usize,
     #[wasm_bindgen(js_name = expandedDirs)] expanded_dirs: Option<Vec<String>>,
 ) -> Result<ProcessedGraph, JsError> {
+    init_panic_hook();
+
     let cruise: CruiseResult = serde_json::from_str(content)
         .map_err(|e: serde_json::Error| JsError::new(&format!("Invalid JSON: {}", e)))?;
 

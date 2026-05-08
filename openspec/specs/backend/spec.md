@@ -175,15 +175,16 @@ packages/rust/src/
 
 | 参数 | 值 |
 |------|-----|
-| `REPULSION_STRENGTH` | 1000.0 |
-| `ATTRACTION_STRENGTH` | 0.01 |
-| `ITERATIONS` | 100 |
-| `COOLING_FACTOR` | 0.95 |
+| `REPULSION_STRENGTH` | 5000.0 |
+| `ATTRACTION_STRENGTH` | 0.001 |
+| `ITERATIONS` | 500 |
+| `COOLING_FACTOR` | 0.98 |
 
 #### Phase 3: combo 内网格定位
 
 - 自顶向下处理 combo
 - 子节点排列为网格：`cols = ceil(sqrt(n))`
+- 对子 combo 执行防重叠后处理（与 Phase 2 相同逻辑）
 - 偏移子 combo 子树保持相对位置
 
 **布局常量：**
@@ -196,7 +197,7 @@ packages/rust/src/
 
 #### Scenario: 布局保证
 
-- THEN 无兄弟 combo 重叠
+- THEN 所有层级的兄弟 combo 不重叠（不仅是顶层，嵌套子 combo 同样保证）
 - AND 每个 combo 完全包含其子节点
 - AND 相同输入产生相同输出（确定性）
 
@@ -263,6 +264,9 @@ import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
 | `test_smart_expansion_*` | 验证自动展开预算算法 |
 | `test_top_level_combos_no_overlap` | 验证力布局防止 combo 重叠 |
 | `test_nested_combos` | 验证 combo 包含层级 |
+| `test_three_level_nested_sibling_combos` | 验证三层嵌套 sibling combo 不重叠 |
+| `test_four_level_deep_nested_sibling_combos` | 验证四层深层嵌套 sibling combo 不重叠 |
+| `test_mixed_nodes_and_combos_nested` | 验证混合节点和 combo 的嵌套布局 |
 
 ## References
 

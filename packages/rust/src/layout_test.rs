@@ -655,3 +655,305 @@ fn test_many_small_combos() {
         }
     }
 }
+
+#[test]
+fn test_three_level_nested_siblings() {
+    use crate::types::NodeType;
+
+    // Three-level nesting: root → src → (components, utils, hooks)
+    let mut nodes: Vec<GraphNode> = vec![];
+
+    for i in 0..2 {
+        nodes.push(GraphNode {
+            id: format!("src/components/comp{}.tsx", i),
+            label: format!("comp{}.tsx", i),
+            node_type: NodeType::File,
+            path: Some(format!("src/components/comp{}.tsx", i)),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/components".to_string()),
+            rect: None,
+        });
+    }
+    for i in 0..2 {
+        nodes.push(GraphNode {
+            id: format!("src/utils/util{}.ts", i),
+            label: format!("util{}.ts", i),
+            node_type: NodeType::File,
+            path: Some(format!("src/utils/util{}.ts", i)),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/utils".to_string()),
+            rect: None,
+        });
+    }
+    for i in 0..2 {
+        nodes.push(GraphNode {
+            id: format!("src/hooks/hook{}.ts", i),
+            label: format!("hook{}.ts", i),
+            node_type: NodeType::File,
+            path: Some(format!("src/hooks/hook{}.ts", i)),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/hooks".to_string()),
+            rect: None,
+        });
+    }
+
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components".to_string(),
+            label: "components".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/utils".to_string(),
+            label: "utils".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/hooks".to_string(),
+            label: "hooks".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    let overlaps = |a: &Rect, b: &Rect| -> bool {
+        a.left < b.left + b.width
+            && a.left + a.width > b.left
+            && a.top < b.top + b.height
+            && a.top + a.height > b.top
+    };
+
+    let components_rect = combos[2].rect.as_ref().unwrap();
+    let utils_rect = combos[3].rect.as_ref().unwrap();
+    let hooks_rect = combos[4].rect.as_ref().unwrap();
+
+    assert!(!overlaps(components_rect, utils_rect), "components and utils should not overlap");
+    assert!(!overlaps(components_rect, hooks_rect), "components and hooks should not overlap");
+    assert!(!overlaps(utils_rect, hooks_rect), "utils and hooks should not overlap");
+}
+
+#[test]
+fn test_four_level_deeply_nested_siblings() {
+    use crate::types::NodeType;
+
+    // Four-level: root → src → components → (ui, layout)
+    let mut nodes: Vec<GraphNode> = vec![];
+
+    for i in 0..2 {
+        nodes.push(GraphNode {
+            id: format!("src/components/ui/Button{}.tsx", i),
+            label: format!("Button{}.tsx", i),
+            node_type: NodeType::File,
+            path: Some(format!("src/components/ui/Button{}.tsx", i)),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/components/ui".to_string()),
+            rect: None,
+        });
+    }
+    for i in 0..2 {
+        nodes.push(GraphNode {
+            id: format!("src/components/layout/Header{}.tsx", i),
+            label: format!("Header{}.tsx", i),
+            node_type: NodeType::File,
+            path: Some(format!("src/components/layout/Header{}.tsx", i)),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/components/layout".to_string()),
+            rect: None,
+        });
+    }
+
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components".to_string(),
+            label: "components".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components/ui".to_string(),
+            label: "ui".to_string(),
+            combo: Some("combo:src/components".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components/layout".to_string(),
+            label: "layout".to_string(),
+            combo: Some("combo:src/components".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    let ui_rect = combos[3].rect.as_ref().unwrap();
+    let layout_rect = combos[4].rect.as_ref().unwrap();
+
+    let overlap = ui_rect.left < layout_rect.left + layout_rect.width
+        && ui_rect.left + ui_rect.width > layout_rect.left
+        && ui_rect.top < layout_rect.top + layout_rect.height
+        && ui_rect.top + ui_rect.height > layout_rect.top;
+
+    assert!(
+        !overlap,
+        "Deep sibling combos 'ui' and 'layout' should not overlap:\n  ui: {:?}\n  layout: {:?}",
+        ui_rect, layout_rect
+    );
+}
+
+#[test]
+fn test_mixed_nodes_and_combos_nested() {
+    use crate::types::NodeType;
+
+    // Mixed: combo contains both direct nodes and child combos
+    // root → src → (index.ts, components/, utils/)
+    let mut nodes = vec![
+        GraphNode {
+            id: "src/index.ts".to_string(),
+            label: "index.ts".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/index.ts".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphNode {
+            id: "src/components/A.tsx".to_string(),
+            label: "A.tsx".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/components/A.tsx".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/components".to_string()),
+            rect: None,
+        },
+        GraphNode {
+            id: "src/components/B.tsx".to_string(),
+            label: "B.tsx".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/components/B.tsx".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/components".to_string()),
+            rect: None,
+        },
+        GraphNode {
+            id: "src/utils/helper.ts".to_string(),
+            label: "helper.ts".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/utils/helper.ts".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/utils".to_string()),
+            rect: None,
+        },
+        GraphNode {
+            id: "src/utils/format.ts".to_string(),
+            label: "format.ts".to_string(),
+            node_type: NodeType::File,
+            path: Some("src/utils/format.ts".to_string()),
+            violation_count: 0,
+            orphan: None,
+            children: None,
+            combo: Some("combo:src/utils".to_string()),
+            rect: None,
+        },
+    ];
+
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components".to_string(),
+            label: "components".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/utils".to_string(),
+            label: "utils".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    let components_rect = combos[2].rect.as_ref().unwrap();
+    let utils_rect = combos[3].rect.as_ref().unwrap();
+
+    let overlap = components_rect.left < utils_rect.left + utils_rect.width
+        && components_rect.left + components_rect.width > utils_rect.left
+        && components_rect.top < utils_rect.top + utils_rect.height
+        && components_rect.top + components_rect.height > utils_rect.top;
+
+    assert!(
+        !overlap,
+        "Sibling combos 'components' and 'utils' should not overlap when mixed with direct node"
+    );
+
+    // Verify src combo contains both direct node and child combos
+    let src_rect = combos[1].rect.as_ref().unwrap();
+    let index_rect = nodes[0].rect.as_ref().unwrap();
+    assert!(index_rect.left >= src_rect.left);
+    assert!(index_rect.top >= src_rect.top);
+    assert!(index_rect.left + index_rect.width <= src_rect.left + src_rect.width);
+    assert!(index_rect.top + index_rect.height <= src_rect.top + src_rect.height);
+
+    assert!(components_rect.left >= src_rect.left);
+    assert!(components_rect.top >= src_rect.top);
+    assert!(utils_rect.left >= src_rect.left);
+    assert!(utils_rect.top >= src_rect.top);
+}

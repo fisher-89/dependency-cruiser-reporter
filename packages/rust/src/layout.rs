@@ -15,7 +15,7 @@ const COOLING_FACTOR: f32 = 0.98;
 /// Three-phase algorithm:
 /// 1. Bottom-up sizing: compute combo sizes from children
 /// 2. Force layout: position top-level combos without overlap
-/// 3. Grid positioning: position children within each combo
+/// 3. Force layout positioning: position children within each combo using force-directed layout
 pub(crate) fn compute_layout(nodes: &mut [GraphNode], combos: &mut [GraphCombo]) {
     if nodes.is_empty() && combos.is_empty() {
         return;
@@ -43,7 +43,7 @@ pub(crate) fn compute_layout(nodes: &mut [GraphNode], combos: &mut [GraphCombo])
         apply_force_layout(&top_level_combos, combos);
     }
 
-    // Phase 3: Position children within each combo using grid (top-down)
+    // Phase 3: Position children within each combo using force layout (top-down)
     // Reverse sorted_indices to process from root to leaves
     let mut top_down_indices = sorted_indices.clone();
     top_down_indices.reverse();
@@ -257,8 +257,18 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
         temperature *= COOLING_FACTOR;
     }
 
-    // Post-processing: ensure no overlaps remain
-    // If overlaps detected, apply additional separation
+    // Post-processing: resolve any remaining overlaps
+    resolve_overlaps(combo_indices, combos);
+}
+
+/// Resolve overlaps between sibling combos by iteratively separating overlapping rectangles.
+/// Works on a subset of combos identified by `combo_indices`.
+fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
+    let n = combo_indices.len();
+    if n <= 1 {
+        return;
+    }
+
     for _ in 0..10 {
         let mut has_overlap = false;
         for i in 0..n {
@@ -269,7 +279,6 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                 if is_overlapping(ri, rj) {
                     has_overlap = true;
 
-                    // Centers
                     let xi = ri.left + ri.width / 2.0;
                     let yi = ri.top + ri.height / 2.0;
                     let xj = rj.left + rj.width / 2.0;
@@ -279,12 +288,10 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                     let dy = yi - yj;
                     let dist = (dx * dx + dy * dy).sqrt().max(1.0);
 
-                    // Compute required separation distance
                     let min_dist_x = (ri.width + rj.width) / 2.0 + GAP;
                     let min_dist_y = (ri.height + rj.height) / 2.0 + GAP;
                     let min_dist = min_dist_x.max(min_dist_y);
 
-                    // Move each combo apart
                     let move_amount = (min_dist - dist) / 2.0 + GAP;
                     let idx_i = combo_indices[i];
                     let idx_j = combo_indices[j];
@@ -314,7 +321,10 @@ fn is_overlapping(a: &Rect, b: &Rect) -> bool {
         && a.top + a.height > b.top
 }
 
-/// Position children within a combo using grid layout
+/// Position children within a combo using force-directed layout.
+///
+/// Both nodes and child combos are treated as rectangular elements in the force simulation.
+/// After force layout resolves, child combos are moved with their subtrees.
 fn position_children_in_combo(
     combo_idx: usize,
     node_children: &std::collections::HashMap<String, Vec<usize>>,
@@ -325,106 +335,192 @@ fn position_children_in_combo(
     let combo_id = combos[combo_idx].id.clone();
     let combo_rect = combos[combo_idx].rect.clone().unwrap();
 
-    let mut child_nodes: Vec<usize> = node_children.get(&combo_id).cloned().unwrap_or_default();
-    let mut child_combos: Vec<usize> = combo_children.get(&combo_id).cloned().unwrap_or_default();
+    let mut child_node_indices: Vec<usize> =
+        node_children.get(&combo_id).cloned().unwrap_or_default();
+    let mut child_combo_indices: Vec<usize> =
+        combo_children.get(&combo_id).cloned().unwrap_or_default();
 
-    child_nodes.sort_by(|&a, &b| nodes[a].id.cmp(&nodes[b].id));
-    child_combos.sort_by(|&a, &b| combos[a].id.cmp(&combos[b].id));
+    child_node_indices.sort_by(|&a, &b| nodes[a].id.cmp(&nodes[b].id));
+    child_combo_indices.sort_by(|&a, &b| combos[a].id.cmp(&combos[b].id));
 
-    let total_children = child_nodes.len() + child_combos.len();
+    let total_children = child_node_indices.len() + child_combo_indices.len();
     if total_children == 0 {
         return;
     }
 
-    // Collect child sizes
-    let mut child_sizes: Vec<(f32, f32)> = Vec::with_capacity(total_children);
-    for _ in &child_nodes {
-        child_sizes.push((NODE_SIZE * 2.0, NODE_SIZE));
+    // Collect child sizes and build a unified list of elements
+    // Each element: (width, height, is_combo, index)
+    let mut elements: Vec<(f32, f32, bool, usize)> = Vec::with_capacity(total_children);
+    for &ni in &child_node_indices {
+        elements.push((NODE_SIZE * 2.0, NODE_SIZE, false, ni));
     }
-    for &ci in &child_combos {
+    for &ci in &child_combo_indices {
         let (w, h) = combos[ci]
             .rect
             .as_ref()
             .map(|r| (r.width, r.height))
             .unwrap_or((NODE_SIZE * 2.0, NODE_SIZE));
-        child_sizes.push((w, h));
+        elements.push((w, h, true, ci));
     }
 
-    // Grid layout
-    let cols = (total_children as f32).sqrt().ceil() as usize;
-    let rows = (total_children + cols - 1) / cols;
+    // Initialize positions: place elements in a grid within the combo as starting positions
+    let n = elements.len();
+    let cols = (n as f32).sqrt().ceil() as usize;
+    let inner_width = combo_rect.width - 2.0 * COMBO_PADDING;
+    let col_width = inner_width / cols as f32;
 
-    // Compute column widths and row heights
-    let mut col_widths = vec![0.0f32; cols];
-    let mut row_heights = vec![0.0f32; rows];
-
-    for (i, &(w, h)) in child_sizes.iter().enumerate() {
+    let mut positions: Vec<(f32, f32)> = Vec::with_capacity(n);
+    for (i, &(w, h, _, _)) in elements.iter().enumerate() {
         let col = i % cols;
         let row = i / cols;
-        col_widths[col] = col_widths[col].max(w);
-        row_heights[row] = row_heights[row].max(h);
+        let x = combo_rect.left + COMBO_PADDING + col as f32 * col_width + (col_width - w) / 2.0;
+        let y = combo_rect.top + COMBO_PADDING + row as f32 * (h + GAP);
+        positions.push((x, y));
     }
 
-    // Position children in grid
-    let mut child_idx = 0;
-    let node_count = child_nodes.len();
+    // Define boundaries for constraint
+    let min_x = combo_rect.left + COMBO_PADDING;
+    let min_y = combo_rect.top + COMBO_PADDING;
+    let max_x = combo_rect.left + combo_rect.width - COMBO_PADDING;
+    let max_y = combo_rect.top + combo_rect.height - COMBO_PADDING;
 
-    for row in 0..rows {
-        let y_offset = combo_rect.top
-            + COMBO_PADDING
-            + (0..row).map(|r| row_heights[r]).sum::<f32>()
-            + row as f32 * GAP;
+    // Run force simulation for all elements within the combo
+    let mut temperature = 20.0;
+    let inner_iterations = 200;
 
-        for col in 0..cols {
-            if child_idx >= total_children {
-                break;
+    for _ in 0..inner_iterations {
+        let mut forces: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
+
+        for i in 0..n {
+            let (xi, yi) = positions[i];
+            let (wi, hi) = (elements[i].0, elements[i].1);
+
+            for j in 0..n {
+                if i == j {
+                    continue;
+                }
+
+                let (xj, yj) = positions[j];
+                let (wj, hj) = (elements[j].0, elements[j].1);
+
+                let dx = xi + wi / 2.0 - (xj + wj / 2.0);
+                let dy = yi + hi / 2.0 - (yj + hj / 2.0);
+                let dist = (dx * dx + dy * dy).sqrt().max(1.0);
+
+                // Overlap-based repulsion (same logic as apply_force_layout)
+                let overlap_x = (wi / 2.0 + wj / 2.0) - dx.abs();
+                let overlap_y = (hi / 2.0 + hj / 2.0) - dy.abs();
+
+                let repulsion = if overlap_x > 0.0 && overlap_y > 0.0 {
+                    let overlap_area = overlap_x * overlap_y;
+                    REPULSION_STRENGTH * (1.0 + overlap_area / 100.0) / dist
+                } else {
+                    REPULSION_STRENGTH / (dist * dist)
+                };
+
+                forces[i].0 += repulsion * dx / dist;
+                forces[i].1 += repulsion * dy / dist;
             }
 
-            let x_offset = combo_rect.left
-                + COMBO_PADDING
-                + (0..col).map(|c| col_widths[c]).sum::<f32>()
-                + col as f32 * GAP;
+            // Attraction to combo center (keeps layout compact within combo)
+            let center_x = combo_rect.left + combo_rect.width / 2.0;
+            let center_y = combo_rect.top + combo_rect.height / 2.0;
+            forces[i].0 += ATTRACTION_STRENGTH * 2.0 * (center_x - xi - wi / 2.0);
+            forces[i].1 += ATTRACTION_STRENGTH * 2.0 * (center_y - yi - hi / 2.0);
+        }
 
-            let (w, h) = child_sizes[child_idx];
+        // Apply forces with temperature annealing
+        for i in 0..n {
+            positions[i].0 += forces[i].0 * temperature;
+            positions[i].1 += forces[i].1 * temperature;
+        }
 
-            if child_idx < node_count {
-                // It's a node
-                let ni = child_nodes[child_idx];
-                nodes[ni].rect = Some(Rect {
-                    top: y_offset,
-                    left: x_offset,
-                    width: w,
-                    height: h,
-                });
-            } else {
-                // It's a sub-combo
-                let ci = child_combos[child_idx - node_count];
+        // Constrain positions to stay within combo boundaries
+        for i in 0..n {
+            let (w, h, _, _) = elements[i];
+            // Ensure max >= min to avoid clamp panic (can happen when element is wider than container)
+            let effective_max_x = max_x.max(min_x + w) - w;
+            let effective_max_y = max_y.max(min_y + h) - h;
+            positions[i].0 = positions[i].0.clamp(min_x, effective_max_x);
+            positions[i].1 = positions[i].1.clamp(min_y, effective_max_y);
+        }
 
-                // Get old position and compute delta
-                let (old_left, old_top) = combos[ci]
+        temperature *= COOLING_FACTOR;
+    }
+
+    // Apply positions: set nodes directly, move combos with subtrees
+    for (i, &(w, h, is_combo, idx)) in elements.iter().enumerate() {
+        let (x, y) = positions[i];
+
+        if !is_combo {
+            // It's a node - set position directly
+            nodes[idx].rect = Some(Rect {
+                top: y,
+                left: x,
+                width: w,
+                height: h,
+            });
+        }
+    }
+
+    // Apply combo positions with subtree offset
+    for (i, &(_w, _h, is_combo, idx)) in elements.iter().enumerate() {
+        if !is_combo {
+            continue;
+        }
+
+        let (x, y) = positions[i];
+        let (old_left, old_top) = combos[idx]
+            .rect
+            .as_ref()
+            .map(|r| (r.left, r.top))
+            .unwrap_or((0.0, 0.0));
+        let dx = x - old_left;
+        let dy = y - old_top;
+
+        if let Some(ref mut rect) = combos[idx].rect {
+            rect.left = x;
+            rect.top = y;
+        }
+
+        if dx.abs() > 1e-6 || dy.abs() > 1e-6 {
+            offset_subtree(idx, dx, dy, nodes, combos);
+        }
+    }
+
+    // Post-processing: resolve any remaining overlaps between child combos
+    if !child_combo_indices.is_empty() {
+        let positions_before: Vec<(f32, f32)> = child_combo_indices
+            .iter()
+            .map(|&ci| {
+                combos[ci]
                     .rect
                     .as_ref()
                     .map(|r| (r.left, r.top))
-                    .unwrap_or((0.0, 0.0));
-                let dx = x_offset - old_left;
-                let dy = y_offset - old_top;
+                    .unwrap_or((0.0, 0.0))
+            })
+            .collect();
 
-                // Set new position for this combo
-                if let Some(ref mut rect) = combos[ci].rect {
-                    rect.left = x_offset;
-                    rect.top = y_offset;
-                }
+        resolve_overlaps(&child_combo_indices, combos);
 
-                // Offset all nodes and combos inside this sub-combo
+        for (i, &ci) in child_combo_indices.iter().enumerate() {
+            let (old_left, old_top) = positions_before[i];
+            let (new_left, new_top) = combos[ci]
+                .rect
+                .as_ref()
+                .map(|r| (r.left, r.top))
+                .unwrap_or((0.0, 0.0));
+            let dx = new_left - old_left;
+            let dy = new_top - old_top;
+            if dx.abs() > 1e-6 || dy.abs() > 1e-6 {
                 offset_subtree(ci, dx, dy, nodes, combos);
             }
-
-            child_idx += 1;
         }
     }
 }
 
-/// Recursively offset all nodes and combos within a combo by (dx, dy).
+/// Offset all nodes and combos within a combo by (dx, dy).
+/// Uses iteration instead of recursion to avoid stack overflow in WASM.
 fn offset_subtree(
     combo_idx: usize,
     dx: f32,
@@ -432,30 +528,32 @@ fn offset_subtree(
     nodes: &mut [GraphNode],
     combos: &mut [GraphCombo],
 ) {
-    let combo_id = combos[combo_idx].id.clone();
+    // Use a Vec as a work queue to process combos iteratively
+    let mut queue: Vec<usize> = vec![combo_idx];
 
-    for n in nodes.iter_mut() {
-        if n.combo.as_ref() == Some(&combo_id) {
-            if let Some(ref mut rect) = n.rect {
-                rect.left += dx;
-                rect.top += dy;
+    while let Some(current_idx) = queue.pop() {
+        let current_id = combos[current_idx].id.clone();
+
+        // Offset nodes in this combo
+        for n in nodes.iter_mut() {
+            if n.combo.as_ref() == Some(&current_id) {
+                if let Some(ref mut rect) = n.rect {
+                    rect.left += dx;
+                    rect.top += dy;
+                }
             }
         }
-    }
 
-    let sub_indices: Vec<usize> = combos
-        .iter()
-        .enumerate()
-        .filter(|(_, c)| c.combo.as_ref() == Some(&combo_id))
-        .map(|(i, _)| i)
-        .collect();
-
-    for i in sub_indices {
-        if let Some(ref mut rect) = combos[i].rect {
-            rect.left += dx;
-            rect.top += dy;
+        // Find and offset child combos, add them to queue
+        for (i, c) in combos.iter_mut().enumerate() {
+            if c.combo.as_ref() == Some(&current_id) {
+                if let Some(ref mut rect) = c.rect {
+                    rect.left += dx;
+                    rect.top += dy;
+                }
+                queue.push(i);
+            }
         }
-        offset_subtree(i, dx, dy, nodes, combos);
     }
 }
 
