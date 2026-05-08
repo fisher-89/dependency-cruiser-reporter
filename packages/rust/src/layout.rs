@@ -5,10 +5,10 @@ const COMBO_PADDING: f32 = 20.0;
 const GAP: f32 = 30.0;
 
 /// Force layout parameters
-const ITERATIONS: usize = 100;
-const REPULSION_STRENGTH: f32 = 1000.0;
-const ATTRACTION_STRENGTH: f32 = 0.01;
-const COOLING_FACTOR: f32 = 0.95;
+const ITERATIONS: usize = 500;
+const REPULSION_STRENGTH: f32 = 5000.0;
+const ATTRACTION_STRENGTH: f32 = 0.001;
+const COOLING_FACTOR: f32 = 0.98;
 
 /// Compute layout for all nodes and combos.
 ///
@@ -172,9 +172,22 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
         return;
     }
 
-    // Initialize positions in a circle
+    // Initialize positions in a circle with enough spacing
     let n = combo_indices.len();
-    let radius = 100.0 * n as f32;
+
+    // Compute total area to estimate needed radius
+    let total_area: f32 = combo_indices
+        .iter()
+        .map(|&idx| {
+            combos[idx]
+                .rect
+                .as_ref()
+                .map(|r| r.width * r.height)
+                .unwrap_or(0.0)
+        })
+        .sum();
+    let radius = (total_area / std::f32::consts::PI).sqrt().max(200.0);
+
     for (i, &idx) in combo_indices.iter().enumerate() {
         if let Some(ref mut rect) = combos[idx].rect {
             let angle = 2.0 * std::f32::consts::PI * i as f32 / n as f32;
@@ -184,7 +197,7 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
     }
 
     // Force simulation
-    let mut temperature = 100.0;
+    let mut temperature = 50.0;
     for _ in 0..ITERATIONS {
         // Compute forces
         let mut forces: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
@@ -208,12 +221,16 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                 let dy = yi - yj;
                 let dist = (dx * dx + dy * dy).sqrt().max(1.0);
 
-                // Repulsion force (inverse square law)
-                // Check if overlapping
-                let overlap = is_overlapping(ri, rj);
-                let repulsion = if overlap {
-                    REPULSION_STRENGTH * 10.0 / (dist * dist) // Stronger if overlapping
+                // Compute overlap-based repulsion
+                let overlap_x = (ri.width / 2.0 + rj.width / 2.0) - dx.abs();
+                let overlap_y = (ri.height / 2.0 + rj.height / 2.0) - dy.abs();
+
+                let repulsion = if overlap_x > 0.0 && overlap_y > 0.0 {
+                    // Rectangles overlap - use stronger separation force
+                    let overlap_area = overlap_x * overlap_y;
+                    REPULSION_STRENGTH * (1.0 + overlap_area / 100.0) / dist
                 } else {
+                    // No overlap - use distance-based repulsion
                     REPULSION_STRENGTH / (dist * dist)
                 };
 
@@ -225,8 +242,8 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
 
             // Attraction to center (keeps layout compact)
             let ri = combos[combo_indices[i]].rect.as_ref().unwrap();
-            forces[i].0 -= ATTRACTION_STRENGTH * ri.left;
-            forces[i].1 -= ATTRACTION_STRENGTH * ri.top;
+            forces[i].0 -= ATTRACTION_STRENGTH * (ri.left + ri.width / 2.0);
+            forces[i].1 -= ATTRACTION_STRENGTH * (ri.top + ri.height / 2.0);
         }
 
         // Apply forces with temperature annealing
@@ -238,6 +255,54 @@ fn apply_force_layout(combo_indices: &[usize], combos: &mut [GraphCombo]) {
         }
 
         temperature *= COOLING_FACTOR;
+    }
+
+    // Post-processing: ensure no overlaps remain
+    // If overlaps detected, apply additional separation
+    for _ in 0..10 {
+        let mut has_overlap = false;
+        for i in 0..n {
+            for j in (i + 1)..n {
+                let ri = combos[combo_indices[i]].rect.as_ref().unwrap();
+                let rj = combos[combo_indices[j]].rect.as_ref().unwrap();
+
+                if is_overlapping(ri, rj) {
+                    has_overlap = true;
+
+                    // Centers
+                    let xi = ri.left + ri.width / 2.0;
+                    let yi = ri.top + ri.height / 2.0;
+                    let xj = rj.left + rj.width / 2.0;
+                    let yj = rj.top + rj.height / 2.0;
+
+                    let dx = xi - xj;
+                    let dy = yi - yj;
+                    let dist = (dx * dx + dy * dy).sqrt().max(1.0);
+
+                    // Compute required separation distance
+                    let min_dist_x = (ri.width + rj.width) / 2.0 + GAP;
+                    let min_dist_y = (ri.height + rj.height) / 2.0 + GAP;
+                    let min_dist = min_dist_x.max(min_dist_y);
+
+                    // Move each combo apart
+                    let move_amount = (min_dist - dist) / 2.0 + GAP;
+                    let idx_i = combo_indices[i];
+                    let idx_j = combo_indices[j];
+
+                    if let Some(ref mut rect) = combos[idx_i].rect {
+                        rect.left += move_amount * dx / dist;
+                        rect.top += move_amount * dy / dist;
+                    }
+                    if let Some(ref mut rect) = combos[idx_j].rect {
+                        rect.left -= move_amount * dx / dist;
+                        rect.top -= move_amount * dy / dist;
+                    }
+                }
+            }
+        }
+        if !has_overlap {
+            break;
+        }
     }
 }
 

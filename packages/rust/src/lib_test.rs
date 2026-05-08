@@ -377,3 +377,293 @@ mod wasm_tests {
         assert!(result.is_err(), "should return error for invalid JSON");
     }
 }
+
+// --- Layout overlap tests ---
+
+/// Helper to check if two rects overlap
+fn rects_overlap(a: &Rect, b: &Rect) -> bool {
+    a.left < b.left + b.width
+        && a.left + a.width > b.left
+        && a.top < b.top + b.height
+        && a.top + a.height > b.top
+}
+
+#[test]
+fn test_sample_no_sibling_combo_overlap() {
+    let modules = vec![
+        Module {
+            source: "src/index.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/app.ts".to_string(),
+            dependencies: vec![Dependency {
+                module: "./utils".to_string(),
+                module_system: "es6".to_string(),
+                dynamic: None,
+                resolved: "src/utils.ts".to_string(),
+                core_module: None,
+                dependency_types: vec!["local".to_string()],
+                circular: None,
+                valid: None,
+                rules: None,
+            }],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/utils.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Button.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Input.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    let json = make_json(modules);
+    let graph = aggregate(&json, 200, None).unwrap();
+
+    // Group combos by parent
+    let mut by_parent: std::collections::HashMap<Option<String>, Vec<&GraphCombo>> =
+        std::collections::HashMap::new();
+    for c in &graph.combos {
+        by_parent.entry(c.combo.clone()).or_default().push(c);
+    }
+
+    // Check no siblings overlap
+    for (parent, siblings) in &by_parent {
+        for i in 0..siblings.len() {
+            for j in (i + 1)..siblings.len() {
+                let a = siblings[i].rect.as_ref().unwrap();
+                let b = siblings[j].rect.as_ref().unwrap();
+
+                assert!(
+                    !rects_overlap(a, b),
+                    "Sibling combos {:?} and {:?} under parent {:?} overlap:\n  {:?}\n  {:?}",
+                    siblings[i].id,
+                    siblings[j].id,
+                    parent,
+                    a,
+                    b
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn test_larger_project_no_overlap() {
+    // Larger test case: multiple directories with nested structures
+    let mut modules = vec![
+        Module {
+            source: "src/index.ts".to_string(),
+            dependencies: vec![
+                Dependency {
+                    module: "./app".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/app.ts".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                },
+                Dependency {
+                    module: "./components/App".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/components/App.tsx".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                },
+            ],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/app.ts".to_string(),
+            dependencies: vec![Dependency {
+                module: "./utils/format".to_string(),
+                module_system: "es6".to_string(),
+                dynamic: None,
+                resolved: "src/utils/format.ts".to_string(),
+                core_module: None,
+                dependency_types: vec!["local".to_string()],
+                circular: None,
+                valid: None,
+                rules: None,
+            }],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/App.tsx".to_string(),
+            dependencies: vec![
+                Dependency {
+                    module: "./Button".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/components/Button.tsx".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                },
+                Dependency {
+                    module: "./Input".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/components/Input.tsx".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                },
+            ],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Button.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/components/Input.tsx".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/utils/format.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "src/utils/style.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "lib/helper.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "lib/validator.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+        Module {
+            source: "test/main.test.ts".to_string(),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        },
+    ];
+
+    // Add more files to stress test the layout
+    for i in 0..10 {
+        modules.push(Module {
+            source: format!("src/features/feature{}/index.ts", i),
+            dependencies: vec![],
+            dependents: None,
+            orphan: None,
+            valid: None,
+            rules: None,
+        });
+    }
+
+    let json = make_json(modules);
+    let graph = aggregate(&json, 200, None).unwrap();
+
+    println!("Nodes: {}", graph.nodes.len());
+    println!("Combos: {}", graph.combos.len());
+    for c in &graph.combos {
+        println!(
+            "  {} (parent: {:?}): {:?}",
+            c.id, c.combo, c.rect
+        );
+    }
+
+    // Group combos by parent
+    let mut by_parent: std::collections::HashMap<Option<String>, Vec<&GraphCombo>> =
+        std::collections::HashMap::new();
+    for c in &graph.combos {
+        by_parent.entry(c.combo.clone()).or_default().push(c);
+    }
+
+    // Check no siblings overlap
+    for (parent, siblings) in &by_parent {
+        for i in 0..siblings.len() {
+            for j in (i + 1)..siblings.len() {
+                let a = siblings[i].rect.as_ref().unwrap();
+                let b = siblings[j].rect.as_ref().unwrap();
+
+                assert!(
+                    !rects_overlap(a, b),
+                    "Sibling combos {:?} and {:?} under parent {:?} overlap:\n  {:?}\n  {:?}",
+                    siblings[i].id,
+                    siblings[j].id,
+                    parent,
+                    a,
+                    b
+                );
+            }
+        }
+    }
+}
