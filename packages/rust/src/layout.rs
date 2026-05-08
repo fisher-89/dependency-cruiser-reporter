@@ -482,8 +482,8 @@ fn position_children_in_combo(
         for i in 0..n {
             let (w, h, _, _) = elements[i];
             // Ensure max >= min to avoid clamp panic (can happen when element is wider than container)
-            let effective_max_x = max_x.max(min_x + w) - w;
-            let effective_max_y = max_y.max(min_y + h) - h;
+            let effective_max_x = (max_x.max(min_x + w) - w).max(min_x);
+            let effective_max_y = (max_y.max(min_y + h) - h).max(min_y);
             positions[i].0 = positions[i].0.clamp(min_x, effective_max_x);
             positions[i].1 = positions[i].1.clamp(min_y, effective_max_y);
         }
@@ -556,8 +556,8 @@ fn position_children_in_combo(
 
         for &ci in &child_combo_indices {
             if let Some(ref mut rect) = combos[ci].rect {
-                let effective_max_x = max_x.max(min_x + rect.width) - rect.width;
-                let effective_max_y = max_y.max(min_y + rect.height) - rect.height;
+                let effective_max_x = (max_x.max(min_x + rect.width) - rect.width).max(min_x);
+                let effective_max_y = (max_y.max(min_y + rect.height) - rect.height).max(min_y);
                 rect.left = rect.left.clamp(min_x, effective_max_x);
                 rect.top = rect.top.clamp(min_y, effective_max_y);
             }
