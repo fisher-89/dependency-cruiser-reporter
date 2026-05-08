@@ -1,8 +1,8 @@
-# AGENTS.md
+# CLAUDE.md
 
 ## Core Principle
 
-**`docs/README.md` is the single source of truth.** Read it before implementing anything. Update it after making changes.
+**`openspec/README.md` is the single source of truth.** Read it before implementing anything. Update it after making changes.
 **Never run `pnpm demo` or `dep-report open` in the background.** These commands start Express servers that bind to ports 3000-3002. Running them in the background leaves orphaned processes that block ports for subsequent runs.
 
 ## Architecture
