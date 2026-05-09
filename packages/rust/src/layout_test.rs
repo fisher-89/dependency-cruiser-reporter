@@ -959,7 +959,93 @@ fn test_mixed_nodes_and_combos_nested() {
 }
 
 #[test]
-fn test_child_combos_clamped_to_parent_boundary() {
+fn test_circle_layout_no_initial_overlap_equal_sizes() {
+    // Circle layout should position equal-sized elements without overlap
+    // if radius is large enough
+    let n = 5;
+    let element_size = (40.0, 20.0); // All same size
+
+    // Compute positions using circle layout logic (same as in position_children_in_combo)
+    let radius = 100.0;
+    let center_x = 200.0;
+    let center_y = 200.0;
+
+    let mut positions: Vec<(f32, f32)> = Vec::with_capacity(n);
+    for i in 0..n {
+        let angle = 2.0 * std::f32::consts::PI * i as f32 / n as f32;
+        let x = center_x + radius * angle.cos() - element_size.0 / 2.0;
+        let y = center_y + radius * angle.sin() - element_size.1 / 2.0;
+        positions.push((x, y));
+    }
+
+    // Check for overlaps
+    for i in 0..n {
+        for j in (i + 1)..n {
+            let (xi, yi) = positions[i];
+            let (xj, yj) = positions[j];
+
+            let overlap = xi < xj + element_size.0
+                && xi + element_size.0 > xj
+                && yi < yj + element_size.1
+                && yi + element_size.1 > yj;
+            assert!(
+                !overlap,
+                "Circle layout positions {} and {} overlap:\n  Pos {}: ({}, {})\n  Pos {}: ({}, {})",
+                i, j, i, xi, yi, j, xj, yj
+            );
+        }
+    }
+}
+
+#[test]
+fn test_resolve_element_overlaps_separates_overlapping_nodes() {
+    // Two nodes at the exact same position - should be separated
+    let mut positions = vec![(100.0, 100.0), (100.0, 100.0)];
+    let elements: Vec<(f32, f32, bool, usize)> = vec![
+        (40.0, 20.0, false, 0), // node 0: 40x20
+        (40.0, 20.0, false, 1), // node 1: 40x20
+    ];
+
+    resolve_element_overlaps(&mut positions, &elements);
+
+    // After resolution, they should not overlap
+    let (x0, y0) = positions[0];
+    let (x1, y1) = positions[1];
+    let (w0, h0) = (elements[0].0, elements[0].1);
+    let (w1, h1) = (elements[1].0, elements[1].1);
+
+    let overlap = x0 < x1 + w1 && x0 + w0 > x1 && y0 < y1 + h1 && y0 + h0 > y1;
+    assert!(!overlap, "Nodes should not overlap after resolution:\n  Node 0: ({}, {}) {}x{}\n  Node 1: ({}, {}) {}x{}", x0, y0, w0, h0, x1, y1, w1, h1);
+}
+
+#[test]
+fn test_resolve_element_overlaps_handles_mixed_nodes_and_combos() {
+    // Three elements: 2 nodes + 1 combo, all overlapping initially
+    let mut positions = vec![(50.0, 50.0), (50.0, 50.0), (50.0, 50.0)];
+    let elements: Vec<(f32, f32, bool, usize)> = vec![
+        (40.0, 20.0, false, 0), // node
+        (60.0, 30.0, false, 1), // node (different size)
+        (80.0, 40.0, true, 0),  // combo
+    ];
+
+    resolve_element_overlaps(&mut positions, &elements);
+
+    // Check no overlaps between any pair
+    for i in 0..positions.len() {
+        for j in (i + 1)..positions.len() {
+            let (xi, yi) = positions[i];
+            let (xj, yj) = positions[j];
+            let (wi, hi) = (elements[i].0, elements[i].1);
+            let (wj, hj) = (elements[j].0, elements[j].1);
+
+            let overlap = xi < xj + wj && xi + wi > xj && yi < yj + hj && yi + hi > yj;
+            assert!(!overlap, "Elements {} and {} should not overlap:\n  Element {}: ({}, {}) {}x{}\n  Element {}: ({}, {}) {}x{}", i, j, i, xi, yi, wi, hi, j, xj, yj, wj, hj);
+        }
+    }
+}
+
+#[test]
+fn test_child_combos_no_overlap_under_stress() {
     use crate::types::NodeType;
 
     // Create a scenario where multiple large sibling combos stress the parent boundary
@@ -1019,48 +1105,182 @@ fn test_child_combos_clamped_to_parent_boundary() {
 
     compute_layout(&mut nodes, &mut combos);
 
-    // Verify all child combos are clamped within parent (src) boundary
-    let src_rect = combos[1].rect.as_ref().unwrap();
-    let inner_left = src_rect.left + COMBO_PADDING;
-    let inner_top = src_rect.top + COMBO_PADDING;
-    let inner_right = src_rect.left + src_rect.width - COMBO_PADDING;
-    let inner_bottom = src_rect.top + src_rect.height - COMBO_PADDING;
+    // Verify no overlap between sibling combos (primary invariant)
+    let child_combos: Vec<_> = combos.iter().skip(2).collect();
+    for i in 0..child_combos.len() {
+        for j in (i + 1)..child_combos.len() {
+            let a = child_combos[i].rect.as_ref().unwrap();
+            let b = child_combos[j].rect.as_ref().unwrap();
+            let overlap = a.left < b.left + b.width
+                && a.left + a.width > b.left
+                && a.top < b.top + b.height
+                && a.top + a.height > b.top;
+            assert!(
+                !overlap,
+                "Sibling combos '{}' and '{}' overlap:\n  A: {:?}\n  B: {:?}",
+                child_combos[i].id,
+                child_combos[j].id,
+                a,
+                b
+            );
+        }
+    }
+}
 
-    for combo in combos.iter().skip(2) {
-        let rect = combo.rect.as_ref().unwrap();
-        // Position must be clamped to parent inner area
+#[test]
+fn test_demo_like_structure_7_combos_plus_direct_node() {
+    use crate::types::NodeType;
+
+    // Simulate the demo project structure:
+    // root -> src -> (index.ts, components/, hooks/, utils/, pages/, services/, types/, lib/)
+    // This is 1 direct node + 7 child combos under src
+    let mut nodes: Vec<GraphNode> = vec![];
+
+    // Direct node under src
+    nodes.push(GraphNode {
+        id: "src/index.ts".to_string(),
+        label: "index.ts".to_string(),
+        node_type: NodeType::File,
+        path: Some("src/index.ts".to_string()),
+        violation_count: 0,
+        orphan: None,
+        children: None,
+        combo: Some("combo:src".to_string()),
+        rect: None,
+    });
+
+    // 7 child combos under src, each with 3 nodes
+    for combo_name in ["components", "hooks", "utils", "pages", "services", "types", "lib"] {
+        for i in 0..3 {
+            nodes.push(GraphNode {
+                id: format!("src/{}/file{}.ts", combo_name, i),
+                label: format!("file{}.ts", i),
+                node_type: NodeType::File,
+                path: Some(format!("src/{}/file{}.ts", combo_name, i)),
+                violation_count: 0,
+                orphan: None,
+                children: None,
+                combo: Some(format!("combo:src/{}", combo_name)),
+                rect: None,
+            });
+        }
+    }
+
+    let mut combos = vec![
+        GraphCombo {
+            id: "combo:root".to_string(),
+            label: "/".to_string(),
+            combo: None,
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src".to_string(),
+            label: "src".to_string(),
+            combo: Some("combo:root".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/components".to_string(),
+            label: "components".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/hooks".to_string(),
+            label: "hooks".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/utils".to_string(),
+            label: "utils".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/pages".to_string(),
+            label: "pages".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/services".to_string(),
+            label: "services".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/types".to_string(),
+            label: "types".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+        GraphCombo {
+            id: "combo:src/lib".to_string(),
+            label: "lib".to_string(),
+            combo: Some("combo:src".to_string()),
+            rect: None,
+        },
+    ];
+
+    compute_layout(&mut nodes, &mut combos);
+
+    // Helper to check overlap
+    let overlaps = |a: &Rect, b: &Rect| -> bool {
+        a.left < b.left + b.width
+            && a.left + a.width > b.left
+            && a.top < b.top + b.height
+            && a.top + a.height > b.top
+    };
+
+    // Check no overlap between sibling combos under src
+    let child_combos: Vec<_> = combos.iter().skip(2).collect();
+    for i in 0..child_combos.len() {
+        for j in (i + 1)..child_combos.len() {
+            let a = child_combos[i].rect.as_ref().unwrap();
+            let b = child_combos[j].rect.as_ref().unwrap();
+            assert!(
+                !overlaps(a, b),
+                "Sibling combos '{}' and '{}' overlap:\n  A: {:?}\n  B: {:?}",
+                child_combos[i].id,
+                child_combos[j].id,
+                a,
+                b
+            );
+        }
+    }
+
+    // Check direct node doesn't overlap with any child combo
+    let index_rect = nodes[0].rect.as_ref().unwrap();
+    for child_combo in &child_combos {
+        let combo_rect = child_combo.rect.as_ref().unwrap();
         assert!(
-            rect.left >= inner_left - 1e-3,
-            "Combo {} left {} is outside parent inner left {}",
-            combo.id,
-            rect.left,
-            inner_left
+            !overlaps(index_rect, combo_rect),
+            "Direct node 'index.ts' overlaps with combo '{}':\n  Node: {:?}\n  Combo: {:?}",
+            child_combo.id,
+            index_rect,
+            combo_rect
         );
+    }
+
+    // Check containment: src combo contains all children
+    let src_rect = combos[1].rect.as_ref().unwrap();
+    assert!(index_rect.left >= src_rect.left);
+    assert!(index_rect.top >= src_rect.top);
+    assert!(index_rect.left + index_rect.width <= src_rect.left + src_rect.width);
+    assert!(index_rect.top + index_rect.height <= src_rect.top + src_rect.height);
+
+    for child_combo in &child_combos {
+        let combo_rect = child_combo.rect.as_ref().unwrap();
         assert!(
-            rect.top >= inner_top - 1e-3,
-            "Combo {} top {} is outside parent inner top {}",
-            combo.id,
-            rect.top,
-            inner_top
-        );
-        // For right/bottom: position is clamped, but size may cause overflow.
-        // The clamp ensures left <= effective_max_x, so right = left + width <= effective_max_x + width.
-        // Overflow is only due to child being wider/taller than parent inner area.
-        let effective_max_x = inner_right.max(inner_left + rect.width) - rect.width;
-        let effective_max_y = inner_bottom.max(inner_top + rect.height) - rect.height;
-        assert!(
-            rect.left <= effective_max_x + 1e-3,
-            "Combo {} left {} exceeds clamp max {}",
-            combo.id,
-            rect.left,
-            effective_max_x
-        );
-        assert!(
-            rect.top <= effective_max_y + 1e-3,
-            "Combo {} top {} exceeds clamp max {}",
-            combo.id,
-            rect.top,
-            effective_max_y
+            combo_rect.left >= src_rect.left
+                && combo_rect.top >= src_rect.top
+                && combo_rect.left + combo_rect.width <= src_rect.left + src_rect.width
+                && combo_rect.top + combo_rect.height <= src_rect.top + src_rect.height,
+            "Combo '{}' not contained in src:\n  Child: {:?}\n  Src: {:?}",
+            child_combo.id,
+            combo_rect,
+            src_rect
         );
     }
 }
