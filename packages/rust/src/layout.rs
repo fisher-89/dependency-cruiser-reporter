@@ -378,64 +378,49 @@ fn resolve_overlaps(combo_indices: &[usize], combos: &mut [GraphCombo]) {
                 if is_overlapping(ri, rj) {
                     has_overlap = true;
 
-                    let xi = ri.left + ri.width / 2.0;
-                    let yi = ri.top + ri.height / 2.0;
-                    let xj = rj.left + rj.width / 2.0;
-                    let yj = rj.top + rj.height / 2.0;
+                    // Calculate overlap on each axis
+                    let center_dx = (ri.left + ri.width / 2.0) - (rj.left + rj.width / 2.0);
+                    let center_dy = (ri.top + ri.height / 2.0) - (rj.top + rj.height / 2.0);
 
-                    // Calculate tension using nearest-neighbor edge distance for magnitude,
-                    // with direction from center-to-center to ensure correct separation sign.
-                    // This reduces oscillation by using the closest edge distance as the
-                    // effective separation metric, while keeping the direction unambiguous.
-                    let center_dx = xi - xj;
-                    let center_dy = yi - yj;
+                    let half_width_sum = (ri.width + rj.width) / 2.0;
+                    let half_height_sum = (ri.height + rj.height) / 2.0;
 
-                    let nearest_dist_x = if xi < xj {
-                        // i is left of j: gap from right edge of i to left edge of j
-                        // Negative when overlapping (right edge of i extends past left edge of j)
-                        rj.left - (ri.left + ri.width)
-                    } else {
-                        // i is right of j: gap from right edge of j to left edge of i
-                        ri.left - (rj.left + rj.width)
-                    };
-                    let nearest_dist_y = if yi < yj {
-                        // i is above j: gap from bottom edge of i to top edge of j
-                        rj.top - (ri.top + ri.height)
-                    } else {
-                        // i is below j: gap from bottom edge of j to top edge of i
-                        ri.top - (rj.top + rj.height)
-                    };
+                    let overlap_x = half_width_sum - center_dx.abs();
+                    let overlap_y = half_height_sum - center_dy.abs();
 
-                    // Use nearest-neighbor distance for magnitude, center-to-center for direction
-                    let dx = if nearest_dist_x.abs() > 1e-6 {
-                        center_dx.signum() * nearest_dist_x.abs()
-                    } else {
-                        center_dx
-                    };
-                    let dy = if nearest_dist_y.abs() > 1e-6 {
-                        center_dy.signum() * nearest_dist_y.abs()
-                    } else {
-                        center_dy
-                    };
-                    let dist = (dx * dx + dy * dy).sqrt().max(1.0);
-
-                    let min_dist_x = (ri.width + rj.width) / 2.0 + GAP;
-                    let min_dist_y = (ri.height + rj.height) / 2.0 + GAP;
-                    let min_dist = min_dist_x.max(min_dist_y);
-
-                    // Extra GAP ensures safety margin against floating-point rounding errors
-                    // and prevents "touching" rectangles that could visually appear merged
-                    let move_amount = (min_dist - dist) / 2.0 + GAP;
                     let idx_i = combo_indices[i];
                     let idx_j = combo_indices[j];
 
-                    if let Some(ref mut rect) = combos[idx_i].rect {
-                        rect.left += move_amount * dx / dist;
-                        rect.top += move_amount * dy / dist;
-                    }
-                    if let Some(ref mut rect) = combos[idx_j].rect {
-                        rect.left -= move_amount * dx / dist;
-                        rect.top -= move_amount * dy / dist;
+                    // Axis-aligned separation: move only along the axis with smaller overlap
+                    // (the "easier" escape direction). Add small epsilon for float safety.
+                    const EPSILON: f32 = 0.5;
+
+                    if overlap_x < overlap_y {
+                        // Separate horizontally
+                        let needed_x = half_width_sum + GAP + EPSILON;
+                        let current_dist_x = center_dx.abs().max(1e-6);
+                        let shift_x = (needed_x - current_dist_x).max(0.0);
+                        let move_x = shift_x / 2.0 * center_dx.signum();
+
+                        if let Some(ref mut rect) = combos[idx_i].rect {
+                            rect.left += move_x;
+                        }
+                        if let Some(ref mut rect) = combos[idx_j].rect {
+                            rect.left -= move_x;
+                        }
+                    } else {
+                        // Separate vertically
+                        let needed_y = half_height_sum + GAP + EPSILON;
+                        let current_dist_y = center_dy.abs().max(1e-6);
+                        let shift_y = (needed_y - current_dist_y).max(0.0);
+                        let move_y = shift_y / 2.0 * center_dy.signum();
+
+                        if let Some(ref mut rect) = combos[idx_i].rect {
+                            rect.top += move_y;
+                        }
+                        if let Some(ref mut rect) = combos[idx_j].rect {
+                            rect.top -= move_y;
+                        }
                     }
                 }
             }
@@ -491,49 +476,39 @@ fn resolve_element_overlaps(
                 if overlap {
                     has_overlap = true;
 
-                    // Centers
-                    let cx_i = xi + wi / 2.0;
-                    let cy_i = yi + hi / 2.0;
-                    let cx_j = xj + wj / 2.0;
-                    let cy_j = yj + hj / 2.0;
+                    // Calculate overlap on each axis
+                    let center_dx = (xi + wi / 2.0) - (xj + wj / 2.0);
+                    let center_dy = (yi + hi / 2.0) - (yj + hj / 2.0);
 
-                    let center_dx = cx_i - cx_j;
-                    let center_dy = cy_i - cy_j;
+                    let half_width_sum = (wi + wj) / 2.0;
+                    let half_height_sum = (hi + hj) / 2.0;
 
-                    // Nearest edge distances for magnitude
-                    let nearest_dist_x = if cx_i < cx_j {
-                        xj - (xi + wi)
+                    let overlap_x = half_width_sum - center_dx.abs();
+                    let overlap_y = half_height_sum - center_dy.abs();
+
+                    // Axis-aligned separation: move only along the axis with smaller overlap
+                    // (the "easier" escape direction). Add small epsilon for float safety.
+                    const EPSILON: f32 = 0.5;
+
+                    if overlap_x < overlap_y {
+                        // Separate horizontally
+                        let needed_x = half_width_sum + GAP + EPSILON;
+                        let current_dist_x = center_dx.abs().max(1e-6);
+                        let shift_x = (needed_x - current_dist_x).max(0.0);
+                        let move_x = shift_x / 2.0 * center_dx.signum();
+
+                        positions[i].0 += move_x;
+                        positions[j].0 -= move_x;
                     } else {
-                        xi - (xj + wj)
-                    };
-                    let nearest_dist_y = if cy_i < cy_j {
-                        yj - (yi + hi)
-                    } else {
-                        yi - (yj + hj)
-                    };
+                        // Separate vertically
+                        let needed_y = half_height_sum + GAP + EPSILON;
+                        let current_dist_y = center_dy.abs().max(1e-6);
+                        let shift_y = (needed_y - current_dist_y).max(0.0);
+                        let move_y = shift_y / 2.0 * center_dy.signum();
 
-                    let dx = if nearest_dist_x.abs() > 1e-6 {
-                        center_dx.signum() * nearest_dist_x.abs()
-                    } else {
-                        center_dx
-                    };
-                    let dy = if nearest_dist_y.abs() > 1e-6 {
-                        center_dy.signum() * nearest_dist_y.abs()
-                    } else {
-                        center_dy
-                    };
-                    let dist = (dx * dx + dy * dy).sqrt().max(1.0);
-
-                    let min_dist_x = (wi + wj) / 2.0 + GAP;
-                    let min_dist_y = (hi + hj) / 2.0 + GAP;
-                    let min_dist = min_dist_x.max(min_dist_y);
-
-                    let move_amount = (min_dist - dist) / 2.0 + GAP;
-
-                    positions[i].0 += move_amount * dx / dist;
-                    positions[i].1 += move_amount * dy / dist;
-                    positions[j].0 -= move_amount * dx / dist;
-                    positions[j].1 -= move_amount * dy / dist;
+                        positions[i].1 += move_y;
+                        positions[j].1 -= move_y;
+                    }
                 }
             }
         }

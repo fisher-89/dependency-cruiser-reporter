@@ -21,7 +21,9 @@
     "build": "pnpm run build:rust && pnpm run build:ts",
     "build:rust": "node scripts/build-rust.js",
     "build:ts": "pnpm -r build",
-    "demo": "node packages/cli/dist/bin/cli.js analyze -p demo && node packages/cli/dist/bin/cli.js open -f demo-graph.json",
+    "analyze": "node packages/cli/dist/bin/cli.js analyze",
+    "open": "node packages/cli/dist/bin/cli.js open",
+    "demo": "pnpm run analyze -p demo && pnpm run open -f demo-graph.json",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix"

@@ -17,5 +17,6 @@ test-results/
 *.swo
 *~
 *-graph.json
+.claude/
 .wps_claude/
 .memsearch
