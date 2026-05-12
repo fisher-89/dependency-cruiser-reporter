@@ -27,6 +27,10 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 - [前端规范](specs/frontend/spec.md) — 组件架构、视图行为、数据加载、G6 布局、样式规范
   - `@dcr-reporter/frontend` `React 19` `AntV G6 5` `Vite 5` `DependencyGraph` `buildGraphData` `comboCombined layout` `combos` `force layout` `ViewMode` `POST /api/graph` `expandedDirs`
 
+### Graph Detail Panel
+- [节点详情面板规范](specs/graph-detail-panel/spec.md) — 选中节点时的详情面板行为：稳定性指标、依赖分组、违规关联
+  - `DetailPanel` `stability` `instability metric` `Ce/(Ce+Ca)` `dependencies` `dependents` `edge type grouping` `violation association` `node selection` `click/double-click disambiguation`
+
 ### CLI
 - [CLI 规范](specs/cli/spec.md) — 命令接口、HTTP API 端点、Node.js 回退、编程式 API
   - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs` `@dcr-reporter/wasm`
@@ -53,6 +57,7 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 | `compute_layout`, force-directed layout, combo positioning | [Backend Spec](specs/backend/spec.md) |
 | `AntV G6`, `DependencyGraph`, `comboCombined` layout | [Frontend Spec](specs/frontend/spec.md) |
 | Graph/Report/Metrics views | [Frontend Spec](specs/frontend/spec.md) |
+| DetailPanel, stability metric, node selection | [Graph Detail Panel Spec](specs/graph-detail-panel/spec.md) |
 | CI/CD, GitHub Actions, pre-commit | [Usage Spec](specs/usage/spec.md) |
 | Setup, build, `pnpm` commands | [Development Spec](specs/development/spec.md) |
 | Testing: `cargo test`, `node:test` | [Development Spec](specs/development/spec.md) |

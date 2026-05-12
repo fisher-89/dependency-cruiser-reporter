@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DependencyGraph } from './components/DependencyGraph';
-import type { ProcessedGraph, ViewMode, ViolationInfo } from './types';
+import { DetailPanel } from './components/DetailPanel';
+import type { GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
 
 function App() {
   const [data, setData] = useState<ProcessedGraph | null>(null);
@@ -8,6 +9,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
   const fetchGraph = useCallback(async (newExpandedDirs?: string[]) => {
     setLoading(true);
@@ -21,6 +23,7 @@ function App() {
         const graphData = (await res.json()) as ProcessedGraph;
         if (graphData.nodes && graphData.edges && graphData.meta) {
           setData(graphData);
+          setSelectedNodeId(null);
           if (graphData.meta.expanded_dirs) {
             setExpandedDirs(new Set(graphData.meta.expanded_dirs));
           }
@@ -52,6 +55,24 @@ function App() {
     [expandedDirs, fetchGraph]
   );
 
+  const handleNodeSelect = useCallback((nodeId: string) => {
+    setSelectedNodeId(nodeId);
+  }, []);
+
+  const selectedNode = useMemo(() => {
+    if (!data || !selectedNodeId) return null;
+    return data.nodes.find((n) => n.id === selectedNodeId) ?? null;
+  }, [data, selectedNodeId]);
+
+  const nodeMap = useMemo(() => {
+    if (!data) return new Map<string, GraphNode>();
+    const map = new Map<string, GraphNode>();
+    for (const n of data.nodes) {
+      map.set(n.id, n);
+    }
+    return map;
+  }, [data]);
+
   // Auto-load graph from server if available
   useEffect(() => {
     fetchGraph();
@@ -64,6 +85,7 @@ function App() {
       const text = await file.text();
       const parsed = JSON.parse(text) as ProcessedGraph;
       setData(parsed);
+      setSelectedNodeId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to parse JSON');
     } finally {
@@ -148,7 +170,22 @@ function App() {
           </div>
         ) : (
           <>
-            {viewMode === 'graph' && <DependencyGraph data={data} onToggleDir={handleToggleDir} />}
+            {viewMode === 'graph' && (
+              <div style={styles.graphSplitLayout}>
+                <DependencyGraph
+                  data={data}
+                  onToggleDir={handleToggleDir}
+                  onNodeSelect={handleNodeSelect}
+                  selectedNodeId={selectedNodeId}
+                />
+                <DetailPanel
+                  node={selectedNode}
+                  edges={data.edges}
+                  violations={data.violations}
+                  nodeMap={nodeMap}
+                />
+              </div>
+            )}
             {viewMode === 'report' && <ReportView violations={data.violations} />}
             {viewMode === 'metrics' && <MetricsView data={data} />}
             <button
@@ -330,6 +367,11 @@ const styles: Record<string, React.CSSProperties> = {
   error: {
     color: '#ef4444',
     marginTop: '16px',
+  },
+  graphSplitLayout: {
+    display: 'flex',
+    gap: 16,
+    height: '100%',
   },
   graphContainer: {
     background: '#fff',

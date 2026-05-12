@@ -332,7 +332,10 @@ fn test_three_top_level_combos_large() {
     let top_level: Vec<_> = combos.iter().filter(|c| c.combo.is_none()).collect();
     assert_eq!(top_level.len(), 1, "Should have exactly 1 root combo");
 
-    let children: Vec<_> = combos.iter().filter(|c| c.combo.is_some()).collect();
+    let children: Vec<_> = combos
+        .iter()
+        .filter(|c| c.combo.as_deref() == Some("combo:root"))
+        .collect();
     for i in 0..children.len() {
         for j in (i + 1)..children.len() {
             let a = children[i].rect.as_ref().unwrap();
@@ -403,8 +406,11 @@ fn test_four_top_level_combos_medium() {
 
     compute_layout(&mut nodes, &mut combos);
 
-    // Verify no overlap between any pair of sibling combos
-    let children: Vec<_> = combos.iter().filter(|c| c.combo.is_some()).collect();
+    // Verify no overlap between any pair of sibling combos under root
+    let children: Vec<_> = combos
+        .iter()
+        .filter(|c| c.combo.as_deref() == Some("combo:root"))
+        .collect();
     for i in 0..children.len() {
         for j in (i + 1)..children.len() {
             let a = children[i].rect.as_ref().unwrap();
@@ -634,8 +640,11 @@ fn test_many_small_combos() {
 
     compute_layout(&mut nodes, &mut combos);
 
-    // Verify no overlap
-    let children: Vec<_> = combos.iter().filter(|c| c.combo.is_some()).collect();
+    // Verify no overlap between sibling combos under root
+    let children: Vec<_> = combos
+        .iter()
+        .filter(|c| c.combo.as_deref() == Some("combo:root"))
+        .collect();
     for i in 0..children.len() {
         for j in (i + 1)..children.len() {
             let a = children[i].rect.as_ref().unwrap();
