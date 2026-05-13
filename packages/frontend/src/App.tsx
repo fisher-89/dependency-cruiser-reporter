@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DependencyGraph } from './components/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
+import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
+import { useT } from './i18n';
+import type { TKey } from './i18n';
+import { useTheme } from './theme';
 import type { GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
 
 function App() {
+  const { t, lang, setLang } = useT();
+  const { theme, cycleTheme } = useTheme();
   const [data, setData] = useState<ProcessedGraph | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [loading, setLoading] = useState(false);
@@ -73,7 +79,6 @@ function App() {
     return map;
   }, [data]);
 
-  // Auto-load graph from server if available
   useEffect(() => {
     fetchGraph();
   }, [fetchGraph]);
@@ -108,36 +113,69 @@ function App() {
     [handleFileUpload]
   );
 
+  const themeIcon =
+    theme === 'dark' ? <MoonIcon /> : theme === 'light' ? <SunIcon /> : <MonitorIcon />;
+  const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>Dependency Cruiser Reporter</h1>
-        <nav style={styles.nav}>
+        <h1 style={styles.title}>{t('app.title')}</h1>
+        <div style={styles.headerControls}>
+          <div style={styles.langSwitcher}>
+            <button
+              type="button"
+              style={{ ...styles.langBtn, ...(lang === 'en' ? styles.langBtnActive : {}) }}
+              onClick={() => setLang('en')}
+              data-testid="lang-en"
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.langBtn, ...(lang === 'zh-CN' ? styles.langBtnActive : {}) }}
+              onClick={() => setLang('zh-CN')}
+              data-testid="lang-zh"
+            >
+              中文
+            </button>
+          </div>
           <button
             type="button"
-            style={{ ...styles.navBtn, ...(viewMode === 'graph' ? styles.navBtnActive : {}) }}
-            onClick={() => setViewMode('graph')}
-            data-testid="nav-graph"
+            style={styles.themeBtn}
+            onClick={cycleTheme}
+            title={t(`theme.${nextTheme}`)}
+            data-testid="theme-toggle"
           >
-            Graph
+            {themeIcon}
           </button>
-          <button
-            type="button"
-            style={{ ...styles.navBtn, ...(viewMode === 'report' ? styles.navBtnActive : {}) }}
-            onClick={() => setViewMode('report')}
-            data-testid="nav-report"
-          >
-            Report
-          </button>
-          <button
-            type="button"
-            style={{ ...styles.navBtn, ...(viewMode === 'metrics' ? styles.navBtnActive : {}) }}
-            onClick={() => setViewMode('metrics')}
-            data-testid="nav-metrics"
-          >
-            Metrics
-          </button>
-        </nav>
+          <nav style={styles.nav}>
+            <button
+              type="button"
+              style={{ ...styles.navBtn, ...(viewMode === 'graph' ? styles.navBtnActive : {}) }}
+              onClick={() => setViewMode('graph')}
+              data-testid="nav-graph"
+            >
+              {t('nav.graph')}
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.navBtn, ...(viewMode === 'report' ? styles.navBtnActive : {}) }}
+              onClick={() => setViewMode('report')}
+              data-testid="nav-report"
+            >
+              {t('nav.report')}
+            </button>
+            <button
+              type="button"
+              style={{ ...styles.navBtn, ...(viewMode === 'metrics' ? styles.navBtnActive : {}) }}
+              onClick={() => setViewMode('metrics')}
+              data-testid="nav-metrics"
+            >
+              {t('nav.metrics')}
+            </button>
+          </nav>
+        </div>
       </header>
 
       <main style={styles.main}>
@@ -158,10 +196,10 @@ function App() {
             />
             <label htmlFor="file-input" style={styles.uploadLabel}>
               <div style={styles.uploadIcon}>📁</div>
-              <div>Drop JSON file here or click to upload</div>
-              <div style={styles.uploadHint}>Upload dependency-cruiser JSON output</div>
+              <div>{t('upload.prompt')}</div>
+              <div style={styles.uploadHint}>{t('upload.hint')}</div>
             </label>
-            {loading && <div data-testid="loading">Loading...</div>}
+            {loading && <div data-testid="loading">{t('upload.loading')}</div>}
             {error && (
               <div style={styles.error} data-testid="error-message">
                 {error}
@@ -194,7 +232,7 @@ function App() {
               onClick={() => setData(null)}
               data-testid="reset-btn"
             >
-              Upload New File
+              {t('upload.newFile')}
             </button>
           </>
         )}
@@ -204,6 +242,7 @@ function App() {
 }
 
 function ReportView({ violations }: { violations: ViolationInfo[] }) {
+  const { t } = useT();
   const errors = violations.filter((v) => v.severity === 'error');
   const warnings = violations.filter((v) => v.severity === 'warn');
   const infos = violations.filter((v) => v.severity === 'info');
@@ -211,22 +250,22 @@ function ReportView({ violations }: { violations: ViolationInfo[] }) {
   return (
     <div style={styles.reportContainer} data-testid="report-view">
       <div style={styles.summary}>
-        <div style={{ ...styles.summaryCard, borderColor: '#ef4444' }}>
+        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-error)' }}>
           <div style={styles.summaryNum}>{errors.length}</div>
-          <div>Errors</div>
+          <div>{t('report.errors')}</div>
         </div>
-        <div style={{ ...styles.summaryCard, borderColor: '#f59e0b' }}>
+        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-warning)' }}>
           <div style={styles.summaryNum}>{warnings.length}</div>
-          <div>Warnings</div>
+          <div>{t('report.warnings')}</div>
         </div>
-        <div style={{ ...styles.summaryCard, borderColor: '#3b82f6' }}>
+        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-info)' }}>
           <div style={styles.summaryNum}>{infos.length}</div>
-          <div>Info</div>
+          <div>{t('report.info')}</div>
         </div>
       </div>
       <div style={styles.violationList} data-testid="violation-list">
         {violations.length === 0 ? (
-          <div style={styles.emptyState}>No violations found</div>
+          <div style={styles.emptyState}>{t('report.noViolations')}</div>
         ) : (
           violations.map((v, i) => (
             <div
@@ -235,15 +274,15 @@ function ReportView({ violations }: { violations: ViolationInfo[] }) {
                 ...styles.violationItem,
                 borderLeftColor:
                   v.severity === 'error'
-                    ? '#ef4444'
+                    ? 'var(--color-error)'
                     : v.severity === 'warn'
-                      ? '#f59e0b'
-                      : '#3b82f6',
+                      ? 'var(--color-warning)'
+                      : 'var(--color-info)',
               }}
               data-testid={`violation-${i}`}
             >
               <div style={styles.violationRule}>
-                <span style={styles.violationSeverity}>{v.severity.toUpperCase()}</span>
+                <span style={styles.violationSeverity}>{t(`severity.${v.severity}` as TKey)}</span>
                 {v.rule}
               </div>
               <div style={styles.violationFrom}>
@@ -259,6 +298,7 @@ function ReportView({ violations }: { violations: ViolationInfo[] }) {
 }
 
 function MetricsView({ data }: { data: ProcessedGraph }) {
+  const { t } = useT();
   const edgeTypes = data.edges.reduce(
     (acc, e) => {
       acc[e.edge_type] = (acc[e.edge_type] || 0) + 1;
@@ -272,23 +312,23 @@ function MetricsView({ data }: { data: ProcessedGraph }) {
       <div style={styles.metricsGrid}>
         <div style={styles.metricCard}>
           <div style={styles.metricValue}>{data.meta.original_node_count}</div>
-          <div style={styles.metricLabel}>Original Nodes</div>
+          <div style={styles.metricLabel}>{t('metrics.originalNodes')}</div>
         </div>
         <div style={styles.metricCard}>
           <div style={styles.metricValue}>{data.meta.aggregated_node_count}</div>
-          <div style={styles.metricLabel}>Aggregated Nodes</div>
+          <div style={styles.metricLabel}>{t('metrics.aggregatedNodes')}</div>
         </div>
         <div style={styles.metricCard}>
           <div style={styles.metricValue}>{data.edges.length}</div>
-          <div style={styles.metricLabel}>Dependencies</div>
+          <div style={styles.metricLabel}>{t('metrics.dependencies')}</div>
         </div>
         <div style={styles.metricCard}>
           <div style={styles.metricValue}>{data.meta.total_violations}</div>
-          <div style={styles.metricLabel}>Violations</div>
+          <div style={styles.metricLabel}>{t('metrics.violations')}</div>
         </div>
       </div>
       <div style={styles.edgeTypes}>
-        <h3 style={styles.edgeTypesTitle}>Edge Types</h3>
+        <h3 style={styles.edgeTypesTitle}>{t('metrics.edgeTypes')}</h3>
         {Object.entries(edgeTypes).map(([type, count]) => (
           <div key={type} style={styles.edgeTypeItem} data-testid={`edge-type-${type}`}>
             <span>{type}</span>
@@ -303,12 +343,12 @@ function MetricsView({ data }: { data: ProcessedGraph }) {
 const styles: Record<string, React.CSSProperties> = {
   container: {
     height: '100vh',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
   header: {
-    background: '#fff',
-    borderBottom: '1px solid #e2e8f0',
+    background: 'var(--color-surface)',
+    borderBottom: '1px solid var(--color-border)',
     padding: '16px 24px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -318,7 +358,41 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     fontSize: '20px',
     lineHeight: '32px',
-    color: '#1e293b',
+    color: 'var(--color-text-primary)',
+  },
+  headerControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  langSwitcher: {
+    display: 'flex',
+    gap: '2px',
+  },
+  langBtn: {
+    padding: '4px 8px',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: 600,
+    color: 'var(--color-text-secondary)',
+  },
+  langBtnActive: {
+    background: 'var(--color-accent-bg)',
+    color: 'var(--color-accent)',
+  },
+  themeBtn: {
+    padding: '6px',
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    color: 'var(--color-text-secondary)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nav: {
     display: 'flex',
@@ -331,22 +405,22 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     borderRadius: '6px',
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--color-text-secondary)',
   },
   navBtnActive: {
-    background: '#e0f2fe',
-    color: '#0284c7',
+    background: 'var(--color-accent-bg)',
+    color: 'var(--color-accent)',
   },
   main: {
     padding: '24px',
     height: 'calc(100% - 64px)',
   },
   uploadArea: {
-    border: '2px dashed #cbd5e1',
+    border: '2px dashed var(--color-border)',
     borderRadius: '12px',
     padding: '48px',
     textAlign: 'center',
-    background: '#fff',
+    background: 'var(--color-surface)',
   },
   fileInput: {
     display: 'none',
@@ -361,11 +435,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   uploadHint: {
     fontSize: '14px',
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     marginTop: '8px',
   },
   error: {
-    color: '#ef4444',
+    color: 'var(--color-error)',
     marginTop: '16px',
   },
   graphSplitLayout: {
@@ -373,26 +447,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 16,
     height: '100%',
   },
-  graphContainer: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  graphInfo: {
-    display: 'flex',
-    gap: '16px',
-    marginBottom: '16px',
-    fontSize: '14px',
-    color: '#64748b',
-  },
-  graph: {
-    width: '100%',
-    border: '1px solid #e2e8f0',
-    borderRadius: '8px',
-  },
   reportContainer: {
-    background: '#fff',
+    background: 'var(--color-surface)',
     borderRadius: '12px',
     padding: '24px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -407,7 +463,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '16px',
     borderRadius: '8px',
     borderLeft: '4px solid',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
     textAlign: 'center',
   },
   summaryNum: {
@@ -425,7 +481,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '12px 16px',
     borderRadius: '8px',
     borderLeft: '4px solid',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
   },
   violationRule: {
     fontWeight: 600,
@@ -441,20 +497,20 @@ const styles: Record<string, React.CSSProperties> = {
   },
   violationFrom: {
     fontSize: '12px',
-    color: '#64748b',
+    color: 'var(--color-text-secondary)',
   },
   violationMsg: {
     fontSize: '12px',
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     marginTop: '4px',
   },
   emptyState: {
     textAlign: 'center',
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     padding: '32px',
   },
   metricsContainer: {
-    background: '#fff',
+    background: 'var(--color-surface)',
     borderRadius: '12px',
     padding: '24px',
     boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -468,17 +524,17 @@ const styles: Record<string, React.CSSProperties> = {
   metricCard: {
     padding: '24px',
     borderRadius: '8px',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
     textAlign: 'center',
   },
   metricValue: {
     fontSize: '36px',
     fontWeight: 700,
-    color: '#1e293b',
+    color: 'var(--color-text-primary)',
   },
   metricLabel: {
     fontSize: '14px',
-    color: '#64748b',
+    color: 'var(--color-text-secondary)',
     marginTop: '4px',
   },
   edgeTypes: {
@@ -493,13 +549,13 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     padding: '8px 12px',
     borderRadius: '6px',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
     marginBottom: '8px',
   },
   resetBtn: {
     marginTop: '16px',
     padding: '8px 16px',
-    background: '#e2e8f0',
+    background: 'var(--color-btn-bg)',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',

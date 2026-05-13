@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { type TKey, useT } from '../i18n';
 import type { GraphEdge, GraphNode, ViolationInfo } from '../types';
 
 interface Props {
@@ -15,13 +16,15 @@ const EDGE_TYPE_LABELS: Record<string, string> = {
   dynamic: 'Dynamic',
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  error: '#ef4444',
-  warn: '#f59e0b',
-  info: '#3b82f6',
+const SEVERITY_VARS: Record<string, string> = {
+  error: 'var(--color-error)',
+  warn: 'var(--color-warning)',
+  info: 'var(--color-info)',
 };
 
 export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
+  const { t } = useT();
+
   const deps = useMemo(() => {
     if (!node) return { outgoing: new Map(), incoming: new Map() };
     const outgoing = new Map<string, GraphEdge[]>();
@@ -73,7 +76,7 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
       <div style={styles.panel}>
         <div style={styles.placeholder}>
           <div style={styles.placeholderIcon}>◉</div>
-          <div style={styles.placeholderText}>Click a node to view details</div>
+          <div style={styles.placeholderText}>{t('detail.clickHint')}</div>
         </div>
       </div>
     );
@@ -84,7 +87,7 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
       <div style={styles.scrollArea}>
         {/* Node Identity */}
         <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Node Details</h3>
+          <h3 style={styles.sectionTitle}>{t('detail.nodeDetails')}</h3>
           <div style={styles.identityLabel}>{node.label}</div>
           {node.path && <div style={styles.identityPath}>{node.path}</div>}
           <div style={styles.identityMeta}>
@@ -123,7 +126,7 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
 
         {/* Stability */}
         <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Stability</h3>
+          <h3 style={styles.sectionTitle}>{t('detail.stability')}</h3>
           {stability ? (
             <div>
               <div style={styles.stabilityValue}>
@@ -137,26 +140,30 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
                     ...styles.progressBarFill,
                     width: `${stability.i * 100}%`,
                     background:
-                      stability.i > 0.7 ? '#ef4444' : stability.i > 0.3 ? '#f59e0b' : '#52c41a',
+                      stability.i > 0.7
+                        ? 'var(--color-error)'
+                        : stability.i > 0.3
+                          ? 'var(--color-warning)'
+                          : '#52c41a',
                   }}
                 />
               </div>
               <div style={styles.stabilityLegend}>
-                <span style={{ color: '#52c41a' }}>Stable</span>
-                <span style={{ color: '#f59e0b' }}>Balanced</span>
-                <span style={{ color: '#ef4444' }}>Unstable</span>
+                <span style={{ color: '#52c41a' }}>{t('detail.stable')}</span>
+                <span style={{ color: 'var(--color-warning)' }}>{t('detail.balanced')}</span>
+                <span style={{ color: 'var(--color-error)' }}>{t('detail.unstable')}</span>
               </div>
             </div>
           ) : (
-            <div style={styles.naText}>N/A (no edges)</div>
+            <div style={styles.naText}>{t('detail.naNoEdges')}</div>
           )}
         </section>
 
         {/* Dependencies (outgoing) */}
         <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Dependencies</h3>
+          <h3 style={styles.sectionTitle}>{t('detail.dependencies')}</h3>
           {deps.outgoing.size === 0 ? (
-            <div style={styles.emptyText}>None</div>
+            <div style={styles.emptyText}>{t('detail.none')}</div>
           ) : (
             Array.from(deps.outgoing.entries()).map(([edgeType, edgeList]) => (
               <div key={edgeType} style={styles.edgeGroup}>
@@ -180,9 +187,9 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
 
         {/* Dependents (incoming) */}
         <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Dependents</h3>
+          <h3 style={styles.sectionTitle}>{t('detail.dependents')}</h3>
           {deps.incoming.size === 0 ? (
-            <div style={styles.emptyText}>None</div>
+            <div style={styles.emptyText}>{t('detail.none')}</div>
           ) : (
             Array.from(deps.incoming.entries()).map(([edgeType, edgeList]) => (
               <div key={edgeType} style={styles.edgeGroup}>
@@ -206,9 +213,9 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
 
         {/* Violations */}
         <section style={styles.section}>
-          <h3 style={styles.sectionTitle}>Violations</h3>
+          <h3 style={styles.sectionTitle}>{t('detail.violations')}</h3>
           {nodeViolations.length === 0 ? (
-            <div style={styles.emptyText}>No violations</div>
+            <div style={styles.emptyText}>{t('detail.noViolations')}</div>
           ) : (
             nodeViolations
               .sort((a, b) => {
@@ -220,17 +227,17 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
                   key={`${v.from}-${v.to}-${v.rule}-${i}`}
                   style={{
                     ...styles.violationItem,
-                    borderLeftColor: SEVERITY_COLORS[v.severity] ?? '#94a3b8',
+                    borderLeftColor: SEVERITY_VARS[v.severity] ?? 'var(--color-text-muted)',
                   }}
                 >
                   <div style={styles.violationHeader}>
                     <span
                       style={{
                         ...styles.violationSeverity,
-                        background: SEVERITY_COLORS[v.severity] ?? '#94a3b8',
+                        background: SEVERITY_VARS[v.severity] ?? 'var(--color-text-muted)',
                       }}
                     >
-                      {v.severity}
+                      {t(`severity.${v.severity}` as TKey)}
                     </span>
                     <span style={styles.violationRule}>{v.rule}</span>
                   </div>
@@ -252,8 +259,8 @@ const styles: Record<string, React.CSSProperties> = {
     width: 320,
     minWidth: 320,
     height: 'calc(100% - 48px)',
-    background: '#fff',
-    border: '1px solid #e2e8f0',
+    background: 'var(--color-surface)',
+    border: '1px solid var(--color-border)',
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -268,7 +275,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
   },
   placeholderIcon: {
     fontSize: 48,
@@ -284,7 +291,7 @@ const styles: Record<string, React.CSSProperties> = {
   sectionTitle: {
     fontSize: 12,
     fontWeight: 600,
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     textTransform: 'uppercase',
     margin: '0 0 8px 0',
     letterSpacing: '0.5px',
@@ -292,12 +299,12 @@ const styles: Record<string, React.CSSProperties> = {
   identityLabel: {
     fontSize: 16,
     fontWeight: 600,
-    color: '#1e293b',
+    color: 'var(--color-text-primary)',
     wordBreak: 'break-all',
   },
   identityPath: {
     fontSize: 12,
-    color: '#64748b',
+    color: 'var(--color-text-secondary)',
     marginTop: 4,
     wordBreak: 'break-all',
   },
@@ -317,7 +324,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   violationCount: {
     fontSize: 12,
-    color: '#ef4444',
+    color: 'var(--color-error)',
     fontWeight: 600,
   },
   stabilityValue: {
@@ -327,7 +334,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   progressBarBg: {
     height: 8,
-    background: '#e2e8f0',
+    background: 'var(--color-border)',
     borderRadius: 4,
     marginTop: 8,
     overflow: 'hidden',
@@ -344,12 +351,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10,
   },
   naText: {
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     fontSize: 13,
     fontStyle: 'italic',
   },
   emptyText: {
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     fontSize: 13,
   },
   edgeGroup: {
@@ -358,7 +365,7 @@ const styles: Record<string, React.CSSProperties> = {
   edgeGroupHeader: {
     fontSize: 12,
     fontWeight: 600,
-    color: '#475569',
+    color: 'var(--color-text-secondary)',
     marginBottom: 4,
   },
   edgeList: {
@@ -368,7 +375,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   edgeItem: {
     fontSize: 12,
-    color: '#334155',
+    color: 'var(--color-text-primary)',
     lineHeight: '20px',
     wordBreak: 'break-all',
   },
@@ -376,7 +383,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '8px 12px',
     borderRadius: 6,
     borderLeft: '3px solid',
-    background: '#f8fafc',
+    background: 'var(--color-bg)',
     marginBottom: 6,
   },
   violationHeader: {
@@ -396,15 +403,15 @@ const styles: Record<string, React.CSSProperties> = {
   violationRule: {
     fontSize: 12,
     fontWeight: 600,
-    color: '#1e293b',
+    color: 'var(--color-text-primary)',
   },
   violationRel: {
     fontSize: 11,
-    color: '#64748b',
+    color: 'var(--color-text-secondary)',
   },
   violationMsg: {
     fontSize: 11,
-    color: '#94a3b8',
+    color: 'var(--color-text-muted)',
     marginTop: 2,
   },
 };

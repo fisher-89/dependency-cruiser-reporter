@@ -56,10 +56,7 @@ pub(crate) fn compute_layout(nodes: &mut [GraphNode], combos: &mut [GraphCombo])
     // Process top-down: for each combo, resolve overlaps among its direct child combos
     for combo_idx in &top_down_indices {
         let combo_id = combos[*combo_idx].id.clone();
-        let child_combos: Vec<usize> = combo_children
-            .get(&combo_id)
-            .cloned()
-            .unwrap_or_default();
+        let child_combos: Vec<usize> = combo_children.get(&combo_id).cloned().unwrap_or_default();
         if child_combos.len() > 1 {
             // Save positions before overlap resolution
             let positions_before: Vec<(f32, f32)> = child_combos
@@ -92,14 +89,8 @@ pub(crate) fn compute_layout(nodes: &mut [GraphNode], combos: &mut [GraphCombo])
         }
 
         // Expand combo to contain all children if they now extend beyond
-        let child_nodes: Vec<usize> = node_children
-            .get(&combo_id)
-            .cloned()
-            .unwrap_or_default();
-        let child_combos: Vec<usize> = combo_children
-            .get(&combo_id)
-            .cloned()
-            .unwrap_or_default();
+        let child_nodes: Vec<usize> = node_children.get(&combo_id).cloned().unwrap_or_default();
+        let child_combos: Vec<usize> = combo_children.get(&combo_id).cloned().unwrap_or_default();
 
         if !child_nodes.is_empty() || !child_combos.is_empty() {
             let mut min_left = f32::MAX;
@@ -161,7 +152,9 @@ fn build_node_children_index(nodes: &[GraphNode]) -> std::collections::HashMap<S
 }
 
 /// Build index: combo_id -> Vec of child combo indices
-fn build_combo_children_index(combos: &[GraphCombo]) -> std::collections::HashMap<String, Vec<usize>> {
+fn build_combo_children_index(
+    combos: &[GraphCombo],
+) -> std::collections::HashMap<String, Vec<usize>> {
     let mut index: std::collections::HashMap<String, Vec<usize>> = std::collections::HashMap::new();
     for (i, c) in combos.iter().enumerate() {
         if let Some(ref parent_id) = c.combo {
@@ -448,10 +441,7 @@ fn is_overlapping(a: &Rect, b: &Rect) -> bool {
 /// Resolve overlaps between all elements (nodes + combos) in a positions array.
 /// Each element is: (width, height, is_combo, index)
 /// Positions are modified in-place to eliminate overlaps.
-fn resolve_element_overlaps(
-    positions: &mut [(f32, f32)],
-    elements: &[(f32, f32, bool, usize)],
-) {
+fn resolve_element_overlaps(positions: &mut [(f32, f32)], elements: &[(f32, f32, bool, usize)]) {
     let n = positions.len();
     if n <= 1 {
         return;
@@ -468,10 +458,7 @@ fn resolve_element_overlaps(
                 let (wj, hj) = (elements[j].0, elements[j].1);
 
                 // Check overlap
-                let overlap = xi < xj + wj
-                    && xi + wi > xj
-                    && yi < yj + hj
-                    && yi + hi > yj;
+                let overlap = xi < xj + wj && xi + wi > xj && yi < yj + hj && yi + hi > yj;
 
                 if overlap {
                     has_overlap = true;
@@ -538,6 +525,16 @@ fn position_children_in_combo(
     let combo_id = combos[combo_idx].id.clone();
     let combo_rect = combos[combo_idx].rect.clone().unwrap();
 
+    // Center of the combo
+    let center_x = combo_rect.left + combo_rect.width / 2.0;
+    let center_y = combo_rect.top + combo_rect.height / 2.0;
+
+    // Define boundaries for constraint
+    let min_x = combo_rect.left + COMBO_PADDING;
+    let min_y = combo_rect.top + COMBO_PADDING;
+    let max_x = combo_rect.left + combo_rect.width - COMBO_PADDING;
+    let max_y = combo_rect.top + combo_rect.height - COMBO_PADDING;
+
     let mut child_node_indices: Vec<usize> =
         node_children.get(&combo_id).cloned().unwrap_or_default();
     let mut child_combo_indices: Vec<usize> =
@@ -579,10 +576,6 @@ fn position_children_in_combo(
     let max_radius = (inner_width.min(inner_height) / 2.0).max(50.0);
     let radius = estimated_radius.min(max_radius).max(50.0);
 
-    // Center of the combo
-    let center_x = combo_rect.left + combo_rect.width / 2.0;
-    let center_y = combo_rect.top + combo_rect.height / 2.0;
-
     let mut positions: Vec<(f32, f32)> = Vec::with_capacity(n);
     for (i, &(w, h, _, _)) in elements.iter().enumerate() {
         let angle = 2.0 * std::f32::consts::PI * i as f32 / n as f32;
@@ -591,12 +584,6 @@ fn position_children_in_combo(
         let y = center_y + radius * angle.sin() - h / 2.0;
         positions.push((x, y));
     }
-
-    // Define boundaries for constraint
-    let min_x = combo_rect.left + COMBO_PADDING;
-    let min_y = combo_rect.top + COMBO_PADDING;
-    let max_x = combo_rect.left + combo_rect.width - COMBO_PADDING;
-    let max_y = combo_rect.top + combo_rect.height - COMBO_PADDING;
 
     // Run force simulation for all elements within the combo
     let mut temperature = 20.0;
@@ -637,8 +624,6 @@ fn position_children_in_combo(
             }
 
             // Attraction to combo center (keeps layout compact within combo)
-            let center_x = combo_rect.left + combo_rect.width / 2.0;
-            let center_y = combo_rect.top + combo_rect.height / 2.0;
             forces[i].0 += ATTRACTION_STRENGTH * 2.0 * (center_x - xi - wi / 2.0);
             forces[i].1 += ATTRACTION_STRENGTH * 2.0 * (center_y - yi - hi / 2.0);
         }
@@ -760,11 +745,6 @@ fn position_children_in_combo(
     }
 
     // Re-clamp child combos to parent boundary after overlap resolution.
-    let min_x = combo_rect.left + COMBO_PADDING;
-    let min_y = combo_rect.top + COMBO_PADDING;
-    let max_x = combo_rect.left + combo_rect.width - COMBO_PADDING;
-    let max_y = combo_rect.top + combo_rect.height - COMBO_PADDING;
-
     for &ci in &child_combo_indices {
         if let Some(ref mut rect) = combos[ci].rect {
             let effective_max_x = (max_x.max(min_x + rect.width) - rect.width).max(min_x);

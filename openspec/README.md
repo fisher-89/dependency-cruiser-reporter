@@ -31,6 +31,14 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 - [节点详情面板规范](specs/graph-detail-panel/spec.md) — 选中节点时的详情面板行为：稳定性指标、依赖分组、违规关联
   - `DetailPanel` `stability` `instability metric` `Ce/(Ce+Ca)` `dependencies` `dependents` `edge type grouping` `violation association` `node selection` `click/double-click disambiguation`
 
+### i18n
+- [国际化规范](specs/i18n/spec.md)（提案中：add-i18n-darkmode） — 多语言支持、I18nProvider、useT() hook
+  - `i18n` `en` `zh-CN` `useT` `I18nProvider` `国际化`
+
+### Dark Mode
+- [深色模式规范](specs/dark-mode/spec.md)（提案中：add-i18n-darkmode） — 浅色/深色/自动主题、CSS 变量、G6 兼容
+  - `深色模式` `dark mode` `theme` `css variables` `data-theme` `prefers-color-scheme`
+
 ### CLI
 - [CLI 规范](specs/cli/spec.md) — 命令接口、HTTP API 端点、Node.js 回退、编程式 API
   - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs` `@dcr-reporter/wasm`
@@ -58,6 +66,8 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 | `AntV G6`, `DependencyGraph`, `comboCombined` layout | [Frontend Spec](specs/frontend/spec.md) |
 | Graph/Report/Metrics views | [Frontend Spec](specs/frontend/spec.md) |
 | DetailPanel, stability metric, node selection | [Graph Detail Panel Spec](specs/graph-detail-panel/spec.md) |
+| `i18n`, `useT`, `I18nProvider`, 国际化 | [i18n Spec](specs/i18n/spec.md) (提案中) |
+| `dark mode`, `theme`, CSS variables, `data-theme` | [Dark Mode Spec](specs/dark-mode/spec.md) (提案中) |
 | CI/CD, GitHub Actions, pre-commit | [Usage Spec](specs/usage/spec.md) |
 | Setup, build, `pnpm` commands | [Development Spec](specs/development/spec.md) |
 | Testing: `cargo test`, `node:test` | [Development Spec](specs/development/spec.md) |
@@ -65,4 +75,16 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 
 ## Changes (未归档的变更提案)
 
-变更提案存放在 `changes/` 目录，每个功能独立隔离。当前无活跃变更提案。
+变更提案存放在 `changes/` 目录，每个功能独立隔离。
+
+| 变更 | 状态 | 描述 |
+|------|------|------|
+| [add-i18n-darkmode](changes/add-i18n-darkmode/proposal.md) | 提案中 | 国际化（简体中文+英文）和深色模式（浅色/深色/跟随系统） |
+| [fix-top-level-combo-spacing](changes/fix-top-level-combo-spacing/proposal.md) | 已完成 | 顶层 combo 间距修复 |
+
+### Spec Deltas
+
+| 变更 | 新增 Spec | 修改 Spec |
+|------|-----------|-----------|
+| add-i18n-darkmode | i18n, dark-mode | frontend |
+| fix-top-level-combo-spacing | axis-aligned-separation | - |

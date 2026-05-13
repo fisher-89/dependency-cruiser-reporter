@@ -124,7 +124,6 @@ ProcessedGraph → React Frontend → AntV G6 渲染
 - [ ] 导出 JSON/CSV
 
 ### P2 - 最好有
-- [ ] 深色主题
-- [ ] 移动端响应式
-- [ ] 源码浏览器
+- [x] 深色主题（进行中：add-i18n-darkmode）
+- [x] 国际化（进行中：add-i18n-darkmode）
 - [ ] Pre-commit 钩子
