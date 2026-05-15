@@ -7,8 +7,8 @@ const GAP: f32 = 30.0;
 
 /// Force layout parameters
 const ITERATIONS: usize = 500;
-const REPULSION_STRENGTH: f32 = 60.0;
-const ATTRACTION_STRENGTH: f32 = 0.05;
+const REPULSION_STRENGTH: f32 = 50.0;
+const ATTRACTION_RATE: f32 = 0.07;
 const COOLING_FACTOR: f32 = 0.98;
 
 #[derive(Clone, Copy)]
@@ -295,40 +295,52 @@ fn apply_force_layout(
     // Force simulation
     let mut temperature = 50.0;
     for _ in 0..ITERATIONS {
-        // Compute forces
+        // Pre-compute centers and rects, accumulate centroid
         let mut forces: Vec<(f32, f32)> = vec![(0.0, 0.0); n];
+        let mut centers: Vec<(f32, f32)> = Vec::with_capacity(n);
+        let mut half_widths: Vec<f32> = Vec::with_capacity(n);
+        let mut half_heights: Vec<f32> = Vec::with_capacity(n);
+        let mut centroid_x = 0.0f32;
+        let mut centroid_y = 0.0f32;
+        for idx in 0..n {
+            let r = element_rect(elements[element_indices[idx]], nodes, combos).unwrap();
+            let cx = r.left + r.width / 2.0;
+            let cy = r.top + r.height / 2.0;
+            centers.push((cx, cy));
+            half_widths.push(r.width / 2.0);
+            half_heights.push(r.height / 2.0);
+            centroid_x += cx;
+            centroid_y += cy;
+        }
+        centroid_x /= n as f32;
+        centroid_y /= n as f32;
 
+        // Repulsion between all pairs
         for i in 0..n {
+            let (xi, yi) = centers[i];
+            let hwi = half_widths[i];
+            let hhi = half_heights[i];
+
             for j in 0..n {
                 if i == j {
                     continue;
                 }
-
-                let el_i = elements[element_indices[i]];
-                let el_j = elements[element_indices[j]];
-                let ri = element_rect(el_i, nodes, combos).unwrap();
-                let rj = element_rect(el_j, nodes, combos).unwrap();
-
-                // Centers
-                let xi = ri.left + ri.width / 2.0;
-                let yi = ri.top + ri.height / 2.0;
-                let xj = rj.left + rj.width / 2.0;
-                let yj = rj.top + rj.height / 2.0;
+                let (xj, yj) = centers[j];
+                let hwj = half_widths[j];
+                let hhj = half_heights[j];
 
                 let dx = xi - xj;
                 let dy = yi - yj;
                 let dist = (dx * dx + dy * dy).sqrt();
 
                 // Compute overlap-based repulsion
-                let overlap_x = (ri.width / 2.0 + rj.width / 2.0 + GAP) - dx.abs();
-                let overlap_y = (ri.height / 2.0 + rj.height / 2.0 + GAP) - dy.abs();
+                let overlap_x = (hwi + hwj + GAP) - dx.abs();
+                let overlap_y = (hhi + hhj + GAP) - dy.abs();
 
                 let repulsion = if overlap_x > 0.0 && overlap_y > 0.0 {
-                    // Rectangles overlap - use stronger separation force
                     let overlap_area = overlap_x * overlap_y;
-                    REPULSION_STRENGTH * (1.0 + overlap_area / 5.0) / dist
+                    REPULSION_STRENGTH * (1.0 + overlap_area / 5.0) / (dist * dist)
                 } else {
-                    // No overlap - use distance-based repulsion
                     REPULSION_STRENGTH / (dist * dist)
                 };
 
@@ -338,11 +350,9 @@ fn apply_force_layout(
                 forces[i].1 += fy;
             }
 
-            // Attraction to center (keeps layout compact)
-            let el_i = elements[element_indices[i]];
-            let ri = element_rect(el_i, nodes, combos).unwrap();
-            forces[i].0 -= ATTRACTION_STRENGTH * (ri.left + ri.width / 2.0);
-            forces[i].1 -= ATTRACTION_STRENGTH * (ri.top + ri.height / 2.0);
+            // Attraction to centroid (keeps layout compact)
+            forces[i].0 += ATTRACTION_RATE * (centroid_x - xi);
+            forces[i].1 += ATTRACTION_RATE * (centroid_y - yi);
         }
 
         // Apply forces with temperature annealing
