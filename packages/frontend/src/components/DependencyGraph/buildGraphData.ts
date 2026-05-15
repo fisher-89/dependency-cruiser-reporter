@@ -1,17 +1,17 @@
 import type { ComboData, EdgeData, GraphData, NodeData } from '@antv/g6';
-import type { EdgeType, NodeType, ProcessedGraph } from '../types';
+import type { EdgeType, NodeType, ProcessedGraph } from '../../types';
 
 /** G6 node data payload */
 export interface G6NodeData {
-  label: string;
-  node_type: NodeType;
-  violation_count: number;
+  label?: string;
+  node_type?: NodeType;
+  violation_count?: number;
   [key: string]: unknown;
 }
 
 /** G6-compatible node */
 export interface G6Node extends NodeData {
-  data: G6NodeData;
+  data?: G6NodeData;
 }
 
 /** G6 edge data payload */
@@ -67,13 +67,13 @@ export function buildGraphData(data: ProcessedGraph): G6GraphData {
     id: c.id,
     label: c.label,
     combo: c.combo,
-    ...(c.rect
+    style: c.rect
       ? {
           x: c.rect ? c.rect.left : undefined,
           y: c.rect ? c.rect.top : undefined,
           size: [c.rect.width, c.rect.height],
         }
-      : undefined),
+      : undefined,
   }));
 
   const edges = data.edges.map<G6Edge>((e, i) => ({

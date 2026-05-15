@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DependencyGraph } from './components/DependencyGraph';
+import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
 import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
 import { useT } from './i18n';

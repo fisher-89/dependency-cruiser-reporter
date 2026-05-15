@@ -1,17 +1,19 @@
-import type { Element as G6Element, GraphData, IPointerEvent } from '@antv/g6';
+import type { ComboData, Element as G6Element, GraphData, IPointerEvent } from '@antv/g6';
 import { Graph } from '@antv/g6';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useT } from '../i18n';
-import { useTheme } from '../theme';
+import { useT } from '../../i18n';
+import { useTheme } from '../../theme';
 import {
   DARK_EDGE_STYLES,
   DARK_NODE_STYLES,
   LIGHT_EDGE_STYLES,
   LIGHT_NODE_STYLES,
-} from '../theme/constants';
-import type { EdgeType, NodeType, ProcessedGraph } from '../types';
-import type { G6NodeData } from './buildGraphData';
+} from '../../theme/constants';
+import type { EdgeType, NodeType, ProcessedGraph } from '../../types';
+import type { G6Node } from './buildGraphData';
 import { buildGraphData } from './buildGraphData';
+
+export { registerCustomCombo } from './customCombo';
 
 interface Props {
   data: ProcessedGraph;
@@ -119,7 +121,6 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
       behaviors: [
         'drag-canvas',
         'zoom-canvas',
-        'drag-element',
         {
           type: 'hover-activate',
           enable: (e: { targetType: string }) => e.targetType === 'node',
@@ -129,15 +130,15 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
         },
       ],
       node: {
-        style: (d) => {
-          const nodeData = d.data as G6NodeData;
-          const nodeType = nodeData.node_type ?? 'file';
+        style: (d: G6Node) => {
+          const nodeData = d.data;
+          const nodeType = nodeData?.node_type ?? 'file';
           const s = NODE_STYLES[nodeType] ?? NODE_STYLES.file;
           return {
             fill: s.fill,
             stroke: s.stroke,
             lineWidth: 2,
-            labelText: nodeData.label ?? '',
+            labelText: nodeData?.label ?? '',
             labelPlacement: 'bottom',
             labelFill: LABEL_FILL,
           };
@@ -154,13 +155,13 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
         },
       },
       combo: {
-        type: 'rect',
-        style: (d: { label?: string; style?: { width?: number; height?: number } }) => {
+        type: 'directory',
+        style: (d: ComboData) => {
           return {
             labelText: d.label ?? '',
             labelPlacement: 'top',
             labelFill: LABEL_FILL,
-            padding: 20,
+            padding: 0,
           };
         },
       },

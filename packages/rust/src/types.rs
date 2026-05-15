@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Tsify)]
 pub struct Rect {
     pub top: f32,
     pub left: f32,

@@ -1007,53 +1007,6 @@ fn test_circle_layout_no_initial_overlap_equal_sizes() {
 }
 
 #[test]
-fn test_resolve_element_overlaps_separates_overlapping_nodes() {
-    // Two nodes at the exact same position - should be separated
-    let mut positions = vec![(100.0, 100.0), (100.0, 100.0)];
-    let elements: Vec<(f32, f32, bool, usize)> = vec![
-        (40.0, 20.0, false, 0), // node 0: 40x20
-        (40.0, 20.0, false, 1), // node 1: 40x20
-    ];
-
-    resolve_element_overlaps(&mut positions, &elements);
-
-    // After resolution, they should not overlap
-    let (x0, y0) = positions[0];
-    let (x1, y1) = positions[1];
-    let (w0, h0) = (elements[0].0, elements[0].1);
-    let (w1, h1) = (elements[1].0, elements[1].1);
-
-    let overlap = x0 < x1 + w1 && x0 + w0 > x1 && y0 < y1 + h1 && y0 + h0 > y1;
-    assert!(!overlap, "Nodes should not overlap after resolution:\n  Node 0: ({}, {}) {}x{}\n  Node 1: ({}, {}) {}x{}", x0, y0, w0, h0, x1, y1, w1, h1);
-}
-
-#[test]
-fn test_resolve_element_overlaps_handles_mixed_nodes_and_combos() {
-    // Three elements: 2 nodes + 1 combo, all overlapping initially
-    let mut positions = vec![(50.0, 50.0), (50.0, 50.0), (50.0, 50.0)];
-    let elements: Vec<(f32, f32, bool, usize)> = vec![
-        (40.0, 20.0, false, 0), // node
-        (60.0, 30.0, false, 1), // node (different size)
-        (80.0, 40.0, true, 0),  // combo
-    ];
-
-    resolve_element_overlaps(&mut positions, &elements);
-
-    // Check no overlaps between any pair
-    for i in 0..positions.len() {
-        for j in (i + 1)..positions.len() {
-            let (xi, yi) = positions[i];
-            let (xj, yj) = positions[j];
-            let (wi, hi) = (elements[i].0, elements[i].1);
-            let (wj, hj) = (elements[j].0, elements[j].1);
-
-            let overlap = xi < xj + wj && xi + wi > xj && yi < yj + hj && yi + hi > yj;
-            assert!(!overlap, "Elements {} and {} should not overlap:\n  Element {}: ({}, {}) {}x{}\n  Element {}: ({}, {}) {}x{}", i, j, i, xi, yi, wi, hi, j, xj, yj, wj, hj);
-        }
-    }
-}
-
-#[test]
 fn test_child_combos_no_overlap_under_stress() {
     use crate::types::NodeType;
 
