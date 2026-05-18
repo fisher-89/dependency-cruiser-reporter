@@ -1,0 +1,34 @@
+specification {
+  element person
+  element system
+  element database
+}
+model {
+  user = person 'User' {
+    description 'A user of the system'
+  }
+  frontend = system 'Frontend' {
+    description 'Web application'
+  }
+  backend = system 'Backend' {
+    description 'API server'
+  }
+  db = database 'Database' {
+    description 'Data storage'
+  }
+
+  user -> frontend 'Uses'
+  frontend -> backend 'API calls'
+  backend -> db 'Reads/Writes'
+}
+views {
+  view frontendView {
+    title 'Frontend Context'
+    include user, frontend
+  }
+
+  view index {
+    title 'System Landscape'
+    include *
+  }
+}

@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
 import { convert } from './convert.js';
@@ -9,6 +9,7 @@ export interface ServerOptions {
   host: string;
   graphFile?: string;
   maxNodes?: number;
+  cwd?: string;
 }
 
 export class DcrServer {
@@ -17,6 +18,7 @@ export class DcrServer {
   private host: string;
   private graphFile?: string;
   private maxNodes: number;
+  private cwd: string;
   private server?: ReturnType<typeof this.app.listen>;
 
   /** Get the actual port the server is listening on */
@@ -29,6 +31,7 @@ export class DcrServer {
     this.host = options.host;
     this.graphFile = options.graphFile;
     this.maxNodes = options.maxNodes ?? 200;
+    this.cwd = options.cwd ?? '.';
 
     this.app = express();
     this.app.use(express.json());
@@ -42,9 +45,58 @@ export class DcrServer {
 
     // API: Get config
     this.app.get('/api/config', (_req: Request, res: Response) => {
+      const cwd = resolve(this.cwd);
+      const hasArchitectureDir = existsSync(join(cwd, '.dc-reporter', 'architecture'));
       res.json({
+        cwd,
+        hasArchitectureDir,
         hasGraphFile: !!this.graphFile,
       });
+    });
+
+    // API: Get architecture model (C4 parsing)
+    this.app.get('/api/architecture/model', async (_req: Request, res: Response) => {
+      const archDir = join(resolve(this.cwd), '.dc-reporter', 'architecture');
+
+      if (!existsSync(archDir)) {
+        res.status(404).json({ error: 'Architecture directory not found' });
+        return;
+      }
+
+      let files: string[];
+      try {
+        files = readdirSync(archDir).filter(f => f.endsWith('.c4'));
+      } catch {
+        res.status(500).json({ error: 'Failed to read architecture directory' });
+        return;
+      }
+
+      if (files.length === 0) {
+        res.status(404).json({ error: 'No .c4 files found in architecture directory' });
+        return;
+      }
+
+      try {
+        const sources: Record<string, string> = {};
+        for (const file of files) {
+          sources[file] = readFileSync(join(archDir, file), 'utf-8');
+        }
+
+        const { fromSources } = await import('@likec4/language-services/node');
+        const likec4 = await fromSources(sources);
+
+        if (likec4.hasErrors()) {
+          const errors = likec4.getErrors();
+          res.status(422).json({ error: 'C4 parse errors', details: JSON.stringify(errors) });
+          return;
+        }
+
+        const computed = likec4.syncComputedModel();
+        res.json(computed.$data);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(422).json({ error: 'Failed to parse C4 files', details: message });
+      }
     });
 
     // API: Get graph data (auto-converts raw dependency-cruiser JSON)

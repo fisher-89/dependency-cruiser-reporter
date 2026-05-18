@@ -7,4 +7,10 @@ export type {
   EdgeType,
 } from '@dcr-reporter/wasm';
 
-export type ViewMode = 'graph' | 'report' | 'metrics';
+export type ViewMode = 'architecture' | 'graph' | 'report' | 'metrics';
+
+export interface AppConfig {
+  cwd: string;
+  hasArchitectureDir: boolean;
+  hasGraphFile: boolean;
+}

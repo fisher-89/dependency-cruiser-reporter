@@ -1,6 +1,6 @@
 export default {
   app: { title: '依赖报告' },
-  nav: { graph: '图谱', report: '报告', metrics: '指标' },
+  nav: { architecture: '架构设计', graph: '依赖图谱', report: '报告', metrics: '指标' },
   upload: {
     prompt: '拖放 JSON 文件到此处或点击上传',
     hint: '上传 dependency-cruiser JSON 输出',
@@ -32,4 +32,9 @@ export default {
   severity: { error: '错误', warn: '警告', info: '信息' },
   graph: { noData: '无图谱数据可用' },
   theme: { light: '浅色', dark: '深色', auto: '自动' },
+  architecture: {
+    empty: '没有找到架构图。请在 .dc-reporter/architecture/ 目录下添加 .c4 文件。',
+    loading: '正在加载架构模型...',
+    error: '加载架构模型失败',
+  },
 } as const;

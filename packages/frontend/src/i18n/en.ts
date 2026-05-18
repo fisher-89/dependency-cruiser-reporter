@@ -1,6 +1,11 @@
 export default {
   app: { title: 'Dependency Cruiser Reporter' },
-  nav: { graph: 'Graph', report: 'Report', metrics: 'Metrics' },
+  nav: {
+    architecture: 'Architecture',
+    graph: 'Dependency Graph',
+    report: 'Report',
+    metrics: 'Metrics',
+  },
   upload: {
     prompt: 'Drop JSON file here or click to upload',
     hint: 'Upload dependency-cruiser JSON output',
@@ -37,4 +42,10 @@ export default {
   severity: { error: 'ERROR', warn: 'WARN', info: 'INFO' },
   graph: { noData: 'No graph data available' },
   theme: { light: 'Light', dark: 'Dark', auto: 'Auto' },
+  architecture: {
+    empty:
+      'No architecture diagram available. Add .c4 files to .dc-reporter/architecture/ in your workspace.',
+    loading: 'Loading architecture model...',
+    error: 'Failed to load architecture model',
+  },
 } as const;

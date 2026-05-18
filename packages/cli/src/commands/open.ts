@@ -6,6 +6,8 @@ export interface OpenOptions {
   host?: string;
   /** Max nodes before auto-aggregation (default 500) */
   maxNodes?: number;
+  /** Workspace root directory (default ".") */
+  cwd?: string;
 }
 
 const DEFAULT_MAX_NODES = 500;
@@ -14,13 +16,14 @@ const DEFAULT_MAX_NODES = 500;
  * Open web viewer with HTTP server
  */
 export async function open(options: OpenOptions): Promise<void> {
-  const { file, port = 3000, host = 'localhost', maxNodes = DEFAULT_MAX_NODES } = options;
+  const { file, port = 3000, host = 'localhost', maxNodes = DEFAULT_MAX_NODES, cwd = '.' } = options;
 
   const serverOptions: ServerOptions = {
     port,
     host,
     graphFile: file,
     maxNodes,
+    cwd,
   };
 
   const server = createServer(serverOptions);

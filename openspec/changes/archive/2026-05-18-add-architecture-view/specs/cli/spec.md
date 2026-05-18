@@ -1,10 +1,4 @@
-# CLI 规范
-
-## Purpose
-
-定义 `dep-report` 命令行工具的命令接口、HTTP API 端点和 Node.js 回退机制。
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: 命令接口
 
@@ -80,84 +74,6 @@ dep-report open [options]
 - IF 目录存在但无 `.c4` 文件 THEN 返回 404
 - IF 解析失败 THEN 返回 422 并附带错误详情
 
-#### Scenario: /api/graph 端点
-
-- WHEN 前端调用 `POST /api/graph`
-- AND body 可选包含 `{ expandedDirs: [...] }`
-- THEN 服务器读取文件并检测格式
-- IF 原始 dc 格式 THEN 调用 `convertWithFallback`
-- IF ProcessedGraph 格式 THEN 直接使用
-- AND 返回 `ProcessedGraph` JSON
-
-### Requirement: Node.js 转换器
-
-系统 SHALL 提供 Node.js 回退转换器 `convertDcOutput`：
-
-```typescript
-export function convertDcOutput(dcJson: string): ProcessedGraph
-```
-
-#### Scenario: WASM 回退
-
-- WHEN WASM 模块不可用或失败
-- THEN 调用 `convertDcOutput`
-- AND 解析 dependency-cruiser JSON
-- AND 分类边类型
-- AND 提取违规
-- AND 返回 `ProcessedGraph`
-
-#### Scenario: 边分类逻辑
-
-| 条件 | 边类型 |
-|------|--------|
-| `dep.coreModule === true` | `core` |
-| `dep.couldNotResolve === true` | `dynamic` |
-| `dep.dependencyTypes` 包含 npm 类型 | `npm` |
-| 否则 | `local` |
-
-### Requirement: 编程式 API
-
-系统 SHALL 导出编程式 Express 服务器：
-
-```typescript
-import { createServer } from '@dcr-reporter/cli';
-
-const server = createServer({
-  port: 3000,
-  host: 'localhost',
-  graphFile: 'graph.json'
-});
-await server.start();
-server.stop();
-```
-
-### Requirement: 类型安全集成
-
-系统 SHALL 从 WASM 模块导入类型：
-
-```typescript
-import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
-```
-
-类型由 Rust tsify 自动生成，确保 Rust 和 TypeScript 类型一致。
-
-### Requirement: 混合聚合控制
-
-系统 SHALL 通过 `expandedDirs` 控制混合聚合：
-
-#### Scenario: 前端请求特定展开目录
-
-- WHEN 前端 `POST /api/graph` body 包含 `{ expandedDirs: ["src/components", "src/utils"] }`
-- THEN 服务器调用 WASM `aggregate` 传入展开目录
-- AND 指定目录显示文件级节点
-- AND 其他目录折叠
-
-#### Scenario: 自动展开
-
-- WHEN `expandedDirs` 未提供
-- THEN WASM 调用 `compute_auto_expanded_dirs` 预算算法
-- AND 目标 ~200 节点
-
 ### Requirement: 项目结构
 
 CLI SHALL 按以下结构组织：
@@ -179,31 +95,3 @@ packages/cli/
 │   └── index.ts         # 主导出
 └── package.json
 ```
-
-### Requirement: 典型工作流
-
-#### Scenario: 标准工作流
-
-```bash
-# 1. 分析项目（运行 dependency-cruiser，保存原始输出）
-dep-report analyze --path ./my-project
-
-# 2. 打开结果（按需聚合）
-dep-report open -f my-project-graph.json
-```
-
-#### Scenario: 外部 dependency-cruiser 输出
-
-```bash
-# 1. 用户自己运行 dependency-cruiser
-npx dependency-cruiser --output-type json src/ > cruise.json
-
-# 2. 查看结果（服务器自动检测格式）
-dep-report open -f cruise.json
-```
-
-## References
-
-- CLI 源码：`packages/cli/src/`
-- 服务器实现：`packages/cli/src/utils/server.ts`
-- 转换器：`packages/cli/src/utils/convert.ts`

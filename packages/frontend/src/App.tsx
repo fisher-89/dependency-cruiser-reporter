@@ -1,11 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
 import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
 import { useT } from './i18n';
 import type { TKey } from './i18n';
 import { useTheme } from './theme';
-import type { GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
+import type { AppConfig, GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
+
+const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
 
 function App() {
   const { t, lang, setLang } = useT();
@@ -16,6 +18,17 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [config, setConfig] = useState<AppConfig | null>(null);
+
+  useEffect(() => {
+    fetch('/api/config')
+      .then((res) => res.json())
+      .then((cfg: AppConfig) => setConfig(cfg))
+      .catch(() => {
+        // Server not available — app runs in client-only mode (file upload)
+        setConfig({ cwd: '.', hasArchitectureDir: false, hasGraphFile: false });
+      });
+  }, []);
 
   const fetchGraph = useCallback(async (newExpandedDirs?: string[]) => {
     setLoading(true);
@@ -150,6 +163,19 @@ function App() {
             {themeIcon}
           </button>
           <nav style={styles.nav}>
+            {config?.hasArchitectureDir && (
+              <button
+                type="button"
+                style={{
+                  ...styles.navBtn,
+                  ...(viewMode === 'architecture' ? styles.navBtnActive : {}),
+                }}
+                onClick={() => setViewMode('architecture')}
+                data-testid="nav-architecture"
+              >
+                {t('nav.architecture')}
+              </button>
+            )}
             <button
               type="button"
               style={{ ...styles.navBtn, ...(viewMode === 'graph' ? styles.navBtnActive : {}) }}
@@ -179,7 +205,13 @@ function App() {
       </header>
 
       <main style={styles.main}>
-        {!data ? (
+        {viewMode === 'architecture' ? (
+          <Suspense
+            fallback={<div style={styles.suspenseFallback}>{t('architecture.loading')}</div>}
+          >
+            <ArchitectureView />
+          </Suspense>
+        ) : !data ? (
           <div
             style={styles.uploadArea}
             onDrop={handleDrop}
@@ -560,6 +592,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '14px',
+  },
+  suspenseFallback: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    color: 'var(--color-text-secondary)',
+    fontSize: '16px',
   },
 };
 

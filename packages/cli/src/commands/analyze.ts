@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, resolve } from 'node:path';
-import { cwd } from 'node:process';
 import { cruise } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
@@ -9,14 +8,18 @@ export interface AnalyzeOptions {
   path: string;
   output?: string;
   config?: string;
+  /** Workspace root directory (default ".") */
+  cwd?: string;
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<string> {
-  const { path: analyzePath, output, config } = options;
+  const { path: analyzePath, output, config, cwd: workspaceRoot = '.' } = options;
+  const absCwd = resolve(workspaceRoot);
 
   // Resolve absolute path
-  const absAnalyzePath = resolve(cwd(), analyzePath);
-  const outputPath = output || resolve(cwd(), `${basename(absAnalyzePath)}-graph.json`);
+  const absAnalyzePath = resolve(absCwd, analyzePath);
+  const outputPath = output
+    || resolve(absCwd, '.dc-reporter', 'scans', `${basename(absAnalyzePath)}-graph.json`);
 
   // Ensure output directory exists
   const parentDir = dirname(outputPath);
@@ -27,17 +30,17 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   // Find dependency-cruiser config
   let configPath: string | undefined;
   if (config) {
-    configPath = resolve(cwd(), config);
+    configPath = resolve(absCwd, config);
   } else {
     configPath = resolve(absAnalyzePath, '.dependency-cruiser.json');
     if (!existsSync(configPath)) {
       configPath = resolve(absAnalyzePath, '.dependency-cruiser.js');
     }
     if (!existsSync(configPath)) {
-      configPath = resolve(cwd(), '.dependency-cruiser.json');
+      configPath = resolve(absCwd, '.dependency-cruiser.json');
     }
     if (!existsSync(configPath)) {
-      configPath = resolve(cwd(), '.dependency-cruiser.js');
+      configPath = resolve(absCwd, '.dependency-cruiser.js');
     }
   }
 
