@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { basename, resolve } from 'node:path';
 import { type ServerOptions, createServer } from '../utils/server.js';
 
 export interface OpenOptions {
@@ -18,10 +20,20 @@ const DEFAULT_MAX_NODES = 500;
 export async function open(options: OpenOptions): Promise<void> {
   const { file, port = 3000, host = 'localhost', maxNodes = DEFAULT_MAX_NODES, cwd = '.' } = options;
 
+  let resolvedFile = file;
+  if (!resolvedFile) {
+    const absCwd = resolve(cwd);
+    const defaultFile = resolve(absCwd, '.dc-reporter', 'scans', `${basename(absCwd)}-graph.json`);
+    if (existsSync(defaultFile)) {
+      resolvedFile = defaultFile;
+      console.log(`Using graph file: ${resolvedFile}`);
+    }
+  }
+
   const serverOptions: ServerOptions = {
     port,
     host,
-    graphFile: file,
+    graphFile: resolvedFile,
     maxNodes,
     cwd,
   };

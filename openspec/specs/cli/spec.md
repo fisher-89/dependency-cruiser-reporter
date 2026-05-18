@@ -13,15 +13,27 @@
 #### analyze 命令
 
 ```bash
-dep-report analyze --path <dir> [options]
+dep-report analyze [options]
 ```
 
 | 选项 | 默认值 | 描述 |
 |------|--------|------|
-| `-p, --path <dir>` | (必需) | 分析的项目目录 |
+| `-p, --path <dir>` | `"."` | 分析的项目目录 |
 | `-o, --output <path>` | `<cwd>/.dc-reporter/scans/<dirname>-graph.json` | 输出 JSON 文件 |
 | `-c, --config <path>` | 自动检测 | dependency-cruiser 配置文件 |
-| `--cwd <path>` | `.` | 工作区根目录 |
+| `--cwd <path>` | `"."` | 工作区根目录 |
+
+##### Scenario: analyze 执行（不传 --path）
+
+- **WHEN** 用户执行 `dep-report analyze`
+- **THEN** 系统分析当前工作目录（`"."`）
+- **AND** 输出文件保存到 `<cwd>/.dc-reporter/scans/`
+
+##### Scenario: analyze 执行（带 --path）
+
+- **WHEN** 用户执行 `dep-report analyze --path ./src`
+- **THEN** 系统分析 `./src` 目录
+- **AND** 输出文件保存到 `<cwd>/.dc-reporter/scans/src-graph.json`
 
 ##### Scenario: analyze 执行（带 --cwd）
 
@@ -37,10 +49,22 @@ dep-report open [options]
 
 | 选项 | 默认值 | 描述 |
 |------|--------|------|
-| `-f, --file <path>` | - | 图 JSON 文件（原始 dc 或 ProcessedGraph） |
+| `-f, --file <path>` | `<cwd>/.dc-reporter/scans/<cwd-basename>-graph.json` | 图 JSON 文件（原始 dc 或 ProcessedGraph） |
 | `-p, --port <port>` | `3000` | 服务器端口 |
 | `--host <host>` | `localhost` | 服务器主机 |
-| `--cwd <path>` | `.` | 工作区根目录 |
+| `--cwd <path>` | `"."` | 工作区根目录 |
+
+##### Scenario: open 执行（不传 --file，默认文件存在）
+
+- **WHEN** 用户执行 `dep-report open`
+- **AND** `<cwd>/.dc-reporter/scans/<cwd-basename>-graph.json` 存在
+- **THEN** 系统加载该文件，打印 "Using graph file: <path>"
+
+##### Scenario: open 执行（不传 --file，默认文件不存在）
+
+- **WHEN** 用户执行 `dep-report open`
+- **AND** `<cwd>/.dc-reporter/scans/<cwd-basename>-graph.json` 不存在
+- **THEN** 服务器正常启动，不预加载图文件
 
 ##### Scenario: open 执行（带 --cwd）
 

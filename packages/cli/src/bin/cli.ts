@@ -9,7 +9,7 @@ program.option('--cwd <path>', 'Workspace root directory', '.');
 program
   .command('analyze')
   .description('Analyze a project directory and generate visualization')
-  .requiredOption('-p, --path <dir>', 'Project directory to analyze')
+  .option('-p, --path <dir>', 'Project directory to analyze', '.')
   .option('-o, --output <path>', 'Output graph JSON file')
   .option('-c, --config <path>', 'dependency-cruiser config file')
   .action(async (options) => {

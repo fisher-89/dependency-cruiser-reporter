@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { basename, dirname, resolve } from 'node:path';
+import { basename, dirname, relative, resolve } from 'node:path';
 import { cruise } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
@@ -13,7 +13,7 @@ export interface AnalyzeOptions {
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<string> {
-  const { path: analyzePath, output, config, cwd: workspaceRoot = '.' } = options;
+  const { path: analyzePath = '.', output, config, cwd: workspaceRoot = '.' } = options;
   const absCwd = resolve(workspaceRoot);
 
   // Resolve absolute path
@@ -73,10 +73,11 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   }
 
   console.log(`Analyzing: ${absAnalyzePath}`);
-
+  const startAt = Date.now();
+  const relativeAnalyzePath = relative(String(cruiseOptions.baseDir) ?? process.cwd(), absAnalyzePath);
   // Run dependency-cruiser via API
   const cruiseResult = await cruise(
-    [absAnalyzePath],
+    [relativeAnalyzePath],
     cruiseOptions,
     undefined, // resolveOptions (webpack)
     transpilerOptions
@@ -94,7 +95,8 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
       : JSON.stringify(cruiseResult.output, null, 2);
 
   writeFileSync(outputPath, rawOutput);
-  console.log(`Graph written to: ${outputPath}`);
+  const duration = Math.round((Date.now() - startAt) / 1000);
+  console.log(`Graph written to: ${outputPath}, takes ${duration} s`);
 
   return outputPath;
 }

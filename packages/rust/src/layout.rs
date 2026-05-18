@@ -3,11 +3,11 @@ use std::collections::HashMap;
 
 const NODE_SIZE: f32 = 20.0;
 const COMBO_PADDING: f32 = 20.0;
-const GAP: f32 = 30.0;
+const GAP: f32 = 50.0;
 
 /// Force layout parameters
 const ITERATIONS: usize = 500;
-const REPULSION_STRENGTH: f32 = 50.0;
+const REPULSION_STRENGTH: f32 = 80.0;
 const ATTRACTION_RATE: f32 = 0.07;
 const COOLING_FACTOR: f32 = 0.98;
 
