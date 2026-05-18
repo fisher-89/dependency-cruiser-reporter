@@ -1,0 +1,6 @@
+model {
+  extend cli {
+    analyze = module 'Analyze'
+    open = module 'Open'
+  }
+}

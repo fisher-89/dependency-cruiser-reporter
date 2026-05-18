@@ -5,7 +5,7 @@ import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
 import { useT } from './i18n';
 import type { TKey } from './i18n';
 import { useTheme } from './theme';
-import type { AppConfig, GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
+import type { GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
 
@@ -18,17 +18,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [config, setConfig] = useState<AppConfig | null>(null);
-
-  useEffect(() => {
-    fetch('/api/config')
-      .then((res) => res.json())
-      .then((cfg: AppConfig) => setConfig(cfg))
-      .catch(() => {
-        // Server not available — app runs in client-only mode (file upload)
-        setConfig({ cwd: '.', hasArchitectureDir: false, hasGraphFile: false });
-      });
-  }, []);
 
   const fetchGraph = useCallback(async (newExpandedDirs?: string[]) => {
     setLoading(true);
@@ -163,19 +152,17 @@ function App() {
             {themeIcon}
           </button>
           <nav style={styles.nav}>
-            {config?.hasArchitectureDir && (
-              <button
-                type="button"
-                style={{
-                  ...styles.navBtn,
-                  ...(viewMode === 'architecture' ? styles.navBtnActive : {}),
-                }}
-                onClick={() => setViewMode('architecture')}
-                data-testid="nav-architecture"
-              >
-                {t('nav.architecture')}
-              </button>
-            )}
+            <button
+              type="button"
+              style={{
+                ...styles.navBtn,
+                ...(viewMode === 'architecture' ? styles.navBtnActive : {}),
+              }}
+              onClick={() => setViewMode('architecture')}
+              data-testid="nav-architecture"
+            >
+              {t('nav.architecture')}
+            </button>
             <button
               type="button"
               style={{ ...styles.navBtn, ...(viewMode === 'graph' ? styles.navBtnActive : {}) }}

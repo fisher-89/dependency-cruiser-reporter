@@ -1,5 +1,5 @@
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, resolve, join } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
 import { convert } from './convert.js';
@@ -43,17 +43,6 @@ export class DcrServer {
     const cliDir = dirname(fileURLToPath(import.meta.url));
     const frontendDist = resolve(cliDir, '../../../frontend/dist');
 
-    // API: Get config
-    this.app.get('/api/config', (_req: Request, res: Response) => {
-      const cwd = resolve(this.cwd);
-      const hasArchitectureDir = existsSync(join(cwd, '.dc-reporter', 'architecture'));
-      res.json({
-        cwd,
-        hasArchitectureDir,
-        hasGraphFile: !!this.graphFile,
-      });
-    });
-
     // API: Get architecture model (C4 parsing)
     this.app.get('/api/architecture/model', async (_req: Request, res: Response) => {
       const archDir = join(resolve(this.cwd), '.dc-reporter', 'architecture');
@@ -96,6 +85,43 @@ export class DcrServer {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         res.status(422).json({ error: 'Failed to parse C4 files', details: message });
+      }
+    });
+
+    // API: Generate architecture model (create starter .c4 file)
+    this.app.post('/api/architecture/generate', async (_req: Request, res: Response) => {
+      const archDir = join(resolve(this.cwd), '.dc-reporter', 'architecture');
+
+      try {
+        if (!existsSync(archDir)) {
+          mkdirSync(archDir, { recursive: true });
+        }
+
+        const template = [
+          'specification {',
+          '  element package',
+          '  element module',
+          '  element component',
+          '  element path',
+          '}',
+          'model {',
+          "  main = package 'Main'",
+          "  sub = package 'SubPackage'",
+          "  main -> sub",
+          '}',
+          'views {',
+          '  view {',
+          '    include *',
+          '  }',
+          '}',
+          '',
+        ].join('\n');
+
+        writeFileSync(join(archDir, 'main.c4'), template, 'utf-8');
+        res.json({ success: true });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.status(500).json({ error: 'Failed to generate architecture model', details: message });
       }
     });
 

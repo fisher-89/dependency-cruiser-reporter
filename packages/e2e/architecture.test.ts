@@ -1,7 +1,7 @@
 import { test, describe, before, after } from "node:test";
 import assert from "node:assert";
 import { spawn } from "node:child_process";
-import { existsSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -197,14 +197,14 @@ model {
     }
   });
 
-  test("GET /api/config returns cwd and hasArchitectureDir", async () => {
-    // Restore valid C4 for this test
-    if (existsSync(archDir)) rmSync(archDir, { recursive: true, force: true });
-    ensureDir(archDir);
-    writeFileSync(resolve(archDir, "main.c4"), validC4);
+  test("POST /api/architecture/generate creates directory and main.c4 with valid C4 content", async () => {
+    // Start with a clean workspace (no .dc-reporter)
+    const cleanWorkspace = resolve(__dirname, ".test-generate-workspace");
+    if (existsSync(cleanWorkspace)) rmSync(cleanWorkspace, { recursive: true, force: true });
+    ensureDir(cleanWorkspace);
 
-    const configPort = 3050 + Math.floor(Math.random() * 1000);
-    const proc = spawn("node", [cliBinary, "open", "--cwd", testWorkspace, "-p", String(configPort)], {
+    const genPort = 3060 + Math.floor(Math.random() * 1000);
+    const proc = spawn("node", [cliBinary, "open", "--cwd", cleanWorkspace, "-p", String(genPort)], {
       cwd: __dirname,
       stdio: ["ignore", "pipe", "pipe"],
     });
@@ -220,14 +220,66 @@ model {
     });
 
     try {
-      const res = await fetch(`http://localhost:${configPort}/api/config`);
-      assert.strictEqual(res.status, 200);
-      const config = await res.json() as Record<string, unknown>;
-      assert.strictEqual(typeof config.cwd, "string", "cwd should be a string");
-      assert.strictEqual(config.hasArchitectureDir, true, "should detect architecture dir");
-      assert.strictEqual(config.hasGraphFile, false, "no graph file provided");
+      const res = await fetch(`http://localhost:${genPort}/api/architecture/generate`, {
+        method: "POST",
+      });
+      assert.strictEqual(res.status, 200, `expected 200, got ${res.status}`);
+      const body = await res.json() as Record<string, unknown>;
+      assert.strictEqual(body.success, true, "should return success");
+
+      // Verify file was created
+      const c4Path = resolve(cleanWorkspace, ".dc-reporter", "architecture", "main.c4");
+      assert.ok(existsSync(c4Path), "main.c4 should exist");
+      const content = readFileSync(c4Path, "utf-8");
+      assert.ok(content.includes("specification {"), "should contain specification block");
+      assert.ok(content.includes("element system"), "should contain system element");
+      assert.ok(content.includes("view index"), "should contain a view");
     } finally {
       proc.kill();
+      if (existsSync(cleanWorkspace)) rmSync(cleanWorkspace, { recursive: true, force: true });
+    }
+  });
+
+  test("POST /api/architecture/generate enables subsequent GET /api/architecture/model", async () => {
+    const modelWorkspace = resolve(__dirname, ".test-generate-model-workspace");
+    if (existsSync(modelWorkspace)) rmSync(modelWorkspace, { recursive: true, force: true });
+    ensureDir(modelWorkspace);
+
+    const genPort2 = 3070 + Math.floor(Math.random() * 1000);
+    const proc = spawn("node", [cliBinary, "open", "--cwd", modelWorkspace, "-p", String(genPort2)], {
+      cwd: __dirname,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error("Server start timeout")), 10000);
+      proc.stdout?.on("data", (data: Buffer) => {
+        if (data.toString().includes("Server running")) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+    });
+
+    try {
+      // Before generation: model should 404
+      const before = await fetch(`http://localhost:${genPort2}/api/architecture/model`);
+      assert.strictEqual(before.status, 404, "should 404 before generation");
+
+      // Generate
+      const genRes = await fetch(`http://localhost:${genPort2}/api/architecture/generate`, {
+        method: "POST",
+      });
+      assert.strictEqual(genRes.status, 200);
+
+      // After generation: model should parse successfully
+      const after = await fetch(`http://localhost:${genPort2}/api/architecture/model`);
+      assert.strictEqual(after.status, 200, `expected 200, got ${after.status}`);
+      const data = await after.json() as Record<string, unknown>;
+      assert.ok(data.elements, "should have elements");
+    } finally {
+      proc.kill();
+      if (existsSync(modelWorkspace)) rmSync(modelWorkspace, { recursive: true, force: true });
     }
   });
 });

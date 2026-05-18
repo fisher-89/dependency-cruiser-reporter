@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useT } from '../i18n';
 
 type State =
@@ -7,9 +7,11 @@ type State =
   | { status: 'empty' }
   | { status: 'ready'; ArchitectureDiagram: ReactNode };
 
-export function useArchitectureDiagram(): State {
+export function useArchitectureDiagram(): { state: State; reload: () => void } {
+  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<State>({ status: 'loading' });
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey triggers re-fetch on reload()
   useEffect(() => {
     let cancelled = false;
 
@@ -63,14 +65,36 @@ export function useArchitectureDiagram(): State {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [reloadKey]);
 
-  return state;
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
+
+  return { state, reload };
 }
 
 export function ArchitectureView() {
   const { t } = useT();
-  const state = useArchitectureDiagram();
+  const { state, reload } = useArchitectureDiagram();
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+
+  const handleGenerate = useCallback(async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const res = await fetch('/api/architecture/generate', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        setGenerateError(body.details || body.error || res.statusText);
+      } else {
+        reload();
+      }
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGenerating(false);
+    }
+  }, [reload]);
 
   if (state.status === 'loading') {
     return <div style={styles.center}>{t('architecture.loading')}</div>;
@@ -92,7 +116,18 @@ export function ArchitectureView() {
   if (state.status === 'empty') {
     return (
       <div style={styles.center}>
-        <p>{t('architecture.empty')}</p>
+        <div style={styles.emptyIcon}>🏗</div>
+        <p style={styles.emptyTitle}>{t('architecture.createPrompt')}</p>
+        {generateError && <p style={styles.errorDetail}>{generateError}</p>}
+        <button
+          type="button"
+          style={{ ...styles.retryBtn, ...(generating ? styles.btnDisabled : {}) }}
+          onClick={handleGenerate}
+          disabled={generating}
+          data-testid="generate-architecture-btn"
+        >
+          {generating ? t('architecture.creating') : t('architecture.createBtn')}
+        </button>
       </div>
     );
   }
@@ -111,6 +146,18 @@ const styles: Record<string, React.CSSProperties> = {
     height: '100%',
     color: 'var(--color-text-secondary)',
     fontSize: '16px',
+  },
+  emptyIcon: {
+    fontSize: '48px',
+    marginBottom: '16px',
+  },
+  emptyTitle: {
+    fontSize: '16px',
+    color: 'var(--color-text-secondary)',
+    marginBottom: '24px',
+    maxWidth: '400px',
+    textAlign: 'center',
+    lineHeight: '1.5',
   },
   errorIcon: {
     width: '48px',
@@ -132,14 +179,19 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
   },
   retryBtn: {
-    marginTop: '16px',
-    padding: '8px 16px',
+    marginTop: '8px',
+    padding: '10px 24px',
     background: 'var(--color-accent-bg)',
     color: 'var(--color-accent)',
     border: 'none',
     borderRadius: '6px',
     cursor: 'pointer',
     fontSize: '14px',
+    fontWeight: 600,
+  },
+  btnDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
   },
   diagramContainer: {
     width: '100%',

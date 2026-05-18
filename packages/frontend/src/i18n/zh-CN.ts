@@ -36,5 +36,9 @@ export default {
     empty: '没有找到架构图。请在 .dc-reporter/architecture/ 目录下添加 .c4 文件。',
     loading: '正在加载架构模型...',
     error: '加载架构模型失败',
+    createPrompt: '使用 C4 模型可视化您的系统架构。一键生成模板开始使用。',
+    createBtn: '一键生成架构模型',
+    creating: '正在生成...',
+    createError: '生成架构模型失败',
   },
 } as const;

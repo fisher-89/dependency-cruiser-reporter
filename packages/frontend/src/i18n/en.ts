@@ -47,5 +47,10 @@ export default {
       'No architecture diagram available. Add .c4 files to .dc-reporter/architecture/ in your workspace.',
     loading: 'Loading architecture model...',
     error: 'Failed to load architecture model',
+    createPrompt:
+      'Visualize your system architecture using the C4 model. Generate a starter template to begin.',
+    createBtn: 'Generate Architecture Model',
+    creating: 'Generating...',
+    createError: 'Failed to generate architecture model',
   },
 } as const;

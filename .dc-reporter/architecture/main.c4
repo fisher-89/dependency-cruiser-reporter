@@ -1,0 +1,18 @@
+specification {
+  element package
+  element module
+  element component
+  element path
+}
+model {
+  cli = package 'Cli'
+  frontend = package 'Frontend'
+
+  cli -> frontend
+}
+views {
+  view {
+    title 'main'
+    include *
+  }
+}
