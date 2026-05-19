@@ -1,5 +1,37 @@
+import { LikeC4ModelProvider, ReactLikeC4 } from '@likec4/diagram';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useT } from '../i18n';
+
+// view,
+// pannable,
+// zoomable,
+// background,
+
+// showNavigationButtons,
+// enableDynamicViewWalkthrough,
+// enableFocusMode,
+// enableRelationshipBrowser,
+// enableElementDetails,
+// enableRelationshipDetails,
+// enableSearch: false,
+// ...isBrowserEnabled && {
+//   onCanvasClick: onNavigateToThisView,
+//   onNodeClick: onNavigateToThisView
+// },
+// enableElementTags: false,
+// enableNotes,
+// enableCompareWithLatest: false,
+// controls,
+// fitView = true
+// fitViewPadding: FitViewPaddings.default,
+// reduceGraphics,
+// enableNotations: hasNotations,
+// className: cx("likec4-static-view", isBrowserEnabled && cssInteractive),
+
+// reactFlowProps,
+// renderNodes,
+// ...props,
+// children
 
 type State =
   | { status: 'loading' }
@@ -10,6 +42,7 @@ type State =
 export function useArchitectureDiagram(): { state: State; reload: () => void } {
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<State>({ status: 'loading' });
+  const [viewId, setViewId] = useState<string>('index');
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey triggers re-fetch on reload()
   useEffect(() => {
@@ -31,10 +64,9 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
 
         const data = await res.json();
 
-        const [{ LikeC4Model }, { layoutLikeC4Model }, diagram] = await Promise.all([
+        const [{ LikeC4Model }, { layoutLikeC4Model }] = await Promise.all([
           import('@likec4/core/model'),
           import('@likec4/layouts'),
-          import('@likec4/diagram'),
         ]);
 
         const model = LikeC4Model.create(data);
@@ -42,14 +74,31 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
 
         if (!cancelled) {
           const rawData = layouted.$data as unknown as Record<string, unknown>;
-          const viewIds = Object.keys((rawData.views as Record<string, unknown>) || {});
-          const firstViewId = viewIds[0] || 'index';
-          const { LikeC4ModelProvider, ReactLikeC4 } = diagram;
+          if (!viewId) {
+            const viewIds = Object.keys((rawData.views as Record<string, unknown>) || {});
+            setViewId(viewIds[0] || 'index');
+          }
           setState({
             status: 'ready',
             ArchitectureDiagram: (
               <LikeC4ModelProvider likec4model={layouted}>
-                <ReactLikeC4 viewId={firstViewId} />
+                <ReactLikeC4
+                  viewId={viewId}
+                  pannable={true}
+                  enableDynamicViewWalkthrough={true}
+                  enableFocusMode={true}
+                  enableRelationshipBrowser={true}
+                  enableElementDetails={true}
+                  enableRelationshipDetails={true}
+                  enableSearch={true}
+                  enableElementTags={true}
+                  enableNotes={true}
+                  enableCompareWithLatest={true}
+                  controls={true}
+                  fitView={true}
+                  showNavigationButtons={true}
+                  onNavigateTo={setViewId}
+                />
               </LikeC4ModelProvider>
             ),
           });
@@ -65,7 +114,7 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, viewId]);
 
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 

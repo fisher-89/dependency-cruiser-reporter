@@ -1,6 +1,20 @@
 model {
   extend cli {
-    analyze = module 'Analyze'
-    open = module 'Open'
+    commands = module 'commands' {
+      analyze = module 'Analyze' {
+        link ../../packages/cli/src/commands/analyze.ts
+      }
+      open = module 'Open'
+    }
+
+    utils = module 'utils' {
+      server = module 'Server'
+      convert = module 'Convert'
+
+      server -[dependency]-> convert
+    }
+
+    commands.open -[dependency]-> utils.server
+    utils.convert -[dependency]-> rust
   }
 }

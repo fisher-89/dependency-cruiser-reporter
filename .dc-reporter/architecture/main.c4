@@ -3,16 +3,25 @@ specification {
   element module
   element component
   element path
+
+  relationship dependency
 }
 model {
-  cli = package 'Cli'
+  cli = package 'Cli' '插件入口，提供analyze、open命令' {
+    link ../../packages/cli
+  }
+
   frontend = package 'Frontend'
 
-  cli -> frontend
+  rust = package 'Rust' '自动聚合节点并计算布局' {
+    link ../../packages/rust
+  }
+
+  cli -[dependency]-> frontend
 }
 views {
-  view {
-    title 'main'
-    include *
+  view ROOT {
+    title 'ROOT'
+    include *, cli.**, frontend.**, rust.**
   }
 }
