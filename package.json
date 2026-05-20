@@ -1,22 +1,16 @@
 {
   "name": "dependency-cruiser-reporter-monorepo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "exports": {
     ".": {
       "types": "./packages/cli/dist/index.d.ts",
       "import": "./packages/cli/dist/index.js"
-    },
-    "./cli": {
-      "types": "./packages/cli/dist/index.d.ts",
-      "import": "./packages/cli/dist/index.js"
-    },
-    "./frontend": {
-      "types": "./packages/frontend/src/main.tsx",
-      "default": "./packages/frontend/src/main.tsx"
     }
   },
+  "bin": "./packages/cli/dist/bin/cli.js",
   "scripts": {
+    "prepare": "npm run build",
     "init": "pnpm run build:rust && pnpm i",
     "build": "pnpm run build:rust && pnpm run build:ts",
     "build:rust": "node scripts/build-rust.js",
