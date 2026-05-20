@@ -3,7 +3,9 @@ name: Build and Deploy to Release Branch
 on:
   push:
     branches:
-      - main # 当 main 分支有代码推送时触发。你也可以改成 master
+      - master # 当 master 分支有代码推送时触发
+    paths:
+      - 'package.json'
 
 permissions:
   contents: write # 赋予 Action 写入仓库和推送分支的权限
@@ -13,30 +15,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 拉取 main 分支的源码
+      # 1. 拉取当前 main 分支最新的代码
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # 必须拉取最近的 2 次提交，以便对比版本号是否真的改变了
 
-      # 2. 安装 Node.js 环境
+      # 2. 检查 package.json 中的 version 是否真的升级了
+      - name: Check if version increased
+        id: check-version
+        run: |
+          # 获取上一次提交和当前提交的 version 字段
+          OLD_VERSION=$(git show HEAD~1:package.json | jq -r '.version')
+          NEW_VERSION=$(jq -r '.version' package.json)
+          
+          echo "旧版本: $OLD_VERSION"
+          echo "新版本: $NEW_VERSION"
+          
+          if [ "$OLD_VERSION" = "$NEW_VERSION" ]; then
+            echo "版本号未发生改变，跳过构建。"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "检测到版本号升级！开始执行构建..."
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      # 3. 安装 Node.js 环境（仅在版本改变时执行）
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # 开启 npm 缓存，加速后续构建
+          cache: 'npm'
 
-      # 3. 安装完整的开发依赖并进行打包
+      # 4. 安装完整的开发依赖并进行打包（仅在版本改变时执行）
       - name: Install dependencies and Build
         run: |
           npm ci
           npm run build
 
-      # 4. 将打包后的文件部署到单独的 release 分支
+      # 5. 将打包后的文件部署到单独的 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          branch: release # 目标分支名，会自动创建
-          folder: packages # 部署当前根目录的所有文件
-          clean: false # 不删除未追踪的文件
-          # 💡 可选优化：如果你不想把 src 源码推送到 release 分支，可以取消下面两行的注释
-          # folder: dist
-          # target-folder: dist
+          branch: release
+          folder: packages
+          clean: false
