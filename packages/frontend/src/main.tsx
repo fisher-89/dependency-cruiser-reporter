@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { registerCustomCombo } from './components/DependencyGraph/DependencyGraph';
 import { I18nProvider } from './i18n';
@@ -14,7 +15,9 @@ if (rootElement) {
     <StrictMode>
       <ThemeProvider>
         <I18nProvider>
-          <App />
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
         </I18nProvider>
       </ThemeProvider>
     </StrictMode>

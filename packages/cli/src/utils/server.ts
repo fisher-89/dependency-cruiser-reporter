@@ -12,6 +12,37 @@ export interface ServerOptions {
   cwd?: string;
 }
 
+const mainC4Template = [
+  'specification {',
+  '  element outer // 系统外实体（例：用户、其他服务）',
+  '  element project // 工程',
+  '  element package // 包',
+  '  element module // 模块、组件',
+  '',
+  '  relationship dependency { // 依赖',
+  '    line solid',
+  '  }',
+  '}',
+  'model {',
+  "  root = project 'Project' {",
+  "    // 此处拆分packages 或 module",
+  "  }",
+  "  user = outer 'User'",
+  "  user -> root",
+  '}',
+  'views {',
+  '  view all of root {',
+  '    title \'all\'',
+  '    include *, root.**',
+  '  }',
+  '  view top {',
+  '    title \'top-only\'',
+  '    include root.*',
+  '  }',
+  '}',
+  '',
+].join('\n');
+
 export class DcrServer {
   private app: Express;
   private _port: number;
@@ -96,28 +127,7 @@ export class DcrServer {
         if (!existsSync(archDir)) {
           mkdirSync(archDir, { recursive: true });
         }
-
-        const template = [
-          'specification {',
-          '  element package',
-          '  element module',
-          '  element component',
-          '  element path',
-          '}',
-          'model {',
-          "  main = package 'Main'",
-          "  sub = package 'SubPackage'",
-          "  main -> sub",
-          '}',
-          'views {',
-          '  view {',
-          '    include *',
-          '  }',
-          '}',
-          '',
-        ].join('\n');
-
-        writeFileSync(join(archDir, 'main.c4'), template, 'utf-8');
+        writeFileSync(join(archDir, 'main.c4'), mainC4Template, 'utf-8');
         res.json({ success: true });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

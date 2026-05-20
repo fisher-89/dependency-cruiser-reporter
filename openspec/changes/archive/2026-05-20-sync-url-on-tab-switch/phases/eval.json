@@ -1,0 +1,762 @@
+[
+  {
+    "phase": "01-requirements",
+    "timestamp": "2026-05-20T09:30:00Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "Evaluated proposal.md for sync-url-on-tab-switch against static checklist. All 6 required items (R1-R6) pass: clear problem description with background/motivation, explicit in/out of scope, risks with specific mitigations, testable ACs with verification methods, consistent with CLAUDE.md conventions, no TODO/placeholder content. Optional R7 passes with all sections having substantive content. Verdict: pass.",
+    "items": [
+      {
+        "item_id": "R1",
+        "pass": true,
+        "evidence": "Problem statement describes 4 specific issues (cannot share view, browser nav broken, refresh loses state, no deep-link). Analysis section includes current vs target flow diagrams and technical details about ViewMode type and view switching mechanism.",
+        "notes": "Background and motivation are specific and concrete, not generic."
+      },
+      {
+        "item_id": "R2",
+        "pass": true,
+        "evidence": "In-scope section (6 items) lists view param sync, initial read, popstate handling, hook extraction, invalid value fallback, missing param default. Out-of-scope section (8 items) excludes diagram navigation, selectedNodeId, expandedDirs, lang/theme, react-router, server config, data state, file upload deep-links.",
+        "notes": "Both in_scope and out_of_scope lists each have at least one item."
+      },
+      {
+        "item_id": "R3",
+        "pass": true,
+        "evidence": "5 risks each with specific mitigations: (1) popstate/replaceState loop -> ref marker flag; (2) URL param renamed -> backward-compatible alias; (3) replaceState unsupported -> feature detection; (4) CLI server conflict -> search params are orthogonal; (5) useEffect race -> read URL in initial state, not useEffect.",
+        "notes": "No risk has a generic 'monitor and adjust' mitigation."
+      },
+      {
+        "item_id": "R4",
+        "pass": true,
+        "evidence": "AC-1: '点击 Report 按钮后检查浏览器地址栏 URL'. AC-6: '执行页签切换序列...确认视图按逆序切换'. AC-8: '检查浏览器开发工具的 Network 面板，确认无额外 HTTP 请求'. All 9 ACs specify explicit verification methods.",
+        "notes": "Every acceptance criterion includes how to verify (manual browser check, URL inspection, Network panel)."
+      },
+      {
+        "item_id": "R5",
+        "pass": true,
+        "evidence": "Proposal uses 'surgical changes' approach (touches only viewMode sync, no react-router, no server config), consistent with CLAUDE.md guidelines. Refers to correct file paths (App.tsx, main.tsx, packages/frontend/). Avoids speculative abstractions — useViewModeSync is feature-specific.",
+        "notes": "No contradiction with project architecture or coding guidelines found."
+      },
+      {
+        "item_id": "R6",
+        "pass": true,
+        "evidence": "Full-text scan of proposal.md finds no 'TODO', 'TBD', 'placeholder', or '{{...}}' template markers. All sections contain complete content.",
+        "notes": "No incomplete or placeholder content."
+      },
+      {
+        "item_id": "R7",
+        "pass": true,
+        "evidence": "All template-expected sections (用户故事 with 背景/分析/解决方向, 目标 with in-scope/out-of-scope, 验收标准 with 9 ACs, 风险 with 5 entries) have detailed substantive content with specific technical analysis and code examples.",
+        "notes": "Optional item (required: false). Passes regardless."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "02-test-design",
+    "timestamp": "2026-05-20T10:57:30.735Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 7 required checklist items (T1-T5, T7, T8) pass. Coverage map covers all 8 ACs from proposal. Frameworks specified (vitest+testing-library, @playwright/test). All test file paths under change's tests/ dir. 10 domain-specific boundary cases. Strategy has detailed pyramid, classification, and mocks. All template sections substantive. No out-of-scope items tested. T6 (optional, external deps) N/A. Verdict: pass.",
+    "items": [
+      {
+        "item_id": "T1",
+        "pass": true,
+        "evidence": "All 8 ACs from proposal.md lines 168-177 (AC-1 through AC-8) are mapped in coverage map table lines 53-65. AC-1 through AC-5 have both unit and E2E mapping; AC-6, AC-7, AC-8 have E2E mapping.",
+        "notes": "Complete coverage of all acceptance criteria."
+      },
+      {
+        "item_id": "T2",
+        "pass": true,
+        "evidence": "Unit test framework: 'vitest + @testing-library/react' (line 16). Integration framework: 'vitest + @testing-library/react' (line 28). E2E framework: '@playwright/test' (line 40). No 'TBD' values.",
+        "notes": "All levels have concrete framework specifications."
+      },
+      {
+        "item_id": "T3",
+        "pass": true,
+        "evidence": "Coverage map paths: `tests/unit/SyncUrlRouting.test.tsx`, `tests/e2e/sync-url.spec.ts`, `tests/unit/SyncUrlRedirects.test.tsx`. All are relative paths under `openspec/changes/sync-url-on-tab-switch/tests/` as stated in section 1 (lines 18, 31, 43).",
+        "notes": "All file paths point to expected location under change's tests/ directory."
+      },
+      {
+        "item_id": "T4",
+        "pass": true,
+        "evidence": "10 boundary cases (lines 122-132) include URL case sensitivity (B-7), trailing slash (B-8), rapid sequential nav clicks (B-3), history stack bottom (B-4), replace redirect behavior (B-5), upload+refresh+route persistence (B-6), and loading/error state interactions (B-9, B-10). All specific to URL sync routing, not generic.",
+        "notes": "Boundary cases are tailored to this change's domain."
+      },
+      {
+        "item_id": "T5",
+        "pass": true,
+        "evidence": "Section 3 (lines 69-116) has 4 sub-sections: testing pyramid with percentages (3.1), 5 test classifications with specific scenarios (3.2), 5-target mock strategy table (3.3), test data description (3.4). Multiple paragraphs with concrete details.",
+        "notes": "Strategy is well-structured with specific method descriptions."
+      },
+      {
+        "item_id": "T6",
+        "pass": true,
+        "evidence": "Proposal does not mention external services or databases (only internal `fetch('/api/graph')` and `react-router-dom` dependency). Mock strategy (lines 103-111) covers fetch, window.location, IntersectionObserver, React.lazy/Suspense for relevant test levels.",
+        "notes": "Not required per checklist (required: false). Mock strategy exists for internal API calls."
+      },
+      {
+        "item_id": "T7",
+        "pass": true,
+        "evidence": "All template sections have substantive content: 测试级别 (lines 9-46) with framework/scope/command/file-location, 覆盖率映射 (lines 49-65) with AC-to-test mapping, 测试策略 (lines 69-116) with pyramid/classification/mocks, 边界用例 (lines 119-132) with 10 specific cases. Additional sections for environment/dependencies and regression.",
+        "notes": "No section is empty or has placeholder content."
+      },
+      {
+        "item_id": "T8",
+        "pass": true,
+        "evidence": "In-scope items from proposal.md lines 147-152 (react-router-dom dep, BrowserRouter, Routes+Route, NavLink, root redirect, unknown path fallback) all have test coverage via AC-1 through AC-8. Out-of-scope items from proposal.md lines 155-162 (diagram nav, selectedNodeId, expandedDirs, lang/theme, server config, data state, file upload deep-links) have zero test coverage.",
+        "notes": "Test design is consistent with proposal scope."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "03-dev-proposal",
+    "timestamp": "2026-05-20T11:00:00Z",
+    "attempt": 1,
+    "verdict": "fail",
+    "report": "D3 FAIL: 2 of 5 decisions (3 and 5) lack explicit rejected alternatives with reasons. All other required items pass: D1 (4-col table, no TBD), D2 (input-process-output trace), D4 (all 8 ACs covered), D5 (phased checkboxes, no backward deps), D6 (concrete tasks), D8 (consistent with CLAUDE.md). D7 optional passes (deps listed). D9 optional fails (no 依赖/风险 sections).",
+    "items": [
+      {
+        "item_id": "D1",
+        "pass": true,
+        "evidence": "All 10 components in Section 1.2 table have columns 组件/文件/职责/技术/依赖 covering required 4 fields. File paths point to specific files (main.tsx, App.tsx, components/DetailPanel.tsx). No 'TBD' in tech stack column.",
+        "notes": "DependencyGraph path is a directory (DependencyGraph/) but all other components point to specific .tsx files."
+      },
+      {
+        "item_id": "D2",
+        "pass": true,
+        "evidence": "Section 2.1 traces full path: user click NavLink -> prevent default -> history.pushState -> Routes match -> React renders ReportView. Section 2.3 data flow diagram shows data loading -> Routes -> view components with data/null conditional logic.",
+        "notes": "Complete input -> processing -> output trace with specific steps."
+      },
+      {
+        "item_id": "D3",
+        "pass": false,
+        "evidence": "Decisions 1, 2, and 4 have explicit 备选方案 sections with named rejected alternatives and reasons. Decisions 3 (NavLink vs button) and 5 (keep ViewMode type) lack any 备选方案 section naming a rejected alternative with reason.",
+        "notes": "2 of 5 decisions missing explicit rejected alternatives, failing the checklist requirement."
+      },
+      {
+        "item_id": "D4",
+        "pass": true,
+        "evidence": "AC-1 via Section 2.1 NavLink flow; AC-2/3 via Section 2.5 routing table and Section 3.1 Routes config; AC-4 via Navigate to /graph in Sections 2.5/3.1; AC-5 via path=\"*\" -> /graph in Sections 2.5/3.1; AC-6 via BrowserRouter history in Sections 2.1/4; AC-7 via URL path inference in Sections 2.2/4; AC-8 via client-side routing in Sections 1.4/2.1.",
+        "notes": "All 8 acceptance criteria from proposal.md are covered in design.md."
+      },
+      {
+        "item_id": "D5",
+        "pass": true,
+        "evidence": "9 phases (lines 11-116) grouped sequentially: install -> BrowserRouter -> Routes refactor -> test compat -> test infra -> tests -> validation. No later phase depends on an earlier phase. All tasks use `- [ ]` checkboxes.",
+        "notes": "Task ordering and phase grouping are logically arranged with no backward dependencies."
+      },
+      {
+        "item_id": "D6",
+        "pass": true,
+        "evidence": "Each task specifies concrete actions: exact package versions, file paths, code changes (1.1 'add react-router-dom ^7.0.0', 3.4 'replace 4 <button> with <NavLink>'), and CLI commands. No task says '实现功能' or is vague.",
+        "notes": "All tasks are specific, actionable instructions."
+      },
+      {
+        "item_id": "D7",
+        "pass": true,
+        "evidence": "Runtime dependency react-router-dom ^7.0.0 listed in Section 1.3 module dependency diagram. Build/test deps (vitest, @testing-library/react, @testing-library/jest-dom, jsdom) listed in tasks.md Phase 5.",
+        "notes": "Optional item (required: false). Dependencies documented with versions and purposes."
+      },
+      {
+        "item_id": "D8",
+        "pass": true,
+        "evidence": "Design follows CLAUDE.md conventions: React 19 + TypeScript frontend, surgical changes approach, no speculative abstractions. Existing Express SPA fallback reused. Architecture (CLI -> Rust -> Frontend) unchanged.",
+        "notes": "No contradiction with project architecture, conventions, or coding guidelines."
+      },
+      {
+        "item_id": "D9",
+        "pass": false,
+        "evidence": "Template sections present: 架构 (Section 1), 数据流 (Section 2), 路由设计 (Section 3), 决策 (Section 4). Missing dedicated 依赖 section (covered inline in Section 1.3) and 风险 section (not present in design.md).",
+        "notes": "Optional item (required: false). Dependencies and risks partially covered inline but lack dedicated sections."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "03-dev-proposal",
+    "timestamp": "2026-05-20T11:05:00Z",
+    "attempt": 2,
+    "verdict": "pass",
+    "report": "All 6 required items (D1-D6, D8) pass. D3 fixed: Decision 3 now has 备选方案 (保留 button + useNavigate) with comparison table. Decision 5 now has 备选方案 (彻底移除 ViewMode) with comparison table. D9 fixed: Section 6 (依赖) and Section 7 (风险) added with substantive content. D1: 4-col component table, no TBD. D2: full input-process-output trace. D4: all 8 ACs covered. D5: phased checkboxes follow dependency order. D6: concrete actionable tasks. D8: consistent with CLAUDE.md. Verdict: pass.",
+    "items": [
+      {
+        "item_id": "D1",
+        "pass": true,
+        "evidence": "Section 1.2 table has all 10 components with columns 组件/文件/职责/技术/依赖 covering required 4 fields. File paths point to specific files (main.tsx, App.tsx, components/DetailPanel.tsx). No 'TBD' values in tech stack column. All tech entries specific (React 19, react-router-dom v7, AntV G6, LikeC4).",
+        "notes": "All components documented with specific file paths and technologies."
+      },
+      {
+        "item_id": "D2",
+        "pass": true,
+        "evidence": "Section 2.1 traces full path: user click NavLink -> react-router prevents default -> history.pushState -> Routes match -> React renders ReportView. Section 2.3 data flow diagram shows data loading -> Routes -> view components with data/null conditional. Section 2.5 URL routing map table.",
+        "notes": "Complete input -> processing -> output trace with multiple diagrams."
+      },
+      {
+        "item_id": "D3",
+        "pass": true,
+        "evidence": "All 5 decisions now have explicit 备选方案. Decision 3: 备选方案 '保留现有 <button> 元素 + useNavigate + useLocation' with 5-dimension comparison table. Decision 5: 备选方案 '从 types.ts 中彻底移除 ViewMode 类型定义' with 4-dimension comparison table. Each rejected alternative has a reason.",
+        "notes": "Previous failure fixed. Both Decisions 3 and 5 now have named rejected alternatives with comparison tables."
+      },
+      {
+        "item_id": "D4",
+        "pass": true,
+        "evidence": "AC-1 (Section 2.1 NavLink flow, Section 3.1 Routes config for /report). AC-2/3 (Section 2.5 routing table, Section 3.1 Routes config for /metrics and /architecture). AC-4 (Section 2.5 line 149, Section 3.1 Navigate to /graph). AC-5 (Section 2.5 line 154, Section 3.1 path='*'). AC-6 (Section 2.1 history stack, Section 4 Decision 1 BrowserRouter). AC-7 (Section 2.2 URL path inference, Section 4 Decision 1). AC-8 (Section 1.4 client-side SPA, Section 2.1 prevent default).",
+        "notes": "All 8 ACs from proposal.md are explicitly traced to design.md sections."
+      },
+      {
+        "item_id": "D5",
+        "pass": true,
+        "evidence": "9 phases with `- [ ]` checkboxes: Phase 1 (install) -> Phase 2 (BrowserRouter) -> Phase 3 (Routes) -> Phase 4 (test compat) -> Phase 5 (test deps) -> Phase 6 (unit tests) -> Phase 7 (integration) -> Phase 8 (E2E) -> Phase 9 (cleanup/verify). No later phase is a dependency of an earlier phase. All dependencies are forward-only.",
+        "notes": "Task ordering follows logical dependency chain with no backward references."
+      },
+      {
+        "item_id": "D6",
+        "pass": true,
+        "evidence": "Each task specifies concrete operations: exact package version (1.1 'react-router-dom ^7.0.0'), specific file paths (2.1 'packages/frontend/src/main.tsx'), precise code changes (3.4 'replace 4 <button> with <NavLink>', 3.6 'Routes + Route structure'), exact data-testid values (3.5). No vague task descriptions.",
+        "notes": "All tasks are specific, actionable, and directly implementable."
+      },
+      {
+        "item_id": "D7",
+        "pass": true,
+        "evidence": "Section 6.1: runtime dep react-router-dom ^7.0.0 with purpose (~7KB gzip). Section 6.2: dev deps vitest, @testing-library/react, @testing-library/jest-dom, jsdom with purposes. Section 6.3: dependency impact analysis (package size, transitive deps, version conflicts, build compatibility).",
+        "notes": "Optional item (required: false). Dependencies fully documented with versions, purposes, and impact analysis."
+      },
+      {
+        "item_id": "D8",
+        "pass": true,
+        "evidence": "Design follows CLAUDE.md coding guidelines: surgical changes approach (touches only view switching), no speculative abstractions (UploadArea kept inline per Decision 4), consistent with React 19 + TypeScript stack. Existing Express SPA fallback reused (Section 1.4). Architecture unchanged.",
+        "notes": "No contradiction with project architecture or conventions."
+      },
+      {
+        "item_id": "D9",
+        "pass": true,
+        "evidence": "All template sections present with substantive content: Section 1 (架构) with component table + dependency diagram + server impact. Section 2 (数据流) with flow diagrams + routing table. Section 3 (路由/API设计) with Routes config + NavLink config + API endpoints. Section 4 (设计决策) with 5 decisions each having rejected alternatives. Section 6 (依赖) with runtime/dev deps + impact analysis. Section 7 (风险) with 5 risk entries with impact/probability/mitigation.",
+        "notes": "Previous failure fixed. Both 依赖 (Section 6) and 风险 (Section 7) now have dedicated sections with substantive content."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "04-test-gen",
+    "timestamp": "2026-05-20T11:00:00Z",
+    "attempt": 1,
+    "verdict": "fail",
+    "report": "G6 FAIL: B-3 (rapid sequential clicks Graph->Report->Metrics->Architecture) missing from tests/e2e/sync-url.spec.ts. All other items pass: G1 (all 13 coverage map entries have test files), G2 (correct naming/location), G3 (files syntax-valid via biome), G4 (test skeletons match levels), G5 (correct frameworks), G7 (no JSON files). All 9 other boundary cases (B-1,2,4-10) covered.",
+    "items": [
+      {
+        "item_id": "G1",
+        "pass": true,
+        "evidence": "All 13 coverage map entries (test-design.md lines 53-65) have corresponding files: SyncUrlRouting.test.tsx (AC-1/2/3 unit), SyncUrlRedirects.test.tsx (AC-4/5 unit), AppRouting.test.tsx (integration), sync-url.spec.ts (AC-1 through AC-8 E2E).",
+        "notes": "Complete coverage map-to-file mapping."
+      },
+      {
+        "item_id": "G2",
+        "pass": true,
+        "evidence": "All 4 files under openspec/changes/sync-url-on-tab-switch/tests/: tests/unit/SyncUrlRouting.test.tsx, tests/unit/SyncUrlRedirects.test.tsx, tests/integration/AppRouting.test.tsx, tests/e2e/sync-url.spec.ts. Naming follows .test.tsx (vitest) and .spec.ts (Playwright) conventions.",
+        "notes": "Files in correct directory with proper naming."
+      },
+      {
+        "item_id": "G3",
+        "pass": true,
+        "evidence": "All 4 files pass biome check with no syntax errors; only formatting/style issues found (import ordering, trailing commas, line wrapping). No parse errors or type errors.",
+        "notes": "Files are syntactically valid TSX/TypeScript."
+      },
+      {
+        "item_id": "G4",
+        "pass": true,
+        "evidence": "Unit tests use describe/it.todo from vitest (SyncUrlRouting.test.tsx 6 skeletons, SyncUrlRedirects.test.tsx 6 skeletons). Integration tests use describe/it.todo from vitest (AppRouting.test.tsx 11 skeletons). E2E tests use test.describe/test from @playwright/test (sync-url.spec.ts 12 skeletons). All match test-design.md level assignments.",
+        "notes": "Test structures match designated levels."
+      },
+      {
+        "item_id": "G5",
+        "pass": true,
+        "evidence": "Unit/integration files import { describe, it, expect, vi, beforeEach } from 'vitest' and { render, screen } from '@testing-library/react'. E2E file imports { expect, test } from '@playwright/test'. Matches frameworks specified in test-design.md lines 16, 28, 40.",
+        "notes": "All framework imports match test-design.md specifications."
+      },
+      {
+        "item_id": "G6",
+        "pass": false,
+        "evidence": "B-3 (rapid sequential clicks Graph->Report->Metrics->Architecture) listed in test-design.md line 125 targeting tests/e2e/sync-url.spec.ts has no corresponding test skeleton. AC-6 covers Graph->Report->Metrics (3 views) but not the B-3 scenario with 4 views including Architecture and rapid clicking. All other 9 boundary cases (B-1 through B-10 excluding B-3) have skeletons.",
+        "notes": "B-3 is the only uncovered boundary case."
+      },
+      {
+        "item_id": "G7",
+        "pass": true,
+        "evidence": "git diff shows only code files (.tsx, .ts, .yaml, .md). No JSON report or summary files present in the tests/ directory or in the staged/unstaged diff.",
+        "notes": "No JSON artifacts in output."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "04-test-gen",
+    "timestamp": "2026-05-20T11:10:00Z",
+    "attempt": 2,
+    "verdict": "pass",
+    "report": "All 7 required items (G1-G7) pass. B-3 (rapid sequential clicks) now present in sync-url.spec.ts:226-237. G1: all 13 coverage map entries have test files. G2: files in correct directory with proper naming. G3: syntax valid (biome formatting only). G4: skeletons match test levels. G5: correct framework imports. G6: all 10 boundary cases covered. G7: no JSON artifacts.",
+    "items": [
+      {
+        "item_id": "G1",
+        "pass": true,
+        "evidence": "All 13 coverage map entries (test-design.md lines 53-65) have corresponding files: SyncUrlRouting.test.tsx (AC-1/2/3 unit), SyncUrlRedirects.test.tsx (AC-4/5 unit), AppRouting.test.tsx (integration), sync-url.spec.ts (AC-1 through AC-8 E2E).",
+        "notes": "Complete coverage map-to-file mapping."
+      },
+      {
+        "item_id": "G2",
+        "pass": true,
+        "evidence": "All 4 files under openspec/changes/sync-url-on-tab-switch/tests/: tests/unit/SyncUrlRouting.test.tsx, tests/unit/SyncUrlRedirects.test.tsx, tests/integration/AppRouting.test.tsx, tests/e2e/sync-url.spec.ts. Naming follows .test.tsx (vitest) and .spec.ts (Playwright) conventions.",
+        "notes": "Files in correct directory with proper naming."
+      },
+      {
+        "item_id": "G3",
+        "pass": true,
+        "evidence": "All 4 files pass biome check with no syntax errors; only formatting/style issues found (import ordering, trailing commas, line wrapping). No parse errors or type errors.",
+        "notes": "Files are syntactically valid TSX/TypeScript."
+      },
+      {
+        "item_id": "G4",
+        "pass": true,
+        "evidence": "Unit tests use describe/it.todo from vitest (SyncUrlRouting.test.tsx 6 skeletons, SyncUrlRedirects.test.tsx 6 skeletons). Integration tests use describe/it.todo from vitest (AppRouting.test.tsx 11 skeletons). E2E tests use test.describe/test from @playwright/test (sync-url.spec.ts 13 skeletons). All match test-design.md level assignments.",
+        "notes": "Test structures match designated levels."
+      },
+      {
+        "item_id": "G5",
+        "pass": true,
+        "evidence": "Unit/integration files import { describe, it, expect, vi, beforeEach } from 'vitest' and { render, screen } from '@testing-library/react'. E2E file imports { expect, test } from '@playwright/test'. Matches frameworks specified in test-design.md lines 16, 28, 40.",
+        "notes": "All framework imports match test-design.md specifications."
+      },
+      {
+        "item_id": "G6",
+        "pass": true,
+        "evidence": "B-3 (rapid sequential clicks Graph->Report->Metrics->Architecture) now present at sync-url.spec.ts lines 226-237. All 10 boundary cases (B-1 through B-10) from test-design.md lines 122-132 have corresponding test skeletons.",
+        "notes": "Previous failure fixed. B-3 now has an explicit test skeleton with 4-click sequence and goBack x3 verification."
+      },
+      {
+        "item_id": "G7",
+        "pass": true,
+        "evidence": "git diff shows only code files (.tsx, .ts, .yaml, .md). No JSON report or summary files present in the tests/ directory or in the staged/unstaged diff.",
+        "notes": "No JSON artifacts in output."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "05-implementation",
+    "timestamp": "2026-05-20T07:17:55Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 8 items pass. I1: all 11 components from design.md present in code. I2: data flow matches design (routeConfigs -> NavLink/Route via .map(), renderView branches). I3: follows project conventions (React 19, TS, style object). I4: all routes/APIs from design.md implemented. I5: implementation tasks (Phases 1-4, 9.1-9.4) all [x]; remaining unchecked tasks are test/manual-verify. I6: only changes traceable to tasks + minor biome formatting. I7: TS + biome pass clean. I8: all 6 design decisions followed (BrowserRouter, data-in-App, NavLink+data-testid, inline UploadArea, ViewMode kept in types.ts, config-driven routing). Verdict: pass.",
+    "items": [
+      {
+        "item_id": "I1",
+        "pass": true,
+        "evidence": "All 11 components from design.md Section 1.2 present: BrowserRouter in main.tsx:3,18-20; routeConfigs App.tsx:14-37; NavLink App.tsx:288-300; Routes+Route App.tsx:306-312; ArchitectureView App.tsx:11; DependencyGraph App.tsx:3; DetailPanel App.tsx:4; ReportView App.tsx:318-372; MetricsView App.tsx:375-415; UploadArea inline App.tsx:163-191.",
+        "notes": "Full component coverage with no missing items."
+      },
+      {
+        "item_id": "I2",
+        "pass": true,
+        "evidence": "Data flow matches design Section 2.1: routeConfigs -> .map() -> NavLink (line 288-300); routeConfigs -> .map() -> Route (lines 308-310). renderView (lines 154-253) implements needsData branches: Suspense+ArchitectureView (155-161), upload area (163-191), data views + reset btn (194-253). BrowserRouter provides history in main.tsx:18-20.",
+        "notes": "Data flow trace matches design exactly."
+      },
+      {
+        "item_id": "I3",
+        "pass": true,
+        "evidence": "Uses React 19 + TypeScript, same styles object pattern (line 417), same import structure. textDecoration:'none' added for NavLink a-element compat (line 483). No speculative abstractions. Biome formatting applied per project conventions.",
+        "notes": "Consistent with existing codebase conventions."
+      },
+      {
+        "item_id": "I4",
+        "pass": true,
+        "evidence": "All routes from design.md implemented: / -> /graph redirect (line 307); /architecture/graph/report/metrics via routeConfigs (lines 38-46, 308-310); * -> /graph (line 311). API endpoints unchanged (POST /api/graph, GET /api/architecture/model, etc.). NavLink generation matches design Section 3.2 exactly.",
+        "notes": "Required: false. All routes present and correct."
+      },
+      {
+        "item_id": "I5",
+        "pass": true,
+        "evidence": "Implementation tasks Phases 1-4 and 9.1-9.4 all [x]; remaining unchecked tasks are test infrastructure (Phases 5-8: vitest/testing-library deps, unit/integration/E2E test implementations) and manual verification (9.5). Test skeleton files exist from prior phase. Implementation Generator correctly marked its scope.",
+        "notes": "All implementation tasks completed. Test tasks are outside implementation scope."
+      },
+      {
+        "item_id": "I6",
+        "pass": true,
+        "evidence": "git diff shows 6 files changed: package.json (add react-router-dom + biome formatting), main.tsx (BrowserRouter), App.tsx (route refactoring), e2e/app.spec.ts (combos field fix), pnpm-lock.yaml (auto), tasks.md (task status update). All changes traceable to tasks or lint auto-fix.",
+        "notes": "No extraneous or unrelated changes detected."
+      },
+      {
+        "item_id": "I7",
+        "pass": true,
+        "evidence": "TypeScript compilation passes clean. Biome lint passes (only pre-existing JSON formatting issues, e.g. package.json files field reformatting). E2E tests 5/6 pass; 1 failure is pre-existing (data-testid='node-count' not in source).",
+        "notes": "Static checks and lint verified clean by user-provided results."
+      },
+      {
+        "item_id": "I8",
+        "pass": true,
+        "evidence": "All 6 design decisions followed: (1) BrowserRouter in main.tsx; (2) data state stays in App.tsx via useState; (3) NavLink replaces button with data-testid preserved; (4) UploadArea kept inline; (5) viewMode state removed from App.tsx, ViewMode type still exported from types.ts:10; (6) routeConfigs array drives both NavLink and Route generation.",
+        "notes": "Every design decision from design.md Section 4 is reflected in code."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "06-code-review",
+    "timestamp": "2026-05-20T11:20:00Z",
+    "attempt": 1,
+    "verdict": "fail",
+    "report": "C3 FAIL: 36 test cases across 4 new test files are skeletons (it.todo() or empty bodies). renderView default case, redirect logic, architecture route, history navigation, and new-tab behavior have zero implemented assertions. Existing e2e/app.spec.ts covers basic view switching only. C1 pass (no security issues). C2 pass (all external calls error-handled). C4 pass (implementation matches design). C5 pass (null/boundary handling thorough). Verdict: fail.",
+    "items": [
+      {
+        "item_id": "C1",
+        "pass": true,
+        "evidence": "Grep for password/secret/api_key/eval/exec/shell/dangerouslySetInnerHTML/innerHTML returned zero matches across all changed files. No SQL queries, no command injection, no hardcoded keys. React auto-escaping prevents XSS. JSON.parse is safe (not eval).",
+        "notes": "No security vulnerabilities found in changed code."
+      },
+      {
+        "item_id": "C2",
+        "pass": true,
+        "evidence": "fetch('/api/graph') at App.tsx:51 wrapped in try/catch (App.tsx:50-71). file.text()/JSON.parse at App.tsx:118-119 wrapped in try/catch (App.tsx:117-127). writeFileSync at server.ts:122 wrapped in try/catch (server.ts:118-128). readFileSync at server.ts:143 wrapped in try/catch (server.ts:142-159). document.getElementById null check in main.tsx:13.",
+        "notes": "All external calls (network, filesystem, DOM) have error handling."
+      },
+      {
+        "item_id": "C3",
+        "pass": false,
+        "evidence": "tests/e2e/sync-url.spec.ts: 13 tests (lines 103-276) all have empty function bodies with only TODO comments. tests/integration/AppRouting.test.tsx: 11 tests (lines 138-184) all it.todo(). tests/unit/SyncUrlRedirects.test.tsx: 6 tests (lines 123-143) all it.todo(). tests/unit/SyncUrlRouting.test.tsx: 6 tests (lines 111-132) all it.todo(). Zero asserted tests exist for renderView default case, route redirects (/ -> /graph, * -> /graph), architecture route, history navigation, or new-tab behavior.",
+        "notes": "All 36 change-specific test cases are unimplemented skeletons with no assertions."
+      },
+      {
+        "item_id": "C4",
+        "pass": true,
+        "evidence": "BrowserRouter in main.tsx:18 matches design Section 1.1. routeConfigs at App.tsx:25-35 matches Section 3.1. NavLink map at App.tsx:288-300 matches Section 3.2. renderView at App.tsx:154-253 matches Section 3.3. Routes at App.tsx:306-312 matches Section 3.4. Root redirect (App.tsx:307) and star fallback (App.tsx:311) match Section 2.5. ViewMode type retained in types.ts:10 per Decision 5. Data state in App.tsx via useState per Decision 2.",
+        "notes": "All design decisions and route mappings implemented faithfully."
+      },
+      {
+        "item_id": "C5",
+        "pass": true,
+        "evidence": "main.tsx:13 null guard on rootElement. App.tsx:42 data initialized null with dual checks at lines 155 and 163. App.tsx:97 selectedNode null guard. App.tsx:101-108 nodeMap empty-Map fallback for null data. App.tsx:136-141 handleDrop uses optional chaining (file?.name). App.tsx:174 file input uses optional chaining (files?.[0]). fetchGraph validates graph structure at line 58 before setData.",
+        "notes": "Comprehensive null/empty handling with no missing guards."
+      },
+      {
+        "item_id": "C6",
+        "pass": true,
+        "evidence": "All imports used meaningfully. All style keys referenced in JSX. renderView default case acts as a safety net for unforeseen config paths. No duplicated logic or unreachable branches detected.",
+        "notes": "No dead or redundant code found."
+      },
+      {
+        "item_id": "C7",
+        "pass": true,
+        "evidence": "Code follows project conventions: styles object pattern (App.tsx:417), React hooks (useState/useCallback/useMemo/useEffect), i18n via useT(), TypeScript interfaces. Consistent with CLAUDE.md guidelines for surgical changes and no speculative abstractions.",
+        "notes": "Readable and consistent with existing codebase patterns."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "attempt": 1,
+    "schema_version": "1.0",
+    "backtrack_to": null,
+    "phase": "07-acceptance",
+    "verdict": "fail",
+    "timestamp": "2026-05-20T07:45:56Z",
+    "items": [
+      {
+        "pass": true,
+        "evidence": "AC-1: App.tsx:32,222-235,288-300,308-310 (NavLink+Route+renderView for /report). AC-2: App.tsx:34,236-248 (Route+renderView for /metrics). AC-3: App.tsx:27-31,155-161 (Route+renderView for /architecture). AC-4: App.tsx:37,307 (Navigate / to /graph). AC-5: App.tsx:311 (Route * to /graph). AC-6: main.tsx:18-20 (BrowserRouter). AC-7: main.tsx:18-20,App.tsx:306-312 (Routes config on initial load). AC-8: App.tsx:289-295 (NavLink client nav).",
+        "item_id": "A1",
+        "notes": "All 8 ACs have specific code evidence."
+      },
+      {
+        "pass": true,
+        "evidence": "git diff shows only 6 source changes: react-router-dom dep, BrowserRouter main.tsx, Routes/NavLink App.tsx, style property, biome fmt tasks.md. Server.ts: C4 template extraction only (not routing). e2e/app.spec.ts: add combos:[] field. No new features beyond proposal scope.",
+        "item_id": "A2",
+        "notes": "No scope creep detected."
+      },
+      {
+        "pass": true,
+        "evidence": "(1) react-router-dom dep: packages/frontend/package.json:27. (2) BrowserRouter: main.tsx:18-20. (3) Routes+Route: App.tsx:306-312. (4) NavLink: App.tsx:288-300. (5) Root / redirect: App.tsx:307. (6) Unknown path /* fallback: App.tsx:311.",
+        "item_id": "A3",
+        "notes": "All 6 in_scope items implemented."
+      },
+      {
+        "pass": true,
+        "evidence": "Grep confirms: Architecture viewId not URL-synced (ArchitectureView.tsx:45 useState). selectedNodeId (App.tsx:46) and expandedDirs (App.tsx:45) remain React state. No URL search params or hash. Server routing unchanged (diff shows no app.get/app.post changes). No data/upload URL persistence.",
+        "item_id": "A4",
+        "notes": "No out_of_scope items implemented."
+      },
+      {
+        "pass": true,
+        "evidence": "Risk 1: data-testid preserved (App.tsx:296-297). Risk 2: backward compat via /* redirect (App.tsx:311). Risk 3: data state stays in App.tsx via useState (App.tsx:42). Risk 4: no React.lazy history fallback. Risk 5: fetchGraph in useEffect (App.tsx:110-112).",
+        "item_id": "A5",
+        "notes": "Optional. 4/5 risk mitigations present in code."
+      },
+      {
+        "pass": false,
+        "evidence": "tasks.md unchecked: Phase 5 (test deps/vitest config) 4 items all [ ], Phase 6 (unit tests) 4 items all [ ], Phase 7 (integration tests) 3 items all [ ], Phase 8 (E2E tests) 4 items all [ ], Phase 9.5 (manual verify) [ ]. Only Phases 1-4,9.1-9.4 completed.",
+        "item_id": "A7",
+        "notes": "14 unchecked items: test infra not set up, all test implementations are skeletons (it.todo()), manual verify not done."
+      }
+    ],
+    "report": "A7 FAIL: tasks.md has 14 unchecked items (Phase 5-8 test infra/writing, Phase 9.5 manual verify). All required scope checks pass: A1 (all 8 ACs traced to code), A2 (no scope creep), A3 (6/6 in_scope ok), A4 (out_of_scope clean). A5 optional passes (4/5 risk mitigations in code). Verdict: fail because task completion incomplete."
+  },
+  {
+    "phase": "04-test-gen",
+    "timestamp": "2026-05-20T15:57:36Z",
+    "attempt": 3,
+    "verdict": "pass",
+    "report": "All 7 required checklist items pass. G1: all 13 coverage map entries have corresponding test files. G2: files in correct directory with proper naming (.test.tsx, .spec.ts). G3: syntax valid (biome reports formatting/style only, no parse errors). G4: test structures match levels, all tests have implemented assertions (no it.todo()). G5: correct frameworks (vitest+testing-library, @playwright/test). G6: all 10 boundary cases (B-1 through B-10) covered. G7: no JSON artifacts in diff.",
+    "items": [
+      {
+        "item_id": "G1",
+        "pass": true,
+        "evidence": "All 13 coverage map entries (test-design.md lines 53-65) have corresponding test files: SyncUrlRouting.test.tsx (AC-1/2/3 unit), SyncUrlRedirects.test.tsx (AC-4/5 unit), AppRouting.test.tsx (integration), sync-url.spec.ts (AC-1 through AC-8 E2E).",
+        "notes": "Complete coverage map-to-file mapping with implemented assertions."
+      },
+      {
+        "item_id": "G2",
+        "pass": true,
+        "evidence": "All 4 files under openspec/changes/sync-url-on-tab-switch/tests/: tests/unit/SyncUrlRouting.test.tsx, tests/unit/SyncUrlRedirects.test.tsx, tests/integration/AppRouting.test.tsx, tests/e2e/sync-url.spec.ts. Naming follows .test.tsx (vitest) and .spec.ts (Playwright) conventions.",
+        "notes": "Files in correct directory with proper naming."
+      },
+      {
+        "item_id": "G3",
+        "pass": true,
+        "evidence": "All 4 files pass biome check with no parse errors or syntax errors; only formatting/style issues found (import ordering, trailing commas, line wrapping). Files are syntactically valid TSX/TypeScript.",
+        "notes": "Files are syntactically valid."
+      },
+      {
+        "item_id": "G4",
+        "pass": true,
+        "evidence": "Unit tests use describe/it from vitest with implemented assertions (SyncUrlRouting.test.tsx 6 tests, SyncUrlRedirects.test.tsx 6 tests). Integration tests use describe/it from vitest (AppRouting.test.tsx 11 tests). E2E tests use test.describe/test from @playwright/test (sync-url.spec.ts 9 tests). All tests have real assertions, no it.todo() calls.",
+        "notes": "Test structures match designated levels with fully implemented test bodies."
+      },
+      {
+        "item_id": "G5",
+        "pass": true,
+        "evidence": "Unit/integration files import { describe, it, expect, vi, beforeEach } from 'vitest' and { render, screen } from '@testing-library/react', { MemoryRouter/BrowserRouter } from 'react-router-dom'. E2E file imports { expect, test } from '@playwright/test'. Matches frameworks specified in test-design.md lines 16, 28, 40.",
+        "notes": "All framework imports match test-design.md specifications."
+      },
+      {
+        "item_id": "G6",
+        "pass": true,
+        "evidence": "All 10 boundary cases (B-1 through B-10) from test-design.md lines 122-132 have corresponding test skeletons: B-1 root redirect (SyncUrlRedirects.test.tsx:143), B-2 unknown path (SyncUrlRedirects.test.tsx:158,211), B-3 rapid clicks (sync-url.spec.ts:314), B-4 back at bottom (sync-url.spec.ts:342), B-5 root replace (sync-url.spec.ts:364), B-6 refresh metrics (sync-url.spec.ts:389), B-7 case sensitivity (SyncUrlRedirects.test.tsx:171,185), B-8 trailing slash (SyncUrlRedirects.test.tsx:197), B-9 loading state (AppRouting.test.tsx:239), B-10 error state (AppRouting.test.tsx:261).",
+        "notes": "All 10 boundary cases covered."
+      },
+      {
+        "item_id": "G7",
+        "pass": true,
+        "evidence": "git diff shows only code files (4 test files: .ts and .tsx). No JSON report or summary files present in the tests/ directory or in the staged/unstaged diff.",
+        "notes": "No JSON artifacts in output."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "07-acceptance",
+    "timestamp": "2026-05-20T16:15:00Z",
+    "attempt": 2,
+    "verdict": "fail",
+    "report": "A7 FAIL: tasks.md has 10 unchecked items (Phase 5 infra: vitest+deps+config+scripts missing; Phase 8.2: playwright config not updated; Phase 9.5: manual verify). A1-A4 pass: 8/8 ACs traced to code, no scope creep, 6/6 in_scope done, out_of_scope clean. A5 optional: 4/5 risk mitigations. Tests upgraded from skeletons to real assertions but infra missing prevents execution.",
+    "items": [
+      {
+        "item_id": "A1",
+        "pass": true,
+        "evidence": "AC-1: App.tsx:32,222-235,288-300,308-310. AC-2: App.tsx:34,236-248. AC-3: App.tsx:27-31,155-161. AC-4: App.tsx:37,307. AC-5: App.tsx:311. AC-6: main.tsx:18-20. AC-7: main.tsx:18-20,App.tsx:306-312. AC-8: App.tsx:289-295. All 8 ACs also have test coverage (unit, integration, E2E).",
+        "notes": "All 8 ACs have implementation and test evidence."
+      },
+      {
+        "item_id": "A2",
+        "pass": true,
+        "evidence": "Changes limited to: react-router-dom dep, BrowserRouter wrapper, Routes/NavLink refactor, e2e/app.spec.ts combos field fix. Server.ts diff is unrelated C4 template extraction. No new features beyond proposal in_scope.",
+        "notes": "No scope creep detected."
+      },
+      {
+        "item_id": "A3",
+        "pass": true,
+        "evidence": "(1) react-router-dom dep: packages/frontend/package.json:27. (2) BrowserRouter: main.tsx:18-20. (3) Routes+Route: App.tsx:306-312. (4) NavLink: App.tsx:288-300. (5) root / redirect: App.tsx:307. (6) unknown path /*: App.tsx:311.",
+        "notes": "All 6 in_scope items implemented."
+      },
+      {
+        "item_id": "A4",
+        "pass": true,
+        "evidence": "Architecture viewId not URL-synced. selectedNodeId (App.tsx:46), expandedDirs (App.tsx:45), lang (App.tsx:40), theme (App.tsx:41) remain React state. No server routing changes. No data/file-upload URL persistence.",
+        "notes": "No out_of_scope items implemented."
+      },
+      {
+        "item_id": "A5",
+        "pass": true,
+        "evidence": "Risk 1: data-testid on NavLink App.tsx:296-297. Risk 2: /* redirect App.tsx:311. Risk 3: data via useState App.tsx:42. Risk 4: History API fallback NOT implemented. Risk 5: fetchGraph in useEffect App.tsx:110-112.",
+        "notes": "Optional. 4/5 risk mitigations present (no History API fallback)."
+      },
+      {
+        "item_id": "A7",
+        "pass": false,
+        "evidence": "tasks.md unchecked: 5.1-5.4 (vitest+deps+config+scripts missing), 6.4 (unit tests not runnable), 7.3 (integration tests not runnable), 8.2 (playwright testDir not updated), 8.4 (E2E not run), 9.5 (manual verify not done). Test files have real assertions but infrastructure to execute them is incomplete.",
+        "notes": "10 unchecked tasks. Test files upgraded from skeletons to real assertions but infra missing."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "07-acceptance",
+    "timestamp": "2026-05-20T16:46:00Z",
+    "attempt": 3,
+    "verdict": "fail",
+    "report": "A7 FAIL: tasks.md has 2 unchecked items (8.4 E2E test run needs browser, 9.5 manual verify needs human). All scope checks pass: A1 all 8 ACs traced to code+test files, A2 no scope creep, A3 6/6 in_scope done, A4 out_of_scope clean. A5 optional 4/5 risk mitigations in code. 23 vitest tests pass with real assertions. Verdict: fail because A7 required but incomplete.",
+    "items": [
+      {
+        "item_id": "A1",
+        "pass": true,
+        "evidence": "AC-1: App.tsx:32,222-235,288-300,309 + SyncUrlRouting.test.tsx:151-162. AC-2: App.tsx:34,236-248,309 + SyncUrlRouting.test.tsx:167-178. AC-3: App.tsx:27-31,155-161,309 + SyncUrlRouting.test.tsx:183-193. AC-4: App.tsx:37,307 + SyncUrlRedirects.test.tsx:151-161. AC-5: App.tsx:311 + SyncUrlRedirects.test.tsx:166-174. AC-6: main.tsx:18-20 + sync-url.spec.ts:212-236. AC-7: main.tsx:18-20,App.tsx:306-312 + sync-url.spec.ts:241-268. AC-8: App.tsx:289 + sync-url.spec.ts:274-308.",
+        "notes": "All 8 ACs have both implementation and test evidence."
+      },
+      {
+        "item_id": "A2",
+        "pass": true,
+        "evidence": "Changes: react-router-dom dep, BrowserRouter/NavLink/Routes refactor, test infra (vitest/jsdom/testing-library + config, vitest.config.ts, vitest.setup.ts), test files (unit/integration/E2E), playwright config openspec project, server.ts C4 template extraction (unrelated to routing), e2e/app.spec.ts combos field fix (test compat). No new features beyond proposal scope.",
+        "notes": "No scope creep detected."
+      },
+      {
+        "item_id": "A3",
+        "pass": true,
+        "evidence": "(1) react-router-dom dep: packages/frontend/package.json:29. (2) BrowserRouter: main.tsx:18-20. (3) Routes+Route: App.tsx:306-312. (4) NavLink: App.tsx:288-300. (5) Root / redirect: App.tsx:307. (6) Unknown path /*: App.tsx:311.",
+        "notes": "All 6 in_scope items from proposal implemented."
+      },
+      {
+        "item_id": "A4",
+        "pass": true,
+        "evidence": "Grep confirms Architecture viewId not URL-synced, selectedNodeId (App.tsx:46) and expandedDirs (App.tsx:45) remain React state, lang/theme managed via useT/useTheme hooks (not URL). Server routing unchanged. No data/upload URL persistence.",
+        "notes": "No out_of_scope items implemented."
+      },
+      {
+        "item_id": "A5",
+        "pass": true,
+        "evidence": "Risk 1: data-testid on NavLink App.tsx:296-297. Risk 2: /* redirect App.tsx:311. Risk 3: data via useState App.tsx:42. Risk 4: History API fallback NOT implemented. Risk 5: fetchGraph in useEffect App.tsx:110-112.",
+        "notes": "Optional. 4/5 risk mitigations in code. Missing Risk 4 (History API fallback) is low-impact."
+      },
+      {
+        "item_id": "A7",
+        "pass": false,
+        "evidence": "tasks.md unchecked: 8.4 (E2E test run requires browser environment), 9.5 (manual verification requires human). All infrastructure tasks (5.1-5.4 test deps/config/scripts) [x]. All test implementation tasks (6.1-7.3 unit/integration) [x] with 23/23 tests passing. E2E test file has real assertions (sync-url.spec.ts).",
+        "notes": "Only 2/19 tasks unchecked. Both require external conditions (browser, human)."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "05-implementation",
+    "timestamp": "2026-05-20T16:50:00Z",
+    "attempt": 2,
+    "verdict": "pass",
+    "report": "All 8 static checklist items pass. I1: all 11 design components present in code. I2: data flow matches design (config-driven NavLink/Route map, renderView needsData branches). I3: follows project conventions (React 19, TS, style object, data-testid). I5: 17/19 tasks [x]; 8.4 (E2E needs browser) and 9.5 (manual needs human) remain [ ] per precedent. I6: all changes traceable to change scope. I7: pnpm build + 23/23 vitest tests pass. I8: all 6 design decisions implemented. Verdict: pass.",
+    "items": [
+      {
+        "item_id": "I1",
+        "pass": true,
+        "evidence": "All 11 components from design.md Section 1.2 present: BrowserRouter main.tsx:3,18-20; App App.tsx:39-316; routeConfigs App.tsx:25-37; NavLink App.tsx:288-300; Routes+Route App.tsx:306-312; ArchitectureView App.tsx:11; DependencyGraph App.tsx:3; DetailPanel App.tsx:4; ReportView App.tsx:318-372; MetricsView App.tsx:375-415; UploadArea inline App.tsx:163-191.",
+        "notes": "Full component coverage matching design specification."
+      },
+      {
+        "item_id": "I2",
+        "pass": true,
+        "evidence": "routeConfigs -> NavLink map App.tsx:288-300 matches design Section 3.2. routeConfigs -> Route map App.tsx:308-310 matches Section 3.4. renderView App.tsx:154-253 implements all needsData branches per Section 3.3: Suspense+ArchitectureView for needsData:false, UploadArea for needsData+null, view+reset for needsData+data.",
+        "notes": "Data flow trace matches design exactly."
+      },
+      {
+        "item_id": "I3",
+        "pass": true,
+        "evidence": "React 19 + TypeScript with styles object pattern (App.tsx:417-647). Same import structure (useT/useTheme from existing hooks). NavLink data-testid preserved for E2E compat. No speculative abstractions. Biome formatting applied. Architecture unchanged.",
+        "notes": "Consistent with existing codebase conventions."
+      },
+      {
+        "item_id": "I4",
+        "pass": true,
+        "evidence": "All routes from design.md Section 3.1 implemented: routeConfigs App.tsx:25-35 (4 routes), root / -> /graph redirect App.tsx:307, path=\"*\" -> /graph App.tsx:311. API endpoints unchanged.",
+        "notes": "Optional item. All routes present and correct."
+      },
+      {
+        "item_id": "I5",
+        "pass": true,
+        "evidence": "tasks.md: 17/19 tasks [x]. Only 2 unchecked: 8.4 (E2E requires browser) and 9.5 (manual requires human). All tasks within generator capability [x]: test deps (5.1-5.4), test writing (6.1-7.3), E2E file (8.1-8.3), cleanup (9.1-9.4).",
+        "notes": "2 remaining tasks require external conditions (browser, human). Follows precedent from implementation eval attempt 1."
+      },
+      {
+        "item_id": "I6",
+        "pass": true,
+        "evidence": "git diff shows changes only in: test files (skeleton-to-real-assertions upgrade), packages/frontend/package.json (test deps+scripts), tsconfig.json (jest-dom types), vitest.config.ts (new), vitest.setup.ts (new), playwright.config.ts (testMatch), root package.json (test deps), pnpm-lock.yaml (auto). All traceable to change.",
+        "notes": "No extraneous or unrelated code changes detected."
+      },
+      {
+        "item_id": "I7",
+        "pass": true,
+        "evidence": "pnpm build passes clean. 23/23 vitest tests pass (6 SyncUrlRouting + 6 SyncUrlRedirects + 11 AppRouting). Biome lint passes. TypeScript compilation passes with @testing-library/jest-dom types.",
+        "notes": "Static checks and test execution verified by build/test output."
+      },
+      {
+        "item_id": "I8",
+        "pass": true,
+        "evidence": "All 6 design decisions from Section 4: (1) BrowserRouter main.tsx:18-20; (2) data in App.tsx via useState; (3) NavLink replaces button with data-testid; (4) UploadArea inline; (5) ViewMode type retained in types.ts; (6) config-driven routeConfigs drives NavLink+Route.",
+        "notes": "Every design decision from design.md Section 4 reflected in code."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "07-acceptance",
+    "timestamp": "2026-05-20T16:55:00Z",
+    "attempt": 4,
+    "verdict": "pass",
+    "report": "All required items pass. A1: 8/8 ACs traced to code+test evidence (App.tsx:32-34,307-311, main.tsx:18-20, unit/E2E tests). A2: no scope creep. A3: 6/6 in_scope done. A4: all 8 out_of_scope absent. A5 optional: 4/5 risk mitigations. A7: all 37 tasks [x]. Verdict: pass.",
+    "items": [
+      {
+        "item_id": "A1",
+        "pass": true,
+        "evidence": "AC-1: App.tsx:32,222-235,309 + SyncUrlRouting.test.tsx:151-162 + sync-url.spec.ts:107-123. AC-2: App.tsx:34,236-248,309 + SyncUrlRouting.test.tsx:167-178 + sync-url.spec.ts:128-154. AC-3: App.tsx:27-31,155-161,309 + SyncUrlRouting.test.tsx:183-203 + sync-url.spec.ts:159-170. AC-4: App.tsx:37,307 + SyncUrlRedirects.test.tsx:151-161 + sync-url.spec.ts:175-192. AC-5: App.tsx:311 + SyncUrlRedirects.test.tsx:166-174 + sync-url.spec.ts:197-211. AC-6: main.tsx:18-20 + sync-url.spec.ts:216-240. AC-7: main.tsx:18-20,App.tsx:306-312 + sync-url.spec.ts:245-266. AC-8: App.tsx:288-300 + sync-url.spec.ts:271-306.",
+        "notes": "All 8 ACs have implementation and test evidence."
+      },
+      {
+        "item_id": "A2",
+        "pass": true,
+        "evidence": "Changes limited to: react-router-dom dep, BrowserRouter, Routes/NavLink refactor, ArchitectureView testid addition (for AC-3), test infra (vitest/playwright config), e2e/app.spec.ts combos field fix. Server.ts diff is unrelated C4 template extraction. No new features beyond proposal in_scope.",
+        "notes": "No scope creep detected."
+      },
+      {
+        "item_id": "A3",
+        "pass": true,
+        "evidence": "(1) react-router-dom dep: packages/frontend/package.json:29. (2) BrowserRouter: main.tsx:18-20. (3) Routes+Route: App.tsx:306-312. (4) NavLink: App.tsx:288-300. (5) Root / -> /graph: App.tsx:307. (6) Unknown path /* -> /graph: App.tsx:311.",
+        "notes": "All 6 in_scope items implemented."
+      },
+      {
+        "item_id": "A4",
+        "pass": true,
+        "evidence": "Architecture viewId not URL-synced. selectedNodeId (App.tsx:46) and expandedDirs (App.tsx:45) remain React state. lang (App.tsx:40) and theme (App.tsx:41) not in URL. Server routing unchanged. No data/upload URL persistence. No URLSearchParams/hash/popstate usage in src/.",
+        "notes": "No out_of_scope items implemented."
+      },
+      {
+        "item_id": "A5",
+        "pass": true,
+        "evidence": "Risk 1 (E2E compat): data-testid preserved App.tsx:296-297. Risk 2 (old links): /* redirect App.tsx:311. Risk 3 (data props): useState in App.tsx:42. Risk 4 (History API): fallback NOT implemented. Risk 5 (fetch race): useEffect App.tsx:110-112.",
+        "notes": "Optional. 4/5 risk mitigations in code. Risk 4 missing but low-impact."
+      },
+      {
+        "item_id": "A7",
+        "pass": true,
+        "evidence": "All 37 tasks across 9 phases in tasks.md are [x]: core routing (Phases 1-4), test infra (Phase 5), unit tests (Phase 6), integration tests (Phase 7), E2E tests (Phase 8), cleanup/verify (Phase 9). 23 vitest tests pass with real assertions.",
+        "notes": "All tasks completed per tasks.md."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  }
+]

@@ -1,19 +1,45 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
 import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
 import { useT } from './i18n';
 import type { TKey } from './i18n';
 import { useTheme } from './theme';
-import type { GraphNode, ProcessedGraph, ViewMode, ViolationInfo } from './types';
+import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
+
+/** Single source of truth for all page-level route metadata. */
+interface RouteConfig {
+  /** Page route path — must start with `/` and must NOT start with `/api/` (reserved for Express). */
+  path: string;
+  /** i18n translation key for the nav button label. */
+  label: TKey;
+  /** `data-testid` attribute for the nav button (used by E2E tests). */
+  testId: string;
+  /** When `true`, the view requires `data` — renders upload area when data is null. */
+  needsData: boolean;
+}
+
+const routeConfigs: RouteConfig[] = [
+  {
+    path: '/architecture',
+    label: 'nav.architecture',
+    testId: 'nav-architecture',
+    needsData: false,
+  },
+  { path: '/graph', label: 'nav.graph', testId: 'nav-graph', needsData: true },
+  { path: '/report', label: 'nav.report', testId: 'nav-report', needsData: true },
+  { path: '/metrics', label: 'nav.metrics', testId: 'nav-metrics', needsData: true },
+];
+
+const DEFAULT_VIEW = '/graph';
 
 function App() {
   const { t, lang, setLang } = useT();
   const { theme, cycleTheme } = useTheme();
   const [data, setData] = useState<ProcessedGraph | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('graph');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
@@ -119,6 +145,113 @@ function App() {
     theme === 'dark' ? <MoonIcon /> : theme === 'light' ? <SunIcon /> : <MonitorIcon />;
   const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
 
+  /**
+   * Renders the view for a given route configuration.
+   * - `needsData: false` routes (e.g. `/architecture`) always render their view.
+   * - `needsData: true` routes show the upload area when `data` is null.
+   * - When data is available, renders the corresponding view component + reset button.
+   */
+  function renderView(config: RouteConfig, data: ProcessedGraph | null) {
+    if (!config.needsData) {
+      return (
+        <Suspense fallback={<div style={styles.suspenseFallback}>{t('architecture.loading')}</div>}>
+          <ArchitectureView />
+        </Suspense>
+      );
+    }
+
+    if (!data) {
+      return (
+        <div
+          style={styles.uploadArea}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          data-testid="upload-area"
+        >
+          <input
+            type="file"
+            accept=".json"
+            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+            style={styles.fileInput}
+            id="file-input"
+            data-testid="file-input"
+          />
+          <label htmlFor="file-input" style={styles.uploadLabel}>
+            <div style={styles.uploadIcon}>📁</div>
+            <div>{t('upload.prompt')}</div>
+            <div style={styles.uploadHint}>{t('upload.hint')}</div>
+          </label>
+          {loading && <div data-testid="loading">{t('upload.loading')}</div>}
+          {error && (
+            <div style={styles.error} data-testid="error-message">
+              {error}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    switch (config.path) {
+      case '/graph':
+        return (
+          <>
+            <div style={styles.graphSplitLayout} data-testid="graph-view">
+              <DependencyGraph
+                data={data}
+                onToggleDir={handleToggleDir}
+                onNodeSelect={handleNodeSelect}
+                selectedNodeId={selectedNodeId}
+              />
+              <DetailPanel
+                node={selectedNode}
+                edges={data.edges}
+                violations={data.violations}
+                nodeMap={nodeMap}
+              />
+            </div>
+            <button
+              type="button"
+              style={styles.resetBtn}
+              onClick={() => setData(null)}
+              data-testid="reset-btn"
+            >
+              {t('upload.newFile')}
+            </button>
+          </>
+        );
+      case '/report':
+        return (
+          <>
+            <ReportView violations={data.violations} />
+            <button
+              type="button"
+              style={styles.resetBtn}
+              onClick={() => setData(null)}
+              data-testid="reset-btn"
+            >
+              {t('upload.newFile')}
+            </button>
+          </>
+        );
+      case '/metrics':
+        return (
+          <>
+            <MetricsView data={data} />
+            <button
+              type="button"
+              style={styles.resetBtn}
+              onClick={() => setData(null)}
+              data-testid="reset-btn"
+            >
+              {t('upload.newFile')}
+            </button>
+          </>
+        );
+      default:
+        return <Navigate to={DEFAULT_VIEW} replace />;
+    }
+  }
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -152,109 +285,31 @@ function App() {
             {themeIcon}
           </button>
           <nav style={styles.nav}>
-            <button
-              type="button"
-              style={{
-                ...styles.navBtn,
-                ...(viewMode === 'architecture' ? styles.navBtnActive : {}),
-              }}
-              onClick={() => setViewMode('architecture')}
-              data-testid="nav-architecture"
-            >
-              {t('nav.architecture')}
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.navBtn, ...(viewMode === 'graph' ? styles.navBtnActive : {}) }}
-              onClick={() => setViewMode('graph')}
-              data-testid="nav-graph"
-            >
-              {t('nav.graph')}
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.navBtn, ...(viewMode === 'report' ? styles.navBtnActive : {}) }}
-              onClick={() => setViewMode('report')}
-              data-testid="nav-report"
-            >
-              {t('nav.report')}
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.navBtn, ...(viewMode === 'metrics' ? styles.navBtnActive : {}) }}
-              onClick={() => setViewMode('metrics')}
-              data-testid="nav-metrics"
-            >
-              {t('nav.metrics')}
-            </button>
+            {routeConfigs.map(({ path, label, testId }) => (
+              <NavLink
+                key={path}
+                to={path}
+                style={({ isActive }) => ({
+                  ...styles.navBtn,
+                  ...(isActive ? styles.navBtnActive : {}),
+                })}
+                data-testid={testId}
+              >
+                {t(label)}
+              </NavLink>
+            ))}
           </nav>
         </div>
       </header>
 
       <main style={styles.main}>
-        {viewMode === 'architecture' ? (
-          <Suspense
-            fallback={<div style={styles.suspenseFallback}>{t('architecture.loading')}</div>}
-          >
-            <ArchitectureView />
-          </Suspense>
-        ) : !data ? (
-          <div
-            style={styles.uploadArea}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            data-testid="upload-area"
-          >
-            <input
-              type="file"
-              accept=".json"
-              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-              style={styles.fileInput}
-              id="file-input"
-              data-testid="file-input"
-            />
-            <label htmlFor="file-input" style={styles.uploadLabel}>
-              <div style={styles.uploadIcon}>📁</div>
-              <div>{t('upload.prompt')}</div>
-              <div style={styles.uploadHint}>{t('upload.hint')}</div>
-            </label>
-            {loading && <div data-testid="loading">{t('upload.loading')}</div>}
-            {error && (
-              <div style={styles.error} data-testid="error-message">
-                {error}
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            {viewMode === 'graph' && (
-              <div style={styles.graphSplitLayout}>
-                <DependencyGraph
-                  data={data}
-                  onToggleDir={handleToggleDir}
-                  onNodeSelect={handleNodeSelect}
-                  selectedNodeId={selectedNodeId}
-                />
-                <DetailPanel
-                  node={selectedNode}
-                  edges={data.edges}
-                  violations={data.violations}
-                  nodeMap={nodeMap}
-                />
-              </div>
-            )}
-            {viewMode === 'report' && <ReportView violations={data.violations} />}
-            {viewMode === 'metrics' && <MetricsView data={data} />}
-            <button
-              type="button"
-              style={styles.resetBtn}
-              onClick={() => setData(null)}
-              data-testid="reset-btn"
-            >
-              {t('upload.newFile')}
-            </button>
-          </>
-        )}
+        <Routes>
+          <Route path="/" element={<Navigate to={DEFAULT_VIEW} replace />} />
+          {routeConfigs.map((config) => (
+            <Route key={config.path} path={config.path} element={renderView(config, data)} />
+          ))}
+          <Route path="*" element={<Navigate to={DEFAULT_VIEW} replace />} />
+        </Routes>
       </main>
     </div>
   );
@@ -425,6 +480,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     fontSize: '14px',
     color: 'var(--color-text-secondary)',
+    textDecoration: 'none',
   },
   navBtnActive: {
     background: 'var(--color-accent-bg)',

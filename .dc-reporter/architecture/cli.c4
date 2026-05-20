@@ -1,20 +1,32 @@
 model {
-  extend cli {
+  extend root.cli {
+    bin = module 'bin' {
+      link ../../packages/cli/src/bin/cli.ts
+
+      root.cli.bin -[dependency]-> root.cli.commands.index
+    }
+
     commands = module 'commands' {
-      analyze = module 'Analyze' {
+      index = module 'index'
+
+      analyze = module 'index' {
         link ../../packages/cli/src/commands/analyze.ts
       }
-      open = module 'Open'
+      open = module 'open'
+
+      root.cli.commands.index -[dependency]-> root.cli.commands.analyze
+      root.cli.commands.index -[dependency]-> root.cli.commands.open
+      root.cli.commands.open -[dependency]-> root.cli.utils.server
     }
 
     utils = module 'utils' {
-      server = module 'Server'
-      convert = module 'Convert'
+      server = module 'server'
+      convert = module 'convert'
 
-      server -[dependency]-> convert
+      root.cli.utils.server -[dependency]-> root.cli.utils.convert
+      root.cli.utils.convert -[dependency]-> root.rust
+      root.cli.utils.server -> root.frontend 'express启动frontend/dist'
     }
 
-    commands.open -[dependency]-> utils.server
-    utils.convert -[dependency]-> rust
   }
 }

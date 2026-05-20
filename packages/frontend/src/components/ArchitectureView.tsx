@@ -146,12 +146,12 @@ export function ArchitectureView() {
   }, [reload]);
 
   if (state.status === 'loading') {
-    return <div style={styles.center}>{t('architecture.loading')}</div>;
+    return <div style={styles.center} data-testid="architecture-view">{t('architecture.loading')}</div>;
   }
 
   if (state.status === 'error') {
     return (
-      <div style={styles.center}>
+      <div style={styles.center} data-testid="architecture-view">
         <div style={styles.errorIcon}>!</div>
         <p>{t('architecture.error')}</p>
         <p style={styles.errorDetail}>{state.message}</p>
@@ -164,7 +164,7 @@ export function ArchitectureView() {
 
   if (state.status === 'empty') {
     return (
-      <div style={styles.center}>
+      <div style={styles.center} data-testid="architecture-view">
         <div style={styles.emptyIcon}>🏗</div>
         <p style={styles.emptyTitle}>{t('architecture.createPrompt')}</p>
         {generateError && <p style={styles.errorDetail}>{generateError}</p>}
@@ -181,7 +181,7 @@ export function ArchitectureView() {
     );
   }
 
-  return <div style={styles.diagramContainer}>{state.ArchitectureDiagram}</div>;
+  return <div style={styles.diagramContainer} data-testid="architecture-view">{state.ArchitectureDiagram}</div>;
 }
 
 export default ArchitectureView;

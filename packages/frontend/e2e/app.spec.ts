@@ -31,6 +31,7 @@ const sampleGraphData = {
     { source: 'src/index.ts', target: 'src/utils.ts', edge_type: 'local', weight: 1 },
     { source: 'src/index.ts', target: 'src/components', edge_type: 'local', weight: 2 },
   ],
+  combos: [],
   meta: {
     original_node_count: 3,
     aggregated_node_count: 3,

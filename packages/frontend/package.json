@@ -13,6 +13,8 @@
     "format": "biome format --write",
     "lint-deps": "dependency-cruiser --config .dependency-cruiser.json src/",
     "lint-deps-all": "dependency-cruiser --config .dependency-cruiser.json src/ -I",
+    "test": "vp test",
+    "test:watch": "vp test watch",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed"
@@ -23,11 +25,14 @@
     "@likec4/diagram": "1.56.0",
     "@likec4/layouts": "1.56.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
     "@dcr-reporter/wasm": "workspace:*",
     "@playwright/test": "^1.45.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
