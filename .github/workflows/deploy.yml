@@ -52,7 +52,16 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      # 5. 安装完整的开发依赖并进行打包（仅在版本改变时执行）
+      # 5. 安装 Rust 工具链（wasm-pack 构建依赖）
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install wasm-pack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: wasm-pack
+
+      # 6. 安装完整的开发依赖并进行打包（仅在版本改变时执行）
       - name: Install dependencies and Build
         run: |
           pnpm install --frozen-lockfile
