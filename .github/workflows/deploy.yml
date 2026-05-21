@@ -3,7 +3,7 @@ name: Build and Deploy to Release Branch
 on:
   push:
     branches:
-      - master # 当 master 分支有代码推送时触发
+      - main
     paths:
       - 'package.json'
   workflow_dispatch:
