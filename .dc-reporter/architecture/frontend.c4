@@ -1,0 +1,7 @@
+model {
+  extend root.frontend {
+    App = module 'App' {
+
+    }
+  }
+}

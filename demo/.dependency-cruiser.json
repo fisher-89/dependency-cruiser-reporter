@@ -1,0 +1,28 @@
+{
+  "forbidden": [
+    {
+      "name": "no-circular",
+      "comment": "Disallow circular dependencies",
+      "severity": "error",
+      "from": {},
+      "to": {
+        "circular": true
+      }
+    },
+    {
+      "name": "no-orphans",
+      "comment": "Disallow orphan modules",
+      "severity": "warn",
+      "from": {
+        "orphan": true,
+        "pathNot": "^src/index\\.js$"
+      },
+      "to": {}
+    }
+  ],
+  "options": {
+    "doNotFollow": {
+      "path": "node_modules"
+    }
+  }
+}

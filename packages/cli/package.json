@@ -1,0 +1,46 @@
+{
+  "name": "@dcr-reporter/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "CLI and HTTP server for dependency-cruiser-reporter",
+  "bin": {
+    "dep-report": "./dist/bin/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "build": "vp pack",
+    "build:rust": "cd ../rust && cargo build --release",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check src/ --write"
+  },
+  "dependencies": {
+    "@dcr-reporter/frontend": "workspace:*",
+    "@dcr-reporter/wasm": "workspace:*",
+    "@likec4/core": "1.56.0",
+    "@likec4/language-services": "1.56.0",
+    "bundle-require": "^5.1.0",
+    "commander": "^12.0.0",
+    "dependency-cruiser": "^17.3.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "typescript": "^5.5.0",
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

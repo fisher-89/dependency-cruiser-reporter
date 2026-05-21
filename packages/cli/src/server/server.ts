@@ -1,0 +1,129 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import express, { type Express, type Request, type Response } from 'express';
+import { convert } from '../utils/convert.js';
+import { setupArchitectureRoutes } from './architecture/architecture.js';
+import { fileURLToPath } from 'node:url';
+
+export interface ServerOptions {
+  port: number;
+  host: string;
+  graphFile?: string;
+  maxNodes?: number;
+  cwd?: string;
+}
+
+export class DcrServer {
+  private app: Express;
+  private _port: number;
+  private host: string;
+  private graphFile?: string;
+  private maxNodes: number;
+  private cwd: string;
+  private server?: ReturnType<typeof this.app.listen>;
+
+  /** Get the actual port the server is listening on */
+  get port(): number {
+    return this._port;
+  }
+
+  constructor(options: ServerOptions) {
+    this._port = options.port;
+    this.host = options.host;
+    this.graphFile = options.graphFile;
+    this.maxNodes = options.maxNodes ?? 200;
+    this.cwd = options.cwd ?? '.';
+
+    this.app = express();
+    this.app.use(express.json());
+    this.setupRoutes();
+  }
+
+  private setupRoutes(): void {
+    // Get frontend dist directory
+    // const cliDir = dirname(fileURLToPath(import.meta.url));
+    const frontendDist = fileURLToPath(new URL('../../frontend/dist', import.meta.url).href);
+
+    // Architecture routes (C4 model parsing & generation)
+    setupArchitectureRoutes(this.app, this.cwd);
+
+    // API: Get graph data (auto-converts raw dependency-cruiser JSON)
+    this.app.post('/api/graph', async (req: Request, res: Response) => {
+      if (!this.graphFile) {
+        res.status(404).json({ error: 'No graph file specified' });
+        return;
+      }
+
+      if (!existsSync(this.graphFile)) {
+        res.status(404).json({ error: `Graph file not found: ${this.graphFile}` });
+        return;
+      }
+
+      try {
+        const content = readFileSync(this.graphFile, 'utf-8');
+        const parsed = JSON.parse(content);
+        const expandedDirs: string[] | undefined = req.body?.expanded_dirs?.length
+          ? req.body.expanded_dirs
+          : undefined;
+
+        if (parsed.modules && Array.isArray(parsed.modules)) {
+          const graph = await convert(content, this.maxNodes, expandedDirs);
+          res.json(graph);
+          return;
+        }
+
+        // Unknown format
+        res.status(400).json({ error: 'Unrecognized graph file format' });
+      } catch (error) {
+        res.status(500).json({ error: 'Failed to read graph file', details: String(error) });
+      }
+    });
+
+    // Serve frontend static files
+    this.app.use(express.static(frontendDist));
+
+    // SPA fallback
+    this.app.get('*', (_req: Request, res: Response) => {
+      const indexPath = resolve(frontendDist, 'index.html');
+      if (existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send(`Frontend not built. Run 'pnpm build' in packages/frontend.(PATH:${indexPath})`);
+      }
+    });
+  }
+
+  async start(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const tryListen = (port: number) => {
+        const server = this.app.listen(port, this.host, () => {
+          this._port = port;
+          this.server = server;
+          resolve();
+        });
+
+        server.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'EADDRINUSE' && port < 65535) {
+            console.log(`Port ${port} is in use, trying ${port + 1}...`);
+            server.close();
+            tryListen(port + 1);
+          } else {
+            reject(err);
+          }
+        });
+      };
+
+      tryListen(this.port);
+    });
+  }
+
+  stop(): void {
+    this.server?.close();
+  }
+}
+
+export function createServer(options: ServerOptions): DcrServer {
+  return new DcrServer(options);
+}
+
+export default DcrServer;

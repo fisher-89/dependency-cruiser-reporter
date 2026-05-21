@@ -1,0 +1,16 @@
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite-plus';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': '/src',
+    },
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: true,
+  },
+});

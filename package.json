@@ -1,0 +1,32 @@
+{
+  "name": "dependency-cruiser-reporter",
+  "private": true,
+  "version": "0.1.9",
+  "exports": {
+    ".": {
+      "types": "./packages/cli/dist/index.d.ts",
+      "import": "./packages/cli/dist/index.js"
+    }
+  },
+  "bin": "./packages/cli/bin/cli.js",
+  "scripts": {
+    "init": "pnpm run build:rust && pnpm i",
+    "build": "pnpm run build:rust && pnpm run build:ts",
+    "build:rust": "node scripts/build-rust.js",
+    "build:ts": "pnpm -r build",
+    "analyze": "node packages/cli/bin/cli.js analyze",
+    "open": "node packages/cli/bin/cli.js open",
+    "demo": "pnpm run analyze -p demo && pnpm run open -f demo-graph.json",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/node": "^20.19.39",
+    "@voidzero-dev/vite-plus-win32-x64-msvc": "^0.1.14",
+    "typescript": "^5.5.0",
+    "vite-plus": "catalog:"
+  },
+  "packageManager": "pnpm@10.33.2"
+}

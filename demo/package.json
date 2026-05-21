@@ -1,0 +1,6 @@
+{
+  "name": "demo-project",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Demo project for dependency-cruiser-reporter"
+}
