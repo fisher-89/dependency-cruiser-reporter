@@ -6,6 +6,7 @@ on:
       - master # 当 master 分支有代码推送时触发
     paths:
       - 'package.json'
+  workflow_dispatch:
 
 permissions:
   contents: write # 赋予 Action 写入仓库和推送分支的权限
