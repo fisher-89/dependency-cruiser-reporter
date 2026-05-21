@@ -1,0 +1,17 @@
+# Default configuration for Clippy
+# Run with: cargo clippy --all-targets --all-features
+
+[lints.rust]
+# Clippy recommended lints
+warnings = []
+
+[lint.clippy]
+# Additional clippy lints
+all = "allow"
+pedantic = "warn"
+nursery = "warn"
+
+# Disable specific lints that are too noisy
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+let_underscore_drop = "allow"

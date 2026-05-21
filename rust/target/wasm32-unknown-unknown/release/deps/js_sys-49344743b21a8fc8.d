@@ -1,0 +1,10 @@
+/home/runner/work/dependency-cruiser-reporter/dependency-cruiser-reporter/packages/rust/target/wasm32-unknown-unknown/release/deps/js_sys-49344743b21a8fc8.d: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/lib.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/mod.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/queue.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/task/singlethread.rs
+
+/home/runner/work/dependency-cruiser-reporter/dependency-cruiser-reporter/packages/rust/target/wasm32-unknown-unknown/release/deps/libjs_sys-49344743b21a8fc8.rlib: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/lib.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/mod.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/queue.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/task/singlethread.rs
+
+/home/runner/work/dependency-cruiser-reporter/dependency-cruiser-reporter/packages/rust/target/wasm32-unknown-unknown/release/deps/libjs_sys-49344743b21a8fc8.rmeta: /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/lib.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/mod.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/queue.rs /home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/task/singlethread.rs
+
+/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/lib.rs:
+/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/mod.rs:
+/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/queue.rs:
+/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/js-sys-0.3.97/src/futures/task/singlethread.rs:

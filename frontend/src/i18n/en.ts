@@ -1,0 +1,56 @@
+export default {
+  app: { title: 'Dependency Cruiser Reporter' },
+  nav: {
+    architecture: 'Architecture',
+    graph: 'Dependency Graph',
+    report: 'Report',
+    metrics: 'Metrics',
+  },
+  upload: {
+    prompt: 'Drop JSON file here or click to upload',
+    hint: 'Upload dependency-cruiser JSON output',
+    newFile: 'Upload New File',
+    loading: 'Loading...',
+  },
+  report: {
+    errors: 'Errors',
+    warnings: 'Warnings',
+    info: 'Info',
+    noViolations: 'No violations found',
+  },
+  detail: {
+    clickHint: 'Click a node to view details',
+    nodeDetails: 'Node Details',
+    stability: 'Stability',
+    dependencies: 'Dependencies',
+    dependents: 'Dependents',
+    violations: 'Violations',
+    noViolations: 'No violations',
+    stable: 'Stable',
+    balanced: 'Balanced',
+    unstable: 'Unstable',
+    naNoEdges: 'N/A (no edges)',
+    none: 'None',
+  },
+  metrics: {
+    originalNodes: 'Original Nodes',
+    aggregatedNodes: 'Aggregated Nodes',
+    dependencies: 'Dependencies',
+    violations: 'Violations',
+    edgeTypes: 'Edge Types',
+  },
+  severity: { error: 'ERROR', warn: 'WARN', info: 'INFO' },
+  graph: { noData: 'No graph data available' },
+  theme: { light: 'Light', dark: 'Dark', auto: 'Auto' },
+  architecture: {
+    empty:
+      'No architecture diagram available. Add .c4 files to .dc-reporter/architecture/ in your workspace.',
+    loading: 'Loading architecture model...',
+    error: 'Failed to load architecture model',
+    createPrompt:
+      'Visualize your system architecture using the C4 model. Generate a starter template to begin.',
+    createBtn: 'Generate Architecture Model',
+    creating: 'Generating...',
+    createError: 'Failed to generate architecture model',
+  },
+} as const;
