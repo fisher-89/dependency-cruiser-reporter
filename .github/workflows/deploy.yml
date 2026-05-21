@@ -72,5 +72,5 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: release
-          folder: /
+          folder: .
           clean: false
