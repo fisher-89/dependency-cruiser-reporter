@@ -146,7 +146,11 @@ export function ArchitectureView() {
   }, [reload]);
 
   if (state.status === 'loading') {
-    return <div style={styles.center} data-testid="architecture-view">{t('architecture.loading')}</div>;
+    return (
+      <div style={styles.center} data-testid="architecture-view">
+        {t('architecture.loading')}
+      </div>
+    );
   }
 
   if (state.status === 'error') {
@@ -181,7 +185,11 @@ export function ArchitectureView() {
     );
   }
 
-  return <div style={styles.diagramContainer} data-testid="architecture-view">{state.ArchitectureDiagram}</div>;
+  return (
+    <div style={styles.diagramContainer} data-testid="architecture-view">
+      {state.ArchitectureDiagram}
+    </div>
+  );
 }
 
 export default ArchitectureView;

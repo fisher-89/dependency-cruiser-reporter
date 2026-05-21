@@ -69,24 +69,8 @@ jobs:
 
       # 5. 将 packages 和 package.json 部署到 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch
-        if: steps.check-version.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # 切换到 release 分支（如果不存在则基于 main 创建）
-          if git fetch origin release 2>/dev/null && git ls-remote --heads origin release | grep -q release; then
-            git checkout -b release origin/release
-          else
-            git checkout -b release
-          fi
-
-          # 删除旧文件，从当前工作目录复制构建产物
-          rm -rf packages/ package.json
-          cp -r "$GITHUB_WORKSPACE"/packages ./
-          cp "$GITHUB_WORKSPACE"/package.json ./
-
-          # 提交并推送
-          git add packages/ package.json
-          git diff --staged --quiet || git commit -m "deploy: release $(jq -r '.version' package.json)"
-          git push origin release
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: release
+          folder: /
+          clean: false
