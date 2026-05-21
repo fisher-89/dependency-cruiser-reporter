@@ -7,7 +7,7 @@ settings:
 catalogs:
   default:
     vite-plus:
-      specifier: latest
+      specifier: ^0.1.22
       version: 0.1.22
 
 overrides:
@@ -67,6 +67,9 @@ importers:
       typescript:
         specifier: ^5.5.0
         version: 5.9.3
+      vite-plus:
+        specifier: 'catalog:'
+        version: 0.1.22(@types/node@20.19.41)(esbuild@0.27.4)(typescript@5.9.3)(vite@8.0.13(@types/node@20.19.41)(esbuild@0.27.4))
 
   packages/e2e:
     dependencies:

@@ -6,7 +6,7 @@ import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const cliBinary = resolve(__dirname, "../cli/dist/bin/cli.js");
+const cliBinary = resolve(__dirname, "../cli/bin/cli.js");
 const testWorkspace = resolve(__dirname, ".test-workspace");
 const archDir = resolve(testWorkspace, ".dc-reporter", "architecture");
 

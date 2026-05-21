@@ -12,7 +12,7 @@ const sampleCruise = resolve(fixturesDir, "sample-cruise.json");
 const outputDir = resolve(__dirname, ".output");
 
 // Resolve CLI binary with absolute path
-const cliBinary = resolve(__dirname, "../cli/dist/bin/cli.js");
+const cliBinary = resolve(__dirname, "../cli/bin/cli.js");
 
 // Check for WASM module
 let wasmModule: { aggregate: typeof aggregate } | null = null;
