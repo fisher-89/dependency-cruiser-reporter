@@ -67,7 +67,13 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
 
-      # 5. 将 packages 和 package.json 部署到 release 分支（仅在版本改变时执行）
+      # 5. 替换 .gitignore，确保构建产物能被提交到 release 分支
+      - name: Override .gitignore for release
+        run: |
+          rm .gitignore
+          echo "node_modules/" > .gitignore
+
+      # 6. 将构建产物部署到 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
