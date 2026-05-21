@@ -23,3 +23,4 @@ test-results/
 .likec4
 
 packages/cli/bin
+packages/rust/pkg/
