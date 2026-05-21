@@ -32,9 +32,8 @@ function findWasmPack() {
 const wasmPack = findWasmPack();
 
 if (!wasmPack) {
-  console.warn('WARN: WASM build skipped - wasm-pack not found');
-  console.warn('Install with: cargo install wasm-pack');
-  process.exit(0);
+  console.error('ERROR: wasm-pack not found. Install with: cargo install wasm-pack');
+  process.exit(1);
 }
 
 console.log(`Using wasm-pack: ${wasmPack}`);

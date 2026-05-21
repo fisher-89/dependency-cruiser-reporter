@@ -1,7 +1,7 @@
 {
   "name": "dependency-cruiser-reporter",
   "private": true,
-  "version": "0.1.9",
+  "version": "0.1.10",
   "exports": {
     ".": {
       "types": "./packages/cli/dist/index.d.ts",
