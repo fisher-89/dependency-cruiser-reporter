@@ -40,18 +40,22 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      # 3. 安装 Node.js 环境（仅在版本改变时执行）
+      # 3. 安装 pnpm 包管理器
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      # 4. 安装 Node.js 环境（仅在版本改变时执行）
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: 'pnpm'
 
-      # 4. 安装完整的开发依赖并进行打包（仅在版本改变时执行）
+      # 5. 安装完整的开发依赖并进行打包（仅在版本改变时执行）
       - name: Install dependencies and Build
         run: |
-          npm ci
-          npm run build
+          pnpm install --frozen-lockfile
+          pnpm run build
 
       # 5. 将打包后的文件部署到单独的 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch

@@ -1,7 +1,7 @@
 {
   "name": "dependency-cruiser-reporter-monorepo",
   "private": true,
-  "version": "0.1.3",
+  "version": "0.1.4",
   "exports": {
     ".": {
       "types": "./packages/cli/dist/index.d.ts",
