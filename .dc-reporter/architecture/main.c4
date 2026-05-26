@@ -18,32 +18,33 @@ specification {
   }
 }
 model {
-  root = project 'project' {
+  ROOT = project {
     // 拆分packages 或 module
     cli = package 'cli' '插件入口，提供analyze、open命令' {
       link ../../packages/cli
     }
 
-    frontend = package 'frontend'
+    frontend = package 'frontend' {
+      link ../../packages/frontend
+    }
 
     rust = package 'rust' '自动聚合节点并计算布局' {
       link ../../packages/rust
     }
   }
 
-  user = outer 'User'
-
-  user -> root 'use'
-  user -> root.cli.bin 'use'
+  USER = outer {
+    -> ROOT.cli.bin 'use'
+  }
 }
 views {
-  view all of root {
+  view all of ROOT {
     title 'all'
-    include *, root.**
+    include *, ROOT.**
   }
 
   view top {
     title 'top-only'
-    include root.*
+    include ROOT.*
   }
 }

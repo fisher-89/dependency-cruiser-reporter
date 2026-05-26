@@ -111,36 +111,6 @@ function App() {
     fetchGraph();
   }, [fetchGraph]);
 
-  const handleFileUpload = useCallback(async (file: File) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const text = await file.text();
-      const parsed = JSON.parse(text) as ProcessedGraph;
-      setData(parsed);
-      setSelectedNodeId(null);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to parse JSON');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file?.name.endsWith('.json')) {
-        handleFileUpload(file);
-      }
-    },
-    [handleFileUpload]
-  );
-
   const themeIcon =
     theme === 'dark' ? <MoonIcon /> : theme === 'light' ? <SunIcon /> : <MonitorIcon />;
   const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
@@ -162,25 +132,7 @@ function App() {
 
     if (!data) {
       return (
-        <div
-          style={styles.uploadArea}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          data-testid="upload-area"
-        >
-          <input
-            type="file"
-            accept=".json"
-            onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
-            style={styles.fileInput}
-            id="file-input"
-            data-testid="file-input"
-          />
-          <label htmlFor="file-input" style={styles.uploadLabel}>
-            <div style={styles.uploadIcon}>📁</div>
-            <div>{t('upload.prompt')}</div>
-            <div style={styles.uploadHint}>{t('upload.hint')}</div>
-          </label>
+        <div style={styles.uploadArea} data-testid="upload-area">
           {loading && <div data-testid="loading">{t('upload.loading')}</div>}
           {error && (
             <div style={styles.error} data-testid="error-message">
@@ -209,42 +161,18 @@ function App() {
                 nodeMap={nodeMap}
               />
             </div>
-            <button
-              type="button"
-              style={styles.resetBtn}
-              onClick={() => setData(null)}
-              data-testid="reset-btn"
-            >
-              {t('upload.newFile')}
-            </button>
           </>
         );
       case '/report':
         return (
           <>
             <ReportView violations={data.violations} />
-            <button
-              type="button"
-              style={styles.resetBtn}
-              onClick={() => setData(null)}
-              data-testid="reset-btn"
-            >
-              {t('upload.newFile')}
-            </button>
           </>
         );
       case '/metrics':
         return (
           <>
             <MetricsView data={data} />
-            <button
-              type="button"
-              style={styles.resetBtn}
-              onClick={() => setData(null)}
-              data-testid="reset-btn"
-            >
-              {t('upload.newFile')}
-            </button>
           </>
         );
       default:
@@ -497,22 +425,6 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     background: 'var(--color-surface)',
   },
-  fileInput: {
-    display: 'none',
-  },
-  uploadLabel: {
-    cursor: 'pointer',
-    display: 'block',
-  },
-  uploadIcon: {
-    fontSize: '48px',
-    marginBottom: '16px',
-  },
-  uploadHint: {
-    fontSize: '14px',
-    color: 'var(--color-text-muted)',
-    marginTop: '8px',
-  },
   error: {
     color: 'var(--color-error)',
     marginTop: '16px',
@@ -626,15 +538,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     background: 'var(--color-bg)',
     marginBottom: '8px',
-  },
-  resetBtn: {
-    marginTop: '16px',
-    padding: '8px 16px',
-    background: 'var(--color-btn-bg)',
-    border: 'none',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: '14px',
   },
   suspenseFallback: {
     display: 'flex',

@@ -8,7 +8,7 @@
 
 ### Requirement: 命令接口
 
-系统 SHALL 提供两个命令：`analyze` 和 `open`，均支持全局 `--cwd` 选项。
+系统 SHALL 提供三个命令：`analyze`、`open` 和 `archi-to-rules`，均支持全局 `--cwd` 选项。
 
 #### analyze 命令
 
@@ -72,6 +72,44 @@ dep-report open [options]
 - THEN 系统启动 Express 服务器
 - AND 服务器从 `./my-project/.dc-reporter/` 读取 C4 文件和图文件
 - AND `/api/config` 返回该工作区的配置
+
+#### archi-to-rules 命令
+
+```bash
+dep-report archi-to-rules [options]
+```
+
+| 选项 | 默认值 | 描述 |
+|------|--------|------|
+| `--cwd <path>` | `"."` | 工作区根目录，`.c4` 文件从此目录的 `.dc-reporter/architecture/` 读取 |
+| `-o, --output <path>` | `<cwd>/.dc-reporter/archi-rules.json` | 输出规则 JSON 文件路径 |
+
+##### Scenario: archi-to-rules 执行（默认路径）
+
+- **WHEN** 用户执行 `dep-report archi-to-rules`
+- **THEN** 系统从 `<cwd>/.dc-reporter/architecture/` 读取所有 `.c4` 文件
+- **AND** 输出规则写入 `<cwd>/.dc-reporter/archi-rules.json`
+- **AND** `.dependency-cruiser.js` 被更新为 `extends: [".dc-reporter/archi-rules.json"]`
+
+##### Scenario: archi-to-rules 执行（带 --cwd）
+
+- **WHEN** 用户执行 `dep-report archi-to-rules --cwd ./my-project`
+- **THEN** 系统从 `./my-project/.dc-reporter/architecture/` 读取 `.c4` 文件
+- **AND** 输出规则写入 `./my-project/.dc-reporter/archi-rules.json`
+- **AND** `.dependency-cruiser.js` 在 `./my-project/` 目录下被更新
+
+##### Scenario: archi-to-rules 执行（带 --output）
+
+- **WHEN** 用户执行 `dep-report archi-to-rules -o ./custom-rules.json`
+- **THEN** 系统输出规则写入 `./custom-rules.json`
+- **AND** `.dependency-cruiser.js` 的 `extends` 指向 `./custom-rules.json`
+
+##### Scenario: archi-to-rules 执行（架构目录不存在）
+
+- **WHEN** 用户执行 `dep-report archi-to-rules`
+- **AND** `<cwd>/.dc-reporter/architecture/` 目录不存在或为空
+- **THEN** 命令输出错误信息，exit code 为 1
+- **AND** 没有规则文件被写入
 
 ### Requirement: HTTP API 端点
 
@@ -196,10 +234,12 @@ packages/cli/
 │   ├── commands/
 │   │   ├── index.ts     # 命令导出
 │   │   ├── analyze.ts   # analyze 命令
+│   │   ├── archi-to-rules.ts  # archi-to-rules 命令
 │   │   └── open.ts      # open 命令
-│   ├── utils/
-│   │   ├── convert.ts   # Node.js JSON 转换器
-│   │   └── server.ts    # Express HTTP 服务器（含架构文件端点）
+│   ├── server/
+│   │   ├── server.ts    # Express HTTP 服务器
+│   │   └── architecture/
+│   │       └── architecture.ts  # C4 模型路由
 │   └── index.ts         # 主导出
 └── package.json
 ```

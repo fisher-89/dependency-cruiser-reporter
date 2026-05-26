@@ -1,5 +1,5 @@
 model {
-  extend root.frontend {
+  extend ROOT.frontend {
     App = module 'App' {
 
     }

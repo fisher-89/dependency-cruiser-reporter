@@ -37,6 +37,7 @@ fn test_aggregate_returns_non_empty_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
 
@@ -64,6 +65,7 @@ fn test_aggregate_small_project_expands_all() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
 
@@ -90,6 +92,7 @@ fn test_aggregate_large_project_has_expanded_dirs() {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             });
         }
     }
@@ -101,6 +104,7 @@ fn test_aggregate_large_project_has_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -147,6 +151,7 @@ fn test_aggregate_with_dependencies() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/utils.ts".to_string(),
@@ -155,6 +160,7 @@ fn test_aggregate_with_dependencies() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
@@ -194,6 +200,7 @@ fn test_aggregate_with_violations() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/b.ts".to_string(),
@@ -202,6 +209,7 @@ fn test_aggregate_with_violations() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
@@ -239,6 +247,7 @@ fn test_aggregate_with_explicit_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
 
@@ -260,6 +269,7 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Button.tsx".to_string(),
@@ -268,6 +278,7 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Input.tsx".to_string(),
@@ -276,6 +287,7 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "lib/utils.ts".to_string(),
@@ -284,6 +296,7 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
@@ -294,8 +307,14 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
 
     // Check that src files are file nodes
     let src_index = result.nodes.iter().find(|n| n.id == "src/index.ts");
-    let src_button = result.nodes.iter().find(|n| n.id == "src/components/Button.tsx");
-    let src_input = result.nodes.iter().find(|n| n.id == "src/components/Input.tsx");
+    let src_button = result
+        .nodes
+        .iter()
+        .find(|n| n.id == "src/components/Button.tsx");
+    let src_input = result
+        .nodes
+        .iter()
+        .find(|n| n.id == "src/components/Input.tsx");
     let lib_node = result.nodes.iter().find(|n| n.id == "lib");
 
     assert!(
@@ -317,7 +336,10 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
     assert_eq!(src_input.unwrap().node_type, NodeType::File);
 
     // lib should be collapsed to a directory node (not expanded)
-    assert!(lib_node.is_some(), "lib should be present as directory node");
+    assert!(
+        lib_node.is_some(),
+        "lib should be present as directory node"
+    );
     assert_eq!(lib_node.unwrap().node_type, NodeType::Directory);
 }
 
@@ -332,6 +354,7 @@ fn test_aggregate_expanded_dirs_nested() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Button.tsx".to_string(),
@@ -340,6 +363,7 @@ fn test_aggregate_expanded_dirs_nested() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/utils/format.ts".to_string(),
@@ -348,21 +372,20 @@ fn test_aggregate_expanded_dirs_nested() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
     let json = make_json(modules);
 
     // Expand only src/components, not src
-    let result = aggregate(
-        &json,
-        200,
-        Some(vec!["src/components".to_string()]),
-    )
-    .unwrap();
+    let result = aggregate(&json, 200, Some(vec!["src/components".to_string()])).unwrap();
 
     // src/components/Button.tsx should be a file node
-    let button = result.nodes.iter().find(|n| n.id == "src/components/Button.tsx");
+    let button = result
+        .nodes
+        .iter()
+        .find(|n| n.id == "src/components/Button.tsx");
     assert!(
         button.is_some(),
         "src/components/Button.tsx should be a file node"
@@ -531,6 +554,7 @@ fn test_sample_no_sibling_combo_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/app.ts".to_string(),
@@ -549,6 +573,7 @@ fn test_sample_no_sibling_combo_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/utils.ts".to_string(),
@@ -557,6 +582,7 @@ fn test_sample_no_sibling_combo_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Button.tsx".to_string(),
@@ -565,6 +591,7 @@ fn test_sample_no_sibling_combo_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Input.tsx".to_string(),
@@ -573,6 +600,7 @@ fn test_sample_no_sibling_combo_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
@@ -641,6 +669,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/app.ts".to_string(),
@@ -659,6 +688,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/App.tsx".to_string(),
@@ -690,6 +720,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Button.tsx".to_string(),
@@ -698,6 +729,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Input.tsx".to_string(),
@@ -706,6 +738,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/utils/format.ts".to_string(),
@@ -714,6 +747,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/utils/style.ts".to_string(),
@@ -722,6 +756,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "lib/helper.ts".to_string(),
@@ -730,6 +765,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "lib/validator.ts".to_string(),
@@ -738,6 +774,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "test/main.test.ts".to_string(),
@@ -746,6 +783,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
@@ -758,6 +796,7 @@ fn test_larger_project_no_overlap() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -767,10 +806,7 @@ fn test_larger_project_no_overlap() {
     println!("Nodes: {}", graph.nodes.len());
     println!("Combos: {}", graph.combos.len());
     for c in &graph.combos {
-        println!(
-            "  {} (parent: {:?}): {:?}",
-            c.id, c.combo, c.rect
-        );
+        println!("  {} (parent: {:?}): {:?}", c.id, c.combo, c.rect);
     }
 
     // Group combos by parent

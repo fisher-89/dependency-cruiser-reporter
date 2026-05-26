@@ -7,9 +7,6 @@ export default {
     metrics: 'Metrics',
   },
   upload: {
-    prompt: 'Drop JSON file here or click to upload',
-    hint: 'Upload dependency-cruiser JSON output',
-    newFile: 'Upload New File',
     loading: 'Loading...',
   },
   report: {

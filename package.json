@@ -1,7 +1,7 @@
 {
   "name": "dependency-cruiser-reporter",
   "private": true,
-  "version": "0.1.10",
+  "version": "0.1.11",
   "exports": {
     ".": {
       "types": "./packages/cli/dist/index.d.ts",
@@ -16,6 +16,7 @@
     "build:ts": "pnpm -r build",
     "analyze": "node packages/cli/bin/cli.js analyze",
     "open": "node packages/cli/bin/cli.js open",
+    "archi-to-rules": "node packages/cli/bin/cli.js archi-to-rules",
     "demo": "pnpm run analyze -p demo && pnpm run open -f demo-graph.json",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
@@ -25,7 +26,7 @@
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^20.19.39",
     "@voidzero-dev/vite-plus-win32-x64-msvc": "^0.1.14",
-    "typescript": "^5.5.0",
+    "typescript": "catalog:",
     "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@10.33.2"

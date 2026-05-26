@@ -1,0 +1,14 @@
+specification {
+  element package
+  element module
+}
+model {
+  core = package 'ROOT.core' {
+    utils = module 'ROOT.core.utils'
+  }
+}
+views {
+  view index {
+    include *
+  }
+}

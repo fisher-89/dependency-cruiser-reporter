@@ -1,5 +1,8 @@
+const path = require('node:path');
+
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
+  extends: ["./.dc-reporter/archi-rules.json"],
   forbidden: [
     {
       name: 'no-circular',
@@ -196,16 +199,12 @@ module.exports = {
     }
   ],
   options: {
-    // Which modules not to follow further when encountered
-    doNotFollow: {
-      // path: an array of regular expressions in strings to match against
-      // path: ['^node_modules']
-    },
+    baseDir: path.resolve(__dirname, './'),
 
     // Which modules to exclude
     exclude: {
       // path: an array of regular expressions in strings to match against
-      path: '(?:node_modules|^node:|dist|[.]test[.](?:ts|tsx|js|jsx)+$)',
+      path: '(^node:|node_modules|dist|openspec|demo|\\.claude|packages/cli/bin|[.](test|spec)[.](?:ts|tsx|js|jsx)+$)',
     },
 
     // Which modules to exclusively include (array of regular expressions in strings)
@@ -229,7 +228,7 @@ module.exports = {
     // false: don't look at process.getBuiltinModule calls (the default)
     // true: dependency-cruiser will detect calls to process.getBuiltinModule/
     // globalThis.process.getBuiltinModule as imports.
-    detectProcessBuiltinModuleCalls: true,
+    // detectProcessBuiltinModuleCalls: true,
 
     // prefix for links in html, d2, mermaid and dot/ svg output (e.g. 'https://github.com/you/yourrepo/blob/main/'
     // to open it on your online repo or `vscode://file/${process.cwd()}/` to 
@@ -322,7 +321,7 @@ module.exports = {
       // if you migrate to ESM (or are in an ESM environment already) you will want to
       // have "module" in the list of mainFields, like so:
       // mainFields: ["module", "main", "types", "typings"],
-      mainFields: ["main", "types", "typings"],
+      mainFields: ["module", "main", "types", "typings"],
 
       // A list of alias fields in package.jsons
       // See https://github.com/defunctzombie/package-browser-field-spec and

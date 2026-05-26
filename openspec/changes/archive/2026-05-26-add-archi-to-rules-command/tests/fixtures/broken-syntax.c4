@@ -1,0 +1,7 @@
+specification {
+  element package
+}
+model {
+  pkg = package 'ROOT.pkg'
+  broken syntax here !!!
+}

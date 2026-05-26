@@ -20,7 +20,10 @@ fn test_is_path_expanded_root() {
 fn test_is_path_expanded_ancestor() {
     // If "src" is expanded, all files under src (including nested dirs) should be expanded
     let set: HashSet<&str> = ["src"].into_iter().collect();
-    assert!(is_path_expanded("src/index.ts", &set), "direct child of src");
+    assert!(
+        is_path_expanded("src/index.ts", &set),
+        "direct child of src"
+    );
     assert!(
         is_path_expanded("src/components/Button.tsx", &set),
         "nested file under src"
@@ -42,6 +45,7 @@ fn test_build_hybrid_nodes_with_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "src/components/Button.tsx".to_string(),
@@ -50,6 +54,7 @@ fn test_build_hybrid_nodes_with_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
         Module {
             source: "lib/utils.ts".to_string(),
@@ -58,6 +63,7 @@ fn test_build_hybrid_nodes_with_expanded_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         },
     ];
 
