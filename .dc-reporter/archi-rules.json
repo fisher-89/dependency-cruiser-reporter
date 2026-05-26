@@ -1,0 +1,184 @@
+{
+  "forbidden": [
+    {
+      "name": "archi-cli",
+      "severity": "error",
+      "comment": "packages/cli can only depends on packages/cli (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-bin",
+      "severity": "error",
+      "comment": "packages/cli/src/bin/cli can only depends on packages/cli/src/bin/cli, packages/cli/src/commands (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/bin/cli"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/bin/cli",
+          "packages/cli/src/commands"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-commands",
+      "severity": "error",
+      "comment": "packages/cli/src/commands can only depends on packages/cli/src/commands (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/commands"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/commands"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-utils",
+      "severity": "error",
+      "comment": "packages/cli/src/utils can only depends on packages/cli/src/utils (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/utils"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/utils"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-server",
+      "severity": "error",
+      "comment": "packages/cli/src/server can only depends on packages/cli/src/server, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/server"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/server",
+          "packages/cli/src/utils/convert"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-commands-analyze",
+      "severity": "error",
+      "comment": "packages/cli/src/commands/analyze can only depends on packages/cli/src/commands/analyze (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/commands/analyze"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/commands/analyze"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-commands-open",
+      "severity": "error",
+      "comment": "packages/cli/src/commands/open can only depends on packages/cli/src/commands/open, packages/cli/src/server (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/commands/open"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/commands/open",
+          "packages/cli/src/server"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-utils-convert",
+      "severity": "error",
+      "comment": "packages/cli/src/utils/convert can only depends on packages/cli/src/utils/convert, packages/rust (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/utils/convert"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/utils/convert",
+          "packages/rust"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend",
+      "severity": "error",
+      "comment": "packages/frontend can only depends on packages/frontend (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-App",
+      "severity": "error",
+      "comment": "packages/frontend/src/App can only depends on packages/frontend/src/App (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/App"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/App"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-rust",
+      "severity": "error",
+      "comment": "packages/rust can only depends on packages/rust (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/rust"
+      },
+      "to": {
+        "pathNot": [
+          "packages/rust"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    }
+  ]
+}

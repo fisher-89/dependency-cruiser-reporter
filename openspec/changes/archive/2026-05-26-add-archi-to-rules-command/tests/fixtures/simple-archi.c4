@@ -1,0 +1,16 @@
+specification {
+  element package
+  element module
+}
+model {
+  core = package 'ROOT.core' {
+    utils = module 'ROOT.core.utils'
+  }
+  app = module 'ROOT.app'
+  core -> app 'Uses'
+}
+views {
+  view index {
+    include *
+  }
+}

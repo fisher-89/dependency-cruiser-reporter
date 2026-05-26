@@ -1,0 +1,13 @@
+specification {
+  element outer
+  element project
+}
+model {
+  user = outer 'External User'
+  platform = project 'Platform'
+}
+views {
+  view index {
+    include *
+  }
+}

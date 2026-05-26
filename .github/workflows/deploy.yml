@@ -72,6 +72,7 @@ jobs:
         run: |
           rm .gitignore
           echo "node_modules/" > .gitignore
+          rm packages/rust/pkg/.gitignore
 
       # 6. 将构建产物部署到 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch

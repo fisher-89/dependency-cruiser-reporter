@@ -2,37 +2,6 @@ import { LikeC4ModelProvider, ReactLikeC4 } from '@likec4/diagram';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useT } from '../i18n';
 
-// view,
-// pannable,
-// zoomable,
-// background,
-
-// showNavigationButtons,
-// enableDynamicViewWalkthrough,
-// enableFocusMode,
-// enableRelationshipBrowser,
-// enableElementDetails,
-// enableRelationshipDetails,
-// enableSearch: false,
-// ...isBrowserEnabled && {
-//   onCanvasClick: onNavigateToThisView,
-//   onNodeClick: onNavigateToThisView
-// },
-// enableElementTags: false,
-// enableNotes,
-// enableCompareWithLatest: false,
-// controls,
-// fitView = true
-// fitViewPadding: FitViewPaddings.default,
-// reduceGraphics,
-// enableNotations: hasNotations,
-// className: cx("likec4-static-view", isBrowserEnabled && cssInteractive),
-
-// reactFlowProps,
-// renderNodes,
-// ...props,
-// children
-
 type State =
   | { status: 'loading' }
   | { status: 'error'; message: string }
@@ -40,85 +9,70 @@ type State =
   | { status: 'ready'; ArchitectureDiagram: ReactNode };
 
 export function useArchitectureDiagram(): { state: State; reload: () => void } {
-  const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<State>({ status: 'loading' });
-  const [viewId, setViewId] = useState<string>('index');
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: reloadKey triggers re-fetch on reload()
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const res = await fetch('/api/architecture/model');
-        if (!res.ok) {
-          if (res.status === 404) {
-            if (!cancelled) setState({ status: 'empty' });
-          } else {
-            const body = await res.json().catch(() => ({ error: res.statusText }));
-            if (!cancelled)
-              setState({ status: 'error', message: body.details || body.error || res.statusText });
-          }
-          return;
+  const [viewId, setViewId] = useState<string>('');
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/architecture/model');
+      if (!res.ok) {
+        if (res.status === 404) {
+          setState({ status: 'empty' });
+        } else {
+          const body = await res.json().catch(() => ({ error: res.statusText }));
+          setState({ status: 'error', message: body.details || body.error || res.statusText });
         }
-
-        const data = await res.json();
-
-        const [{ LikeC4Model }, { layoutLikeC4Model }] = await Promise.all([
-          import('@likec4/core/model'),
-          import('@likec4/layouts'),
-        ]);
-
-        const model = LikeC4Model.create(data);
-        const layouted = await layoutLikeC4Model(model);
-
-        if (!cancelled) {
-          const rawData = layouted.$data as unknown as Record<string, unknown>;
-          if (!viewId) {
-            const viewIds = Object.keys((rawData.views as Record<string, unknown>) || {});
-            setViewId(viewIds[0] || 'index');
-          }
-          setState({
-            status: 'ready',
-            ArchitectureDiagram: (
-              <LikeC4ModelProvider likec4model={layouted}>
-                <ReactLikeC4
-                  viewId={viewId}
-                  pannable={true}
-                  enableDynamicViewWalkthrough={true}
-                  enableFocusMode={true}
-                  enableRelationshipBrowser={true}
-                  enableElementDetails={true}
-                  enableRelationshipDetails={true}
-                  enableSearch={true}
-                  enableElementTags={true}
-                  enableNotes={true}
-                  enableCompareWithLatest={true}
-                  controls={true}
-                  fitView={true}
-                  showNavigationButtons={true}
-                  onNavigateTo={setViewId}
-                />
-              </LikeC4ModelProvider>
-            ),
-          });
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setState({ status: 'error', message: err instanceof Error ? err.message : String(err) });
-        }
+        return;
       }
+
+      const data = await res.json();
+
+      const [{ LikeC4Model }, { layoutLikeC4Model }] = await Promise.all([
+        import('@likec4/core/model'),
+        import('@likec4/layouts'),
+      ]);
+
+      const model = LikeC4Model.create(data);
+      const layouted = await layoutLikeC4Model(model);
+
+      const rawData = layouted.$data as unknown as Record<string, unknown>;
+      if (!viewId) {
+        const viewIds = Object.keys((rawData.views as Record<string, unknown>) || {});
+        setViewId(viewIds.includes('all') ? 'all' : viewIds[0] || 'index');
+      }
+      setState({
+        status: 'ready',
+        ArchitectureDiagram: (
+          <LikeC4ModelProvider likec4model={layouted}>
+            <ReactLikeC4
+              viewId={viewId}
+              pannable={true}
+              enableDynamicViewWalkthrough={true}
+              enableFocusMode={true}
+              enableRelationshipBrowser={true}
+              enableElementDetails={true}
+              enableRelationshipDetails={true}
+              enableSearch={true}
+              enableElementTags={true}
+              enableNotes={true}
+              enableCompareWithLatest={true}
+              controls={true}
+              fitView={true}
+              showNavigationButtons={true}
+              onNavigateTo={setViewId}
+            />
+          </LikeC4ModelProvider>
+        ),
+      });
+    } catch (err) {
+      setState({ status: 'error', message: err instanceof Error ? err.message : String(err) });
     }
+  }, [viewId]);
 
+  useEffect(() => {
     load();
-    return () => {
-      cancelled = true;
-    };
-  }, [reloadKey, viewId]);
+  }, [load]);
 
-  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
-
-  return { state, reload };
+  return { state, reload: load };
 }
 
 export function ArchitectureView() {

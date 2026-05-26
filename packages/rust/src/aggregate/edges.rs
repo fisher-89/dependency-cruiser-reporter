@@ -26,6 +26,9 @@ pub(crate) fn extract_edges(modules: &[Module]) -> Vec<RawEdge> {
     let mut edges = Vec::new();
     for m in modules {
         for dep in &m.dependencies {
+            if dep.core_module.is_some_and(|f| f) {
+                continue;
+            }
             edges.push(RawEdge {
                 from: m.source.clone(),
                 to: dep.resolved.clone(),
@@ -56,14 +59,16 @@ pub(crate) fn aggregate_edges(
             .cloned()
             .unwrap_or_else(|| e.to.clone());
         if src_node != tgt_node {
-            let info = edge_map.entry((src_node.clone(), tgt_node.clone())).or_insert(EdgeInfo {
-                dep_types: Vec::new(),
-                count: 0,
-                has_circular: false,
-                error_count: 0,
-                warn_count: 0,
-                info_count: 0,
-            });
+            let info = edge_map
+                .entry((src_node.clone(), tgt_node.clone()))
+                .or_insert(EdgeInfo {
+                    dep_types: Vec::new(),
+                    count: 0,
+                    has_circular: false,
+                    error_count: 0,
+                    warn_count: 0,
+                    info_count: 0,
+                });
             info.dep_types.extend(e.dep_types.clone());
             info.count += 1;
             if e.circular {
@@ -88,9 +93,21 @@ pub(crate) fn aggregate_edges(
                 edge_type,
                 weight: info.count,
                 circular: if info.has_circular { Some(true) } else { None },
-                error_count: if info.error_count > 0 { Some(info.error_count) } else { None },
-                warn_count: if info.warn_count > 0 { Some(info.warn_count) } else { None },
-                info_count: if info.info_count > 0 { Some(info.info_count) } else { None },
+                error_count: if info.error_count > 0 {
+                    Some(info.error_count)
+                } else {
+                    None
+                },
+                warn_count: if info.warn_count > 0 {
+                    Some(info.warn_count)
+                } else {
+                    None
+                },
+                info_count: if info.info_count > 0 {
+                    Some(info.info_count)
+                } else {
+                    None
+                },
             }
         })
         .collect();

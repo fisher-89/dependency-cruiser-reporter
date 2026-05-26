@@ -21,6 +21,9 @@ pub(crate) fn build_hybrid_nodes(
     let mut dir_groups: HashMap<String, Vec<String>> = HashMap::new();
 
     for m in modules {
+        if m.core_module.is_some_and(|f| f) {
+            continue;
+        }
         if is_path_expanded(&m.source, expanded_set) {
             node_lookup.insert(m.source.clone(), m.source.clone());
         } else {
@@ -40,6 +43,9 @@ pub(crate) fn build_hybrid_nodes(
     // File nodes (expanded directories)
     let mut file_sources: HashSet<String> = HashSet::new();
     for m in modules {
+        if m.core_module.is_some_and(|f| f) {
+            continue;
+        }
         let node_id = &node_lookup[&m.source];
         if *node_id == m.source && !file_sources.contains(&m.source) {
             file_sources.insert(m.source.clone());

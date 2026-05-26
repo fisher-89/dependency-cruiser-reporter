@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { analyze, open } from '../commands/index.js';
+import { analyze, archiToRules, open } from '../commands/index.js';
 
 program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
 
@@ -36,6 +36,18 @@ program
       port: Number.parseInt(options.port, 10),
       host: options.host,
       cwd,
+    });
+  });
+
+program
+  .command('archi-to-rules')
+  .description('Convert C4 architecture model to dependency-cruiser rules')
+  .option('-o, --output <path>', 'Output rules JSON file path')
+  .action(async (options) => {
+    const cwd = program.opts().cwd;
+    await archiToRules({
+      cwd,
+      output: options.output,
     });
   });
 

@@ -120,6 +120,8 @@ pub(super) struct Module {
     pub valid: Option<bool>,
     #[serde(default)]
     pub rules: Option<Vec<Rule>>,
+    #[serde(rename = "coreModule")]
+    pub core_module: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

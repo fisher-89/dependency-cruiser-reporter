@@ -1,0 +1,11 @@
+specification {
+  element package
+}
+model {
+  isolated = package 'ROOT.isolated'
+}
+views {
+  view index {
+    include *
+  }
+}

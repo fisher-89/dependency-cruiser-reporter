@@ -1,0 +1,11 @@
+specification {
+  element module
+}
+model {
+  shared = module 'ROOT.shared'
+}
+views {
+  view index {
+    include *
+  }
+}

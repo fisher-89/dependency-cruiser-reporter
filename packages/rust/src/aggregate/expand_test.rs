@@ -1,7 +1,7 @@
+use super::super::hybrid::build_hybrid_nodes;
 use super::*;
 use crate::types::{Module, NodeType};
 use std::collections::{HashMap, HashSet};
-use super::super::hybrid::build_hybrid_nodes;
 
 #[test]
 fn test_compute_auto_expanded_dirs_small_project() {
@@ -13,6 +13,7 @@ fn test_compute_auto_expanded_dirs_small_project() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
     let violation_counts = HashMap::new();
@@ -39,6 +40,7 @@ fn test_smart_expansion_respects_budget() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
     let violation_counts = HashMap::new();
@@ -56,6 +58,7 @@ fn test_smart_expansion_respects_direct_children_limit() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
     for i in 0..10 {
@@ -66,6 +69,7 @@ fn test_smart_expansion_respects_direct_children_limit() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
     for i in 0..250 {
@@ -76,6 +80,7 @@ fn test_smart_expansion_respects_direct_children_limit() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -98,6 +103,7 @@ fn test_smart_expansion_expands_small_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         })
         .collect();
     for i in 0..60 {
@@ -108,6 +114,7 @@ fn test_smart_expansion_expands_small_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
     for i in 0..250 {
@@ -118,6 +125,7 @@ fn test_smart_expansion_expands_small_dirs() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -140,6 +148,7 @@ fn test_smart_expansion_prioritizes_violations() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
     for i in 0..10 {
@@ -150,6 +159,7 @@ fn test_smart_expansion_prioritizes_violations() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -177,6 +187,7 @@ fn test_real_world_scale() {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             });
         }
     }
@@ -189,6 +200,7 @@ fn test_real_world_scale() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -199,6 +211,7 @@ fn test_real_world_scale() {
         orphan: None,
         valid: None,
         rules: None,
+        core_module: None,
     });
     modules.push(Module {
         source: "src/App.tsx".to_string(),
@@ -207,6 +220,7 @@ fn test_real_world_scale() {
         orphan: None,
         valid: None,
         rules: None,
+        core_module: None,
     });
 
     for i in 0..250 {
@@ -217,6 +231,7 @@ fn test_real_world_scale() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -228,15 +243,25 @@ fn test_real_world_scale() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
     let violation_counts = HashMap::new();
     let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    assert!(dirs.contains(&"src".to_string()), "src has 4 direct children <= 50, should expand");
-    assert!(!dirs.contains(&"lib".to_string()), "lib has 250 direct children > 50");
-    assert!(!dirs.contains(&"vendor".to_string()), "vendor has 100 direct children > 50");
+    assert!(
+        dirs.contains(&"src".to_string()),
+        "src has 4 direct children <= 50, should expand"
+    );
+    assert!(
+        !dirs.contains(&"lib".to_string()),
+        "lib has 250 direct children > 50"
+    );
+    assert!(
+        !dirs.contains(&"vendor".to_string()),
+        "vendor has 100 direct children > 50"
+    );
 
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
@@ -254,12 +279,16 @@ fn test_relative_path_with_single_top_level_dir() {
 
     for i in 0..20 {
         modules.push(Module {
-            source: format!("../wpsweb/client/app/applications/dbsheet/helpers/helper{}.ts", i),
+            source: format!(
+                "../wpsweb/client/app/applications/dbsheet/helpers/helper{}.ts",
+                i
+            ),
             dependencies: vec![],
             dependents: None,
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
@@ -271,24 +300,32 @@ fn test_relative_path_with_single_top_level_dir() {
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
     for i in 0..500 {
         modules.push(Module {
-            source: format!("../wpsweb/client/app/applications/spreadsheet/core/mod{}.ts", i),
+            source: format!(
+                "../wpsweb/client/app/applications/spreadsheet/core/mod{}.ts",
+                i
+            ),
             dependencies: vec![],
             dependents: None,
             orphan: None,
             valid: None,
             rules: None,
+            core_module: None,
         });
     }
 
     let violation_counts = HashMap::new();
     let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
 
-    assert!(!dirs.is_empty(), "Should expand some small leaf directories");
+    assert!(
+        !dirs.is_empty(),
+        "Should expand some small leaf directories"
+    );
 
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();
     let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
@@ -300,7 +337,10 @@ fn test_relative_path_with_single_top_level_dir() {
         TARGET_NODE_BUDGET
     );
 
-    let dir_nodes: Vec<_> = nodes.iter().filter(|n| matches!(n.node_type, NodeType::Directory)).collect();
+    let dir_nodes: Vec<_> = nodes
+        .iter()
+        .filter(|n| matches!(n.node_type, NodeType::Directory))
+        .collect();
     assert!(
         dir_nodes.len() <= 3,
         "Should have at most 3 directory nodes, got {}",

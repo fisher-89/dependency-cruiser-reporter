@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, relative, resolve } from 'node:path';
+import type { ICruiseOptions } from 'dependency-cruiser';
 import { cruise } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
@@ -45,8 +46,10 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   }
 
   // Extract cruise options from config
-  let cruiseOptions: Record<string, unknown> = {
+  let cruiseOptions: ICruiseOptions = {
     outputType: 'json',
+    baseDir: absCwd,
+    skipAnalysisNotInRules: false,
   };
 
   if (configPath && existsSync(configPath)) {

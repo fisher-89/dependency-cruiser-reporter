@@ -2,9 +2,6 @@ export default {
   app: { title: '依赖报告' },
   nav: { architecture: '架构设计', graph: '依赖图谱', report: '报告', metrics: '指标' },
   upload: {
-    prompt: '拖放 JSON 文件到此处或点击上传',
-    hint: '上传 dependency-cruiser JSON 输出',
-    newFile: '上传新文件',
     loading: '加载中...',
   },
   report: { errors: '错误', warnings: '警告', info: '信息', noViolations: '未发现违规' },
