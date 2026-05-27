@@ -1,0 +1,16 @@
+{
+  "schema": "openspec-step-report/v1",
+  "change": "fix-archi-rules-conflict",
+  "task_id": "0",
+  "step": "lint",
+  "status": "fail",
+  "timestamp": "2026-05-27T01:33:58.075107+00:00",
+  "duration_ms": 2280,
+  "details": {
+    "errors": 0,
+    "warnings": 0,
+    "linters": [
+      "tsc"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+specification {
+  element package
+  element module
+}
+
+model {
+  core = package 'Core'
+  utils = module 'Utils'
+  shared = package 'Shared'
+  app = module 'App'
+  server = module 'Server'
+}
+
+views {
+  view index {
+    include *
+  }
+}
