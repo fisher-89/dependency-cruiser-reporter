@@ -1,8 +1,10 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
+import { GraphViewLayout } from './components/GraphViewLayout';
 import { SettingsDropdown } from './components/settings';
+import { useGraphData } from './hooks/useGraphData';
 import { useT } from './i18n';
 import type { TKey } from './i18n';
 import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
@@ -35,57 +37,28 @@ const routeConfigs: RouteConfig[] = [
 
 const DEFAULT_VIEW = '/graph';
 
+/** Routes whose data is managed by useGraphData. */
+const GRAPH_ROUTES = new Set(['/graph', '/report', '/metrics']);
+
 function App() {
   const { t } = useT();
-  const [data, setData] = useState<ProcessedGraph | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
+  const location = useLocation();
+  const { data, loading, error, fetchGraph, refresh, toggleDir } = useGraphData();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  const fetchGraph = useCallback(async (newExpandedDirs?: string[]) => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/graph', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expanded_dirs: newExpandedDirs }),
-      });
-      if (res.ok) {
-        const graphData = (await res.json()) as ProcessedGraph;
-        if (graphData.nodes && graphData.edges && graphData.meta) {
-          setData(graphData);
-          setSelectedNodeId(null);
-          if (graphData.meta.expanded_dirs) {
-            setExpandedDirs(new Set(graphData.meta.expanded_dirs));
-          }
-        }
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to fetch graph');
-    } finally {
-      setLoading(false);
+  // Lazy-load graph data when entering a route that needs it.
+  // Normalize to lowercase because React Router matches routes case-insensitively
+  // but location.pathname retains the original case (e.g. "/Report" → "/report").
+  useEffect(() => {
+    if (GRAPH_ROUTES.has(location.pathname.toLowerCase()) && !data && !loading && !error) {
+      fetchGraph();
     }
-  }, []);
+  }, [location.pathname, data, loading, error, fetchGraph]);
 
-  const handleToggleDir = useCallback(
-    (dir: string) => {
-      const next = new Set(expandedDirs);
-      let isExpand = true;
-      for (const expandedPath of expandedDirs) {
-        if (expandedPath.startsWith(dir)) {
-          next.delete(expandedPath);
-          isExpand = false;
-        }
-      }
-      if (isExpand) {
-        next.add(dir);
-      }
-      setExpandedDirs(next);
-      fetchGraph(Array.from(next));
-    },
-    [expandedDirs, fetchGraph]
-  );
+  const handleRefresh = useCallback(() => {
+    setSelectedNodeId(null);
+    refresh();
+  }, [refresh]);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -105,15 +78,11 @@ function App() {
     return map;
   }, [data]);
 
-  useEffect(() => {
-    fetchGraph();
-  }, [fetchGraph]);
-
   /**
    * Renders the view for a given route configuration.
    * - `needsData: false` routes (e.g. `/architecture`) always render their view.
    * - `needsData: true` routes show the upload area when `data` is null.
-   * - When data is available, renders the corresponding view component + reset button.
+   * - When data is available, renders the corresponding view component.
    */
   function renderView(config: RouteConfig, data: ProcessedGraph | null) {
     if (!config.needsData) {
@@ -140,11 +109,11 @@ function App() {
     switch (config.path) {
       case '/graph':
         return (
-          <>
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <div style={styles.graphSplitLayout} data-testid="graph-view">
               <DependencyGraph
                 data={data}
-                onToggleDir={handleToggleDir}
+                onToggleDir={toggleDir}
                 onNodeSelect={handleNodeSelect}
                 selectedNodeId={selectedNodeId}
               />
@@ -155,19 +124,19 @@ function App() {
                 nodeMap={nodeMap}
               />
             </div>
-          </>
+          </GraphViewLayout>
         );
       case '/report':
         return (
-          <>
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <ReportView violations={data.violations} />
-          </>
+          </GraphViewLayout>
         );
       case '/metrics':
         return (
-          <>
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <MetricsView data={data} />
-          </>
+          </GraphViewLayout>
         );
       default:
         return <Navigate to={DEFAULT_VIEW} replace />;
@@ -371,7 +340,8 @@ const styles: Record<string, React.CSSProperties> = {
   graphSplitLayout: {
     display: 'flex',
     gap: 16,
-    height: '100%',
+    flex: 1,
+    minHeight: 0,
   },
   reportContainer: {
     background: 'var(--color-surface)',

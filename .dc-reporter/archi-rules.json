@@ -137,7 +137,7 @@
       "severity": "error",
       "comment": "packages/frontend can only depends on packages/frontend (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/frontend(?!/App(?=/|\\.))"
+        "path": "^packages/frontend(?!/main(?=/|\\.))(?!/theme(?=/|\\.))(?!/i18n(?=/|\\.))(?!/styles(?=/|\\.))(?!/App(?=/|\\.))(?!/components(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -149,15 +149,104 @@
       }
     },
     {
+      "name": "archi-frontend-main",
+      "severity": "error",
+      "comment": "packages/frontend/src/main can only depends on packages/frontend/src/main, packages/frontend/src/App, packages/frontend/src/theme, packages/frontend/src/i18n (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/main"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/main",
+          "packages/frontend/src/App",
+          "packages/frontend/src/theme",
+          "packages/frontend/src/i18n"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-theme",
+      "severity": "error",
+      "comment": "packages/frontend/src/theme can only depends on packages/frontend/src/theme (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/theme"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/theme"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-i18n",
+      "severity": "error",
+      "comment": "packages/frontend/src/i18n can only depends on packages/frontend/src/i18n (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/i18n"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/i18n"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-styles",
+      "severity": "error",
+      "comment": "packages/frontend/src/styles can only depends on packages/frontend/src/styles, packages/frontend/src/theme (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/styles"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/styles",
+          "packages/frontend/src/theme"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
       "name": "archi-frontend-App",
       "severity": "error",
-      "comment": "packages/frontend/src/App can only depends on packages/frontend/src/App (Auto-generated from C4 architecture model)",
+      "comment": "packages/frontend/src/App can only depends on packages/frontend/src/App, packages/frontend/src/i18n, packages/frontend/src/styles, packages/frontend/src/components (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/frontend/src/App"
       },
       "to": {
         "pathNot": [
-          "packages/frontend/src/App"
+          "packages/frontend/src/App",
+          "packages/frontend/src/i18n",
+          "packages/frontend/src/styles",
+          "packages/frontend/src/components"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-components",
+      "severity": "error",
+      "comment": "packages/frontend/src/components can only depends on packages/frontend/src/components, packages/frontend/src/i18n, packages/frontend/src/styles (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/components"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/components",
+          "packages/frontend/src/i18n",
+          "packages/frontend/src/styles"
         ],
         "dependencyTypes": [
           "local"

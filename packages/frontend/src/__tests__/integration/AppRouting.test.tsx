@@ -13,7 +13,7 @@
  */
 
 import App from '@/App';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -299,53 +299,32 @@ describe('AppRouting (Integration)', () => {
   });
 
   // =========================================================================
-  // File upload then route switching
+  // Data loaded via fetch, then route switching to /metrics
   // =========================================================================
-  it('after file upload, can switch to /metrics and see metrics view', async () => {
-    // Do not mock fetch; instead we'll upload a file directly
-    fetchMock = mockFetchPending();
+  it('after data loaded via fetch, can switch to /metrics and see edge-type cards', async () => {
+    fetchMock = mockFetchSuccess();
 
     renderApp();
 
-    // Root "/" redirects to "/graph", showing upload area
-    expect(screen.getByTestId('upload-area')).toBeInTheDocument();
-
-    // Simulate file upload
-    const fileContent = JSON.stringify(sampleGraphData);
-    const file = new File([fileContent], 'test-graph.json', { type: 'application/json' });
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-
-    await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [file] } });
-    });
-
-    // After upload, graph view should be visible
+    // Wait for initial data load
     await screen.findByTestId('graph-view');
 
     // Navigate to /metrics
     navigateTo('nav-metrics');
     await screen.findByTestId('metrics-view');
+    expect(screen.getByTestId('edge-type-local')).toBeInTheDocument();
     expect(screen.getByTestId('nav-metrics')).toHaveAttribute('aria-current', 'page');
   });
 
   // =========================================================================
-  // File upload then /report
+  // Data loaded via fetch, then /report — verify specific violation entries
   // =========================================================================
-  it('after navigating to /report after upload, ReportView shows violations', async () => {
-    fetchMock = mockFetchPending();
+  it('after navigating to /report after fetch, ReportView shows violation entries', async () => {
+    fetchMock = mockFetchSuccess();
 
     renderApp();
 
-    // Upload file
-    const fileContent = JSON.stringify(sampleGraphData);
-    const file = new File([fileContent], 'test-graph.json', { type: 'application/json' });
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-
-    await act(async () => {
-      fireEvent.change(fileInput, { target: { files: [file] } });
-    });
-
-    // Wait for graph view after upload
+    // Wait for initial data load
     await screen.findByTestId('graph-view');
 
     // Navigate to /report
@@ -355,30 +334,6 @@ describe('AppRouting (Integration)', () => {
     // The sample data has 1 violation
     expect(screen.getByTestId('violation-list')).toBeInTheDocument();
     expect(screen.getByTestId('violation-0')).toBeInTheDocument();
-  });
-
-  // =========================================================================
-  // Reset button
-  // =========================================================================
-  it('reset button sets data to null, URL remains on same path, upload area appears', async () => {
-    fetchMock = mockFetchSuccess();
-
-    renderApp();
-
-    // Wait for data to load
-    await screen.findByTestId('graph-view');
-
-    // Click the reset button
-    navigateTo('reset-btn');
-
-    // Upload area should appear
-    expect(screen.getByTestId('upload-area')).toBeInTheDocument();
-
-    // Graph view should be gone
-    expect(screen.queryByTestId('graph-view')).not.toBeInTheDocument();
-
-    // URL should still be /graph (reset does not change the route)
-    expect(screen.getByTestId('nav-graph')).toHaveAttribute('aria-current', 'page');
   });
 
   // =========================================================================

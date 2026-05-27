@@ -1,5 +1,7 @@
 packages:
-  - "packages/*"
+  - "packages/e2e"
+  - "packages/cli"
+  - "packages/frontend"
   - "packages/rust/pkg"
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest

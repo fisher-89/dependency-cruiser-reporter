@@ -5,6 +5,7 @@ export default {
     graph: 'Dependency Graph',
     report: 'Report',
     metrics: 'Metrics',
+    refresh: 'Refresh data',
   },
   upload: {
     loading: 'Loading...',

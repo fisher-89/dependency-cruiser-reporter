@@ -1,6 +1,12 @@
 export default {
   app: { title: '依赖报告' },
-  nav: { architecture: '架构设计', graph: '依赖图谱', report: '报告', metrics: '指标' },
+  nav: {
+    architecture: '架构设计',
+    graph: '依赖图谱',
+    report: '报告',
+    metrics: '指标',
+    refresh: '刷新',
+  },
   upload: {
     loading: '加载中...',
   },

@@ -1,7 +1,28 @@
 model {
   extend ROOT.frontend {
-    App = module 'App' {
+    main = module {
+      -[dependency]-> ROOT.frontend.App
+      -[dependency]-> ROOT.frontend.theme
+      -[dependency]-> ROOT.frontend.i18n
+    }
 
+    theme = module
+
+    i18n = module
+
+    styles = module {
+      -[dependency]-> ROOT.frontend.theme
+    }
+
+    App = module {
+      -[dependency]-> ROOT.frontend.i18n
+      -[dependency]-> ROOT.frontend.styles
+      -[dependency]-> ROOT.frontend.components
+    }
+
+    components = module {
+      -[dependency]-> ROOT.frontend.i18n
+      -[dependency]-> ROOT.frontend.styles
     }
   }
 }

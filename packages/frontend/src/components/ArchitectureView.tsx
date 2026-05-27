@@ -1,6 +1,7 @@
 import { LikeC4ModelProvider, ReactLikeC4 } from '@likec4/diagram';
-import { type ReactNode, useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n';
+import { RefreshIcon } from './icons';
 
 type State =
   | { status: 'loading' }
@@ -80,6 +81,20 @@ export function ArchitectureView() {
   const { state, reload } = useArchitectureDiagram();
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const prevState = useRef(state);
+
+  useEffect(() => {
+    if (prevState.current !== state) {
+      setRefreshing(false);
+      prevState.current = state;
+    }
+  }, [state]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    reload();
+  }, [reload]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -140,8 +155,23 @@ export function ArchitectureView() {
   }
 
   return (
-    <div style={styles.diagramContainer} data-testid="architecture-view">
-      {state.ArchitectureDiagram}
+    <div style={styles.pageWrapper} data-testid="architecture-view">
+      <div style={styles.actionBar}>
+        <button
+          type="button"
+          style={styles.actionBtn}
+          onClick={handleRefresh}
+          disabled={refreshing}
+          title={t('nav.refresh')}
+          aria-label={t('nav.refresh')}
+        >
+          <span className={refreshing ? 'spinning' : undefined} style={styles.actionBtnIcon}>
+            <RefreshIcon />
+          </span>
+          {t('nav.refresh')}
+        </button>
+      </div>
+      <div style={styles.diagramContainer}>{state.ArchitectureDiagram}</div>
     </div>
   );
 }
@@ -149,6 +179,34 @@ export function ArchitectureView() {
 export default ArchitectureView;
 
 const styles: Record<string, React.CSSProperties> = {
+  pageWrapper: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  actionBar: {
+    display: 'flex',
+    alignItems: 'center',
+    paddingBottom: '12px',
+    flexShrink: 0,
+  },
+  actionBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    border: '1px solid var(--color-border)',
+    background: 'var(--color-surface)',
+    cursor: 'pointer',
+    borderRadius: '6px',
+    fontSize: '13px',
+    color: 'var(--color-text-secondary)',
+  },
+  actionBtnIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   center: {
     display: 'flex',
     flexDirection: 'column',
@@ -205,7 +263,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'not-allowed',
   },
   diagramContainer: {
-    width: '100%',
-    height: '100%',
+    flex: 1,
+    minHeight: 0,
   },
 };

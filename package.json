@@ -1,6 +1,6 @@
 {
   "name": "dependency-cruiser-reporter",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "exports": {
     ".": {
       "types": "./packages/cli/dist/index.d.ts",
@@ -9,7 +9,9 @@
   },
   "bin": "./packages/cli/bin/cli.js",
   "files": [
+    "packages/cli/package.json",
     "packages/cli/bin",
+    "packages/frontend/package.json",
     "packages/frontend/dist",
     "packages/rust/pkg"
   ],
