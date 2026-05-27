@@ -1,0 +1,22 @@
+specification {
+  element package
+  element module
+}
+
+model {
+  cli = package 'CLI' {
+    commands = module 'Commands' {
+      open = module 'Open'
+      analyze = module 'Analyze'
+    }
+    server = module 'Server'
+  }
+  shared_lib = module 'SharedLib'
+  db = module 'Database'
+}
+
+views {
+  view index {
+    include *
+  }
+}

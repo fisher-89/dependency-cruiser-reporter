@@ -1,0 +1,20 @@
+specification {
+  element package
+  element module
+}
+
+model {
+  commands = package 'Commands' {
+    open = module 'Open' {
+      helper = module 'Helper'
+    }
+    analyze = module 'Analyze'
+  }
+  utils = module 'Utils'
+}
+
+views {
+  view index {
+    include *
+  }
+}

@@ -85,6 +85,87 @@ function virtualPathToModule(url: string): string {
 }
 
 // ---------------------------------------------------------------------------
+// Regex escaping and hierarchy analysis
+// ---------------------------------------------------------------------------
+
+/**
+ * Escape ECMAScript RegExp special characters in a string.
+ * Escapes all 14 special characters: . + * ? \ ( ) [ ] { } ^ $ |
+ * The path separator `/` is not escaped.
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.+*?\\()\[\]{}^$|]/g, '\\$&');
+}
+
+/**
+ * Build a mapping of parent element FQNs to their direct child suffixes.
+ * Only direct children (not grandchildren) are included.
+ *
+ * @param elements - Array of elements with `id` (FQN) fields
+ * @returns Map where keys are parent FQNs and values are arrays of direct child FQN suffixes
+ */
+function buildParentChildMap(
+  elements: ReadonlyArray<{ id: string }>
+): Map<string, string[]> {
+  const result = new Map<string, string[]>();
+  const allFqns = new Set(elements.map((el) => el.id));
+
+  for (const el of elements) {
+    const fqn = el.id;
+    const ancestors = ancestorFqns(fqn);
+
+    for (const ancestor of ancestors) {
+      if (!allFqns.has(ancestor)) continue;
+
+      const relative = relativeFqn(fqn, ancestor);
+      // Only direct children (no "." in the relative FQN means it's a direct child)
+      if (relative && !relative.includes('.')) {
+        const children = result.get(ancestor);
+        if (children) {
+          if (!children.includes(relative)) {
+            children.push(relative);
+          }
+        } else {
+          result.set(ancestor, [relative]);
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Collect ancestor dependency paths along the ancestor chain of an element.
+ * Walks up the ancestor chain and collects all dependency paths from each
+ * ancestor. Ancestors not present in the dependencyMap are skipped.
+ *
+ * @param elementFqn - The element's FQN
+ * @param dependencyMap - Map of element FQN to Set of dependency paths
+ * @param _allElements - Map of all element FQNs to C4Element objects
+ * @returns Array of deduplicated dependency paths inherited from ancestors
+ */
+function collectAncestorDeps(
+  elementFqn: string,
+  dependencyMap: Map<string, Set<string>>,
+  _allElements: Map<string, C4Element>
+): string[] {
+  const inherited = new Set<string>();
+  const ancestors = ancestorFqns(elementFqn);
+
+  for (const ancestor of ancestors) {
+    const deps = dependencyMap.get(ancestor);
+    if (deps) {
+      for (const dep of deps) {
+        inherited.add(dep);
+      }
+    }
+  }
+
+  return Array.from(inherited);
+}
+
+// ---------------------------------------------------------------------------
 // 3-tier path resolution
 // ---------------------------------------------------------------------------
 
@@ -204,17 +285,28 @@ function ruleNameFromFqn(fqn: string): string {
 export function buildForbiddenRule(
   elementFqn: string,
   resolvedPath: string,
-  dependencyPaths: string[]
+  dependencyPaths: string[],
+  childExclusionSuffixes?: string[]
 ): ForbiddenRule {
   // Combine self path with dependency paths and deduplicate
   const uniquePaths = [...new Set([resolvedPath, ...dependencyPaths])];
+
+  // Build from.path with optional negative lookahead exclusions for children (方案 B)
+  let fromPath = `^${resolvedPath}`;
+  if (childExclusionSuffixes && childExclusionSuffixes.length > 0) {
+    const lookaheadParts = childExclusionSuffixes
+      .filter((suffix) => suffix.length > 0)
+      .map((suffix) => `(?!/${escapeRegex(suffix)}(?=/|\\.))`)
+      .join('');
+    fromPath += lookaheadParts;
+  }
 
   return {
     name: ruleNameFromFqn(elementFqn),
     severity: 'error',
     comment: `${resolvedPath} can only depends on ${uniquePaths.join(', ')} (Auto-generated from C4 architecture model)`,
     from: {
-      path: `^${resolvedPath}`,
+      path: fromPath,
     },
     to: {
       pathNot: uniquePaths,
@@ -227,11 +319,21 @@ export function buildForbiddenRule(
  * Build the complete rules file structure from processed elements.
  */
 export function buildRulesFile(
-  elements: Array<{ elementFqn: string; resolvedPath: string; dependencyPaths: string[] }>
+  elements: Array<{
+    elementFqn: string;
+    resolvedPath: string;
+    dependencyPaths: string[];
+    childExclusionSuffixes?: string[];
+  }>
 ): { forbidden: ForbiddenRule[] } {
   return {
     forbidden: elements.map((el) =>
-      buildForbiddenRule(el.elementFqn, el.resolvedPath, el.dependencyPaths)
+      buildForbiddenRule(
+        el.elementFqn,
+        el.resolvedPath,
+        el.dependencyPaths,
+        el.childExclusionSuffixes
+      )
     ),
   };
 }
@@ -516,33 +618,59 @@ export async function archiToRules(options: ArchiToRulesOptions = {}): Promise<v
     }
   }
 
-  // Step 5: Resolve paths for each element and build rules
+  // Step 5: Resolve paths for each element
   const pathMap = new Map<string, string>(); // element FQN -> resolved relative path
+  for (const el of filteredElements) {
+    const resolvedPath = resolveElementPath(el.id, el.links ?? null, elementMap);
+    pathMap.set(el.id, resolvedPath);
+  }
+
+  // Step 6: Build parent-child hierarchy map (方案 B)
+  const parentChildMap = buildParentChildMap(filteredElements);
+
+  // Step 7: Collect ancestor dependency inheritance for each element (方案 C)
+  const ancestorDepMap = new Map<string, string[]>();
+  for (const el of filteredElements) {
+    const inherited = collectAncestorDeps(el.id, dependencyMap, elementMap);
+    ancestorDepMap.set(el.id, inherited);
+  }
+
+  // Step 8: Build rule entries with merged deps and child exclusions
   const ruleEntries: Array<{
     elementFqn: string;
     resolvedPath: string;
     dependencyPaths: string[];
+    childExclusionSuffixes?: string[];
   }> = [];
 
   for (const el of filteredElements) {
-    const resolvedPath = resolveElementPath(el.id, el.links ?? null, elementMap);
-    pathMap.set(el.id, resolvedPath);
+    const resolvedPath = pathMap.get(el.id);
+    if (!resolvedPath) continue;
+
+    // Merge own deps + inherited ancestor deps (方案 C), deduplicated
+    const ownDeps = dependencyMap.get(el.id) ?? new Set();
+    const inheritedDeps = ancestorDepMap.get(el.id) ?? [];
+    const allDeps = [...new Set([...ownDeps, ...inheritedDeps])];
+
+    // Child exclusion suffixes for parent elements (方案 B)
+    const childSuffixes = parentChildMap.get(el.id);
 
     ruleEntries.push({
       elementFqn: el.id,
       resolvedPath,
-      dependencyPaths: Array.from(dependencyMap.get(el.id) ?? []),
+      dependencyPaths: allDeps,
+      childExclusionSuffixes: childSuffixes && childSuffixes.length > 0 ? childSuffixes : undefined,
     });
   }
 
-  // Step 6: Validate paths on disk
+  // Step 9: Validate paths on disk
   const failedPaths = validatePaths(pathMap, absCwd);
 
   // Write rules file (regardless of validation outcome)
   const rulesData = buildRulesFile(ruleEntries);
   writeRulesFile(outputPath, rulesData);
 
-  // Step 7: Update .dependency-cruiser.js extends field
+  // Step 10: Update .dependency-cruiser.js extends field
   const configPath = resolve(absCwd, '.dependency-cruiser.js');
   const extendPath = `./${relative(absCwd, outputPath).replaceAll(sep, '/')}`;
   const configUpdated = updateDependencyCruiserConfig(configPath, extendPath);

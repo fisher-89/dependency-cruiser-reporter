@@ -5,7 +5,7 @@
       "severity": "error",
       "comment": "packages/cli can only depends on packages/cli (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli"
+        "path": "^packages/cli(?!/bin(?=/|\\.))(?!/commands(?=/|\\.))(?!/utils(?=/|\\.))(?!/server(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -38,7 +38,7 @@
       "severity": "error",
       "comment": "packages/cli/src/commands can only depends on packages/cli/src/commands (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/commands"
+        "path": "^packages/cli/src/commands(?!/analyze(?=/|\\.))(?!/open(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -54,7 +54,7 @@
       "severity": "error",
       "comment": "packages/cli/src/utils can only depends on packages/cli/src/utils (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/utils"
+        "path": "^packages/cli/src/utils(?!/convert(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -137,7 +137,7 @@
       "severity": "error",
       "comment": "packages/frontend can only depends on packages/frontend (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/frontend"
+        "path": "^packages/frontend(?!/App(?=/|\\.))"
       },
       "to": {
         "pathNot": [
