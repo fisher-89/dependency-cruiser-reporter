@@ -2,10 +2,9 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
-import { MonitorIcon, MoonIcon, SunIcon } from './components/icons';
+import { SettingsDropdown } from './components/settings';
 import { useT } from './i18n';
 import type { TKey } from './i18n';
-import { useTheme } from './theme';
 import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
@@ -37,8 +36,7 @@ const routeConfigs: RouteConfig[] = [
 const DEFAULT_VIEW = '/graph';
 
 function App() {
-  const { t, lang, setLang } = useT();
-  const { theme, cycleTheme } = useTheme();
+  const { t } = useT();
   const [data, setData] = useState<ProcessedGraph | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,10 +109,6 @@ function App() {
     fetchGraph();
   }, [fetchGraph]);
 
-  const themeIcon =
-    theme === 'dark' ? <MoonIcon /> : theme === 'light' ? <SunIcon /> : <MonitorIcon />;
-  const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
-
   /**
    * Renders the view for a given route configuration.
    * - `needsData: false` routes (e.g. `/architecture`) always render their view.
@@ -185,33 +179,7 @@ function App() {
       <header style={styles.header}>
         <h1 style={styles.title}>{t('app.title')}</h1>
         <div style={styles.headerControls}>
-          <div style={styles.langSwitcher}>
-            <button
-              type="button"
-              style={{ ...styles.langBtn, ...(lang === 'en' ? styles.langBtnActive : {}) }}
-              onClick={() => setLang('en')}
-              data-testid="lang-en"
-            >
-              EN
-            </button>
-            <button
-              type="button"
-              style={{ ...styles.langBtn, ...(lang === 'zh-CN' ? styles.langBtnActive : {}) }}
-              onClick={() => setLang('zh-CN')}
-              data-testid="lang-zh"
-            >
-              中文
-            </button>
-          </div>
-          <button
-            type="button"
-            style={styles.themeBtn}
-            onClick={cycleTheme}
-            title={t(`theme.${nextTheme}`)}
-            data-testid="theme-toggle"
-          >
-            {themeIcon}
-          </button>
+          <SettingsDropdown />
           <nav style={styles.nav}>
             {routeConfigs.map(({ path, label, testId }) => (
               <NavLink
@@ -366,35 +334,6 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
-  },
-  langSwitcher: {
-    display: 'flex',
-    gap: '2px',
-  },
-  langBtn: {
-    padding: '4px 8px',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    borderRadius: '4px',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: 'var(--color-text-secondary)',
-  },
-  langBtnActive: {
-    background: 'var(--color-accent-bg)',
-    color: 'var(--color-accent)',
-  },
-  themeBtn: {
-    padding: '6px',
-    border: 'none',
-    background: 'transparent',
-    cursor: 'pointer',
-    borderRadius: '4px',
-    color: 'var(--color-text-secondary)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   nav: {
     display: 'flex',

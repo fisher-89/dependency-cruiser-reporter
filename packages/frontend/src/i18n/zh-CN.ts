@@ -29,6 +29,7 @@ export default {
   severity: { error: '错误', warn: '警告', info: '信息' },
   graph: { noData: '无图谱数据可用' },
   theme: { light: '浅色', dark: '深色', auto: '自动' },
+  settings: { label: '设置', language: '语言', theme: '主题' },
   architecture: {
     empty: '没有找到架构图。请在 .dc-reporter/architecture/ 目录下添加 .c4 文件。',
     loading: '正在加载架构模型...',

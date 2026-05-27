@@ -7,6 +7,7 @@ interface ThemeContextValue {
   theme: ThemeMode;
   resolvedTheme: ResolvedTheme;
   cycleTheme: () => void;
+  setTheme: (next: ThemeMode) => void;
 }
 
 const CYCLE: ThemeMode[] = ['light', 'dark', 'auto'];
@@ -25,13 +26,12 @@ function getStoredTheme(): ThemeMode {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeMode>(getStoredTheme);
+  const [theme, setThemeState] = useState<ThemeMode>(getStoredTheme);
 
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>(() =>
     resolveTheme(getStoredTheme())
   );
 
-  // Sync data-theme attribute on html element
   useEffect(() => {
     const html = document.documentElement;
     if (resolvedTheme === 'dark') {
@@ -41,7 +41,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [resolvedTheme]);
 
-  // Listen for system preference changes in auto mode
   useEffect(() => {
     if (theme !== 'auto') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -52,15 +51,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
 
-  // When theme mode changes (non-auto), update resolvedTheme
   useEffect(() => {
-    if (theme !== 'auto') {
-      setResolvedTheme(theme);
-    }
+    setResolvedTheme(resolveTheme(theme));
   }, [theme]);
 
   const cycleTheme = useCallback(() => {
-    setTheme((prev) => {
+    setThemeState((prev) => {
       const idx = CYCLE.indexOf(prev);
       const next = CYCLE[(idx + 1) % CYCLE.length];
       localStorage.setItem('theme', next);
@@ -68,8 +64,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const setTheme = useCallback((next: ThemeMode) => {
+    localStorage.setItem('theme', next);
+    setThemeState(next);
+  }, []);
+
   return (
-    <ThemeContext.Provider value={{ theme, resolvedTheme, cycleTheme }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, cycleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );

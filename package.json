@@ -8,6 +8,11 @@
     }
   },
   "bin": "./packages/cli/bin/cli.js",
+  "files": [
+    "packages/cli/bin",
+    "packages/frontend/dist",
+    "packages/rust/pkg"
+  ],
   "scripts": {
     "init": "pnpm run build:rust && pnpm i",
     "build": "pnpm run build:rust && pnpm run build:ts",

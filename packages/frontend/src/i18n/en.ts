@@ -39,6 +39,7 @@ export default {
   severity: { error: 'ERROR', warn: 'WARN', info: 'INFO' },
   graph: { noData: 'No graph data available' },
   theme: { light: 'Light', dark: 'Dark', auto: 'Auto' },
+  settings: { label: 'Settings', language: 'Language', theme: 'Theme' },
   architecture: {
     empty:
       'No architecture diagram available. Add .c4 files to .dc-reporter/architecture/ in your workspace.',

@@ -58,7 +58,12 @@ vi.mock('@/i18n', () => ({
 // Mock theme hook
 // ---------------------------------------------------------------------------
 vi.mock('@/theme', () => ({
-  useTheme: () => ({ theme: 'light', resolvedTheme: 'light', cycleTheme: vi.fn() }),
+  useTheme: () => ({
+    theme: 'light',
+    resolvedTheme: 'light',
+    cycleTheme: vi.fn(),
+    setTheme: vi.fn(),
+  }),
   ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -377,9 +382,9 @@ describe('AppRouting (Integration)', () => {
   });
 
   // =========================================================================
-  // Language and theme toggles
+  // Settings dropdown (language and theme)
   // =========================================================================
-  it('language and theme toggles remain functional after route changes', async () => {
+  it('settings dropdown contains language and theme options', async () => {
     fetchMock = mockFetchSuccess();
 
     renderApp();
@@ -391,31 +396,38 @@ describe('AppRouting (Integration)', () => {
     navigateTo('nav-metrics');
     await screen.findByTestId('metrics-view');
 
-    // Language buttons should be present and clickable
+    // Settings toggle should be present
+    const settingsToggle = screen.getByTestId('settings-toggle');
+    expect(settingsToggle).toBeInTheDocument();
+
+    // Open the settings dropdown
+    fireEvent.click(settingsToggle);
+    expect(screen.getByTestId('settings-dropdown')).toBeInTheDocument();
+
+    // Language buttons should be present
     expect(screen.getByTestId('lang-en')).toBeInTheDocument();
     expect(screen.getByTestId('lang-zh')).toBeInTheDocument();
 
-    // Click Chinese language toggle
+    // Click Chinese language toggle (closes dropdown)
     fireEvent.click(screen.getByTestId('lang-zh'));
-    expect(screen.getByTestId('lang-zh')).toBeInTheDocument();
 
-    // Click English language toggle
+    // Re-open dropdown and click English
+    fireEvent.click(screen.getByTestId('settings-toggle'));
     fireEvent.click(screen.getByTestId('lang-en'));
-    expect(screen.getByTestId('lang-en')).toBeInTheDocument();
 
-    // Theme toggle should be present and clickable
-    const themeToggle = screen.getByTestId('theme-toggle');
-    expect(themeToggle).toBeInTheDocument();
+    // Re-open dropdown to check theme buttons
+    fireEvent.click(screen.getByTestId('settings-toggle'));
+    expect(screen.getByTestId('theme-light')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-dark')).toBeInTheDocument();
+    expect(screen.getByTestId('theme-auto')).toBeInTheDocument();
 
-    fireEvent.click(themeToggle);
-    // Still present after click
-    expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    // Click dark theme (dropdown stays open since theme buttons don't close it)
+    fireEvent.click(screen.getByTestId('theme-dark'));
 
-    // Navigate back to /graph — layout/controls remain intact
+    // Navigate back to /graph — settings toggle remains
     navigateTo('nav-graph');
     await screen.findByTestId('graph-view');
 
-    expect(screen.getByTestId('lang-en')).toBeInTheDocument();
-    expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('settings-toggle')).toBeInTheDocument();
   });
 });
