@@ -12,14 +12,15 @@ export default defineConfig({
       alwaysBundle: [/.+/],
     },
     outputOptions: {
-      file: './bin/cli.js',
+      dir: './bin',
+      entryFileNames: 'cli.js',
       codeSplitting: false,
       paths: {
         '@dcr-reporter/wasm': './wasm/wasm.js',
       },
     },
     copy: [
-      { from: './packages/rust/pkg', to: './bin', rename: 'wasm' },
+      { from: './packages/rust/pkg/*.*', to: './bin/wasm' },
       { from: './packages/frontend/dist', to: './bin', rename: 'frontend' },
     ],
     hooks: {

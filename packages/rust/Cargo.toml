@@ -1,9 +1,11 @@
 [package]
 name = "wasm"
 version = "0.1.0"
+license = "MIT"
 edition = "2021"
 authors = ["your name"]
 description = "dependency-cruiser reporter"
+repository = "https://ksogitlab.kso.net/zhangbohan3/wps-agent-plugin"
 
 [lib]
 crate-type = ["cdylib"]
