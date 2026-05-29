@@ -204,12 +204,12 @@ export function resolveElementPath(
 
     if (ancestor.kind === 'package') {
       // Package ancestor: link_dir/src/<relative>
-      const sub = rel ? `/src/${rel.replace(/\./g, '/')}` : '';
+      const sub = rel ? `/src/${rel.replaceAll('.', '/')}` : '';
       return `${linkDir}${sub}`;
     }
     if (ancestor.kind === 'module') {
       // Module ancestor: link_dir/<relative>
-      const sub = rel ? `/${rel.replace(/\./g, '/')}` : '';
+      const sub = rel ? `/${rel.replaceAll('.', '/')}` : '';
       return `${linkDir}${sub}`;
     }
     // Other kind (project, etc.): use link dir as prefix then default convention

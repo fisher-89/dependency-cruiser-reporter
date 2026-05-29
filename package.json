@@ -1,23 +1,23 @@
 {
   "name": "dependency-cruiser-reporter",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "exports": {
     ".": {
-      "types": "./packages/cli/dist/index.d.ts",
-      "import": "./packages/cli/dist/index.js"
+      "types": "./packages/cli/bin/cli.d.ts",
+      "import": "./packages/cli/bin/cli.js"
     }
   },
-  "bin": "./packages/cli/bin/cli.js",
+  "bin": {
+    "dep-report": "./bin/cli.js"
+  },
   "files": [
-    "packages/cli/package.json",
-    "packages/cli/bin",
-    "packages/frontend/package.json",
-    "packages/frontend/dist",
-    "packages/rust/pkg"
+    "package.json",
+    "bin/"
   ],
   "scripts": {
     "init": "pnpm run build:rust && pnpm i",
     "build": "pnpm run build:rust && pnpm run build:ts",
+    "bundle": "vp pack",
     "build:rust": "node scripts/build-rust.js",
     "build:ts": "pnpm -r build",
     "analyze": "node packages/cli/bin/cli.js analyze",

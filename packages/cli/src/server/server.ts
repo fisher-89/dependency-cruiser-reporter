@@ -40,11 +40,12 @@ export class DcrServer {
   }
 
   private setupRoutes(): void {
-    // Get frontend dist directory
-    // const cliDir = dirname(fileURLToPath(import.meta.url));
-    const frontendDist = fileURLToPath(new URL('../../frontend/dist', import.meta.url).href);
-
-    // Architecture routes (C4 model parsing & generation)
+    // Auto-detect frontend dist: dev mode resolves to packages/frontend/dist/,
+    // bundle mode falls back to ./frontend alongside cli.js
+    const _devFrontend = fileURLToPath(new URL('../../frontend/dist', import.meta.url).href);
+    const frontendDist = existsSync(_devFrontend)
+      ? _devFrontend
+      : fileURLToPath(new URL('./frontend', import.meta.url).href);
     setupArchitectureRoutes(this.app, this.cwd);
 
     // API: Get graph data (auto-converts raw dependency-cruiser JSON)
