@@ -68,17 +68,10 @@ jobs:
           pnpm run build
           pnpm run bundle
 
-      # 5. 替换 .gitignore，确保构建产物能被提交到 release 分支
-      - name: Override .gitignore for release
-        run: |
-          rm .gitignore
-          echo "node_modules/" > .gitignore
-          rm packages/rust/pkg/.gitignore
-
-      # 6. 将构建产物部署到 release 分支（仅在版本改变时执行）
+      # 7. 将 bin 目录部署到 release 分支（仅在版本改变时执行）
       - name: Deploy to release branch
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: release
-          folder: .
-          clean: false
+          folder: bin
+          clean: true

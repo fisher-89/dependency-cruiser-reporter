@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
@@ -21,6 +22,16 @@ export default defineConfig({
       { from: './packages/rust/pkg', to: './bin', rename: 'wasm' },
       { from: './packages/frontend/dist', to: './bin', rename: 'frontend' },
     ],
+    hooks: {
+      'build:done': async (ctx) => {
+        const pkg = await import('./package.json');
+        writeFileSync('./bin/package.json', JSON.stringify({
+          name: pkg.name,
+          version: pkg.version,
+          bin: { 'dep-reporter': './cli.js' },
+        }, null, 2));
+      }
+    },
     format: 'es',
     dts: false,
     minify: true,
