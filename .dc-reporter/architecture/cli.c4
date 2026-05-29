@@ -8,7 +8,7 @@ model {
 
     commands = module {
       analyze = module
-      open = module {
+      dashboard = module {
         -[dependency]-> ROOT.cli.server
       }
     }

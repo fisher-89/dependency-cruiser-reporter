@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 import { type ServerOptions, createServer } from '../server/server.js';
 
-export interface OpenOptions {
+export interface DashboardOptions {
   file?: string;
   port?: number;
   host?: string;
@@ -15,9 +15,9 @@ export interface OpenOptions {
 const DEFAULT_MAX_NODES = 500;
 
 /**
- * Open web viewer with HTTP server
+ * Start dashboard web viewer with HTTP server
  */
-export async function open(options: OpenOptions): Promise<void> {
+export async function dashboard(options: DashboardOptions): Promise<void> {
   const { file, port = 3000, host = 'localhost', maxNodes = DEFAULT_MAX_NODES, cwd = '.' } = options;
 
   let resolvedFile = file;
@@ -56,4 +56,4 @@ export async function open(options: OpenOptions): Promise<void> {
   });
 }
 
-export default open;
+export default dashboard;

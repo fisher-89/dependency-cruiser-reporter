@@ -18,7 +18,7 @@
 
 #### Scenario: 组件通信
 
-- WHEN 用户执行 `dep-report open`
+- WHEN 用户执行 `dep-report dashboard`
 - THEN CLI 启动 Express 服务器
 - AND 前端从 `/api/config` 和 `/api/graph` 加载数据
 - AND Rust 后端（WASM）执行聚合计算
@@ -28,7 +28,7 @@
 系统 SHALL 遵循延迟转换数据流：
 
 ```
-dependency-cruiser JSON → analyze (保存原始) → open (按需聚合) → ProcessedGraph → 前端渲染
+dependency-cruiser JSON → analyze (保存原始) → dashboard (按需聚合) → ProcessedGraph → 前端渲染
 ```
 
 #### Scenario: analyze 模式
@@ -38,9 +38,9 @@ dependency-cruiser JSON → analyze (保存原始) → open (按需聚合) → P
 - AND 保存原始 JSON 到文件
 - AND 不执行聚合（延迟到 open）
 
-#### Scenario: open 模式
+#### Scenario: dashboard 模式
 
-- WHEN 用户执行 `dep-report open -f file.json`
+- WHEN 用户执行 `dep-report dashboard -f file.json`
 - THEN 服务器启动并检测文件格式
 - IF 文件是原始 dependency-cruiser 格式
   - THEN 调用 `convertWithFallback`（WASM 优先，Node.js 回退）

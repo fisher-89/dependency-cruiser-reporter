@@ -55,7 +55,7 @@ describe("CLI Integration Tests", () => {
 		assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
 		assert.ok(result.stdout.includes("dep-report"));
 		assert.ok(result.stdout.includes("analyze"));
-		assert.ok(result.stdout.includes("open"));
+		assert.ok(result.stdout.includes("dashboard"));
 	});
 
 	test("analyze --help shows options", () => {
@@ -70,8 +70,8 @@ describe("CLI Integration Tests", () => {
 		assert.ok(result.stdout.includes("-c"));
 	});
 
-	test("open --help shows options", () => {
-		const result = spawnSync("node", [cliBinary, "open", "--help"], {
+	test("dashboard --help shows options", () => {
+		const result = spawnSync("node", [cliBinary, "dashboard", "--help"], {
 			cwd: __dirname,
 			encoding: "utf-8",
 		});
@@ -144,15 +144,15 @@ describe("WASM Module Tests", () => {
 	});
 });
 
-describe("Open Command Tests", () => {
-	test("open command converts raw DC JSON to ProcessedGraph", async () => {
+describe("Dashboard Command Tests", () => {
+	test("dashboard command converts raw DC JSON to ProcessedGraph", async () => {
 		if (!wasmAvailable) {
 			console.log("Skipping: Neither WASM nor Rust binary available");
 			return;
 		}
 
 		const port = 3001 + Math.floor(Math.random() * 1000);
-		const proc = spawn("node", [cliBinary, "open", "-f", sampleCruise, "-p", String(port)], {
+		const proc = spawn("node", [cliBinary, "dashboard", "-f", sampleCruise, "-p", String(port)], {
 			cwd: __dirname,
 			stdio: ["ignore", "pipe", "pipe"],
 		});

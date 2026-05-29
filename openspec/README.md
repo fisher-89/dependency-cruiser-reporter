@@ -13,7 +13,7 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 
 ### Project
 - [项目规范](specs/project/spec.md) — 核心功能、边类型、CLI 命令、目标用户、路线图
-  - `dep-report` `analyze` `open` `circular dependencies` `unused dependencies` `rule violations` `edge types: local/npm/core/dynamic` `ProcessedGraph` `Rust preprocessing` `hybrid aggregation` `Node.js fallback`
+  - `dep-report` `analyze` `dashboard` `circular dependencies` `unused dependencies` `rule violations` `edge types: local/npm/core/dynamic` `ProcessedGraph` `Rust preprocessing` `hybrid aggregation` `Node.js fallback`
 
 ### Architecture
 - [架构规范](specs/architecture/spec.md) — 三组件架构、数据流、混合聚合策略、展开算法
@@ -41,7 +41,7 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 
 ### CLI
 - [CLI 规范](specs/cli/spec.md) — 命令接口、HTTP API 端点、Node.js 回退、编程式 API
-  - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report open: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs` `@dcr-reporter/wasm`
+  - `@dcr-reporter/cli` `dep-report analyze: --path/--output/--config` `dep-report dashboard: --file/--port/--host` `convertDcOutput` `analyzeWithFallback` `createServer` `POST /api/graph` `expanded_dirs` `@dcr-reporter/wasm`
 
 ### Usage
 - [使用规范](specs/usage/spec.md) — 使用场景、Web UI、CI/CD 集成、Monorepo 分析
@@ -58,7 +58,7 @@ dependency-cruiser-reporter OpenSpec 规范索引。每个条目列出规范文�
 | `ProcessedGraph`, `GraphNode`, `GraphEdge`, type contracts | [Backend Spec](specs/backend/spec.md) |
 | `aggregate`, `aggregate_from_str`, `expanded_dirs`, `tsify` | [Backend Spec](specs/backend/spec.md) |
 | `convertDcOutput`, Node.js fallback | [CLI Spec](specs/cli/spec.md) |
-| `dep-report analyze/open`, CLI options | [CLI Spec](specs/cli/spec.md) |
+| `dep-report analyze/dashboard`, CLI options | [CLI Spec](specs/cli/spec.md) |
 | `expanded_dirs`, hybrid aggregation, `compute_auto_expanded_dirs` | [Architecture Spec](specs/architecture/spec.md) |
 | `EdgeType`, `NodeType` enums | [Backend Spec](specs/backend/spec.md) |
 | `createServer`, `/api/config`, `POST /api/graph` | [CLI Spec](specs/cli/spec.md) |

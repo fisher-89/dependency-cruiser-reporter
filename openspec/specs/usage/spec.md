@@ -14,7 +14,7 @@
 
 - WHEN 用户执行 `dep-report analyze --path ./project`
 - THEN 系统运行 dependency-cruiser 并保存原始输出
-- WHEN 用户执行 `dep-report open -f project-graph.json`
+- WHEN 用户执行 `dep-report dashboard -f project-graph.json`
 - THEN 系统启动服务器并在浏览器中显示可视化
 
 ### Requirement: CI/CD 集成
@@ -46,7 +46,7 @@
 {
   "scripts": {
     "scan": "dep-report analyze --path src",
-    "view": "dep-report open -f src-graph.json"
+    "view": "dep-report dashboard -f src-graph.json"
   }
 }
 ```
@@ -70,11 +70,11 @@
 ```bash
 # 整体概览
 dep-report analyze --path ./packages -o overview-graph.json
-dep-report open -f overview-graph.json
+dep-report dashboard -f overview-graph.json
 
 # 钻取特定包
 dep-report analyze --path ./packages/core -o core-graph.json
-dep-report open -f core-graph.json
+dep-report dashboard -f core-graph.json
 ```
 
 ### Requirement: Pre-commit 钩子
@@ -106,8 +106,8 @@ fi
 #### Scenario: 启动服务器
 
 ```bash
-dep-report open -f graph.json
-dep-report open -f graph.json -p 8080  # 自定义端口
+dep-report dashboard -f graph.json
+dep-report dashboard -f graph.json -p 8080  # 自定义端口
 ```
 
 - WHEN 服务器启动
@@ -186,7 +186,7 @@ dep-report open -f graph.json -p 8080  # 自定义端口
 
 | 角色 | 工作 |
 |------|------|
-| 开发者 | 提交前 `dep-report analyze` + `dep-report open` |
+| 开发者 | 提交前 `dep-report analyze` + `dep-report dashboard` |
 | 技术主管 | PR 审查时检查架构合规性 |
 | DevOps | CI/CD 管道中 `dep-report analyze` + 工件上传 |
 | 架构师 | 生成包级概览用于文档 |

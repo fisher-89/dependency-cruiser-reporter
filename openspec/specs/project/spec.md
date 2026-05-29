@@ -51,7 +51,7 @@ dependency-cruiser-reporter 将 [dependency-cruiser](https://github.com/sverrejo
 
 ### Requirement: CLI 命令
 
-系统 SHALL 提供两个 CLI 命令：
+系统 SHALL 提供三个 CLI 命令：
 
 #### Scenario: analyze 命令
 
@@ -60,9 +60,9 @@ dependency-cruiser-reporter 将 [dependency-cruiser](https://github.com/sverrejo
 - AND 保存原始 JSON 输出（不执行聚合）
 - AND 自动检测 `.dependency-cruiser.json` 配置
 
-#### Scenario: open 命令
+#### Scenario: dashboard 命令
 
-- WHEN 用户执行 `dep-report open -f <file>`
+- WHEN 用户执行 `dep-report dashboard -f <file>`
 - THEN 系统启动 HTTP 服务器
 - AND 自动检测文件格式（原始 dc 或 ProcessedGraph）
 - AND 按需执行聚合（WASM 优先，Node.js 回退）

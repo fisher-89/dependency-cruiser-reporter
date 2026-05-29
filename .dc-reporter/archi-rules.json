@@ -38,7 +38,7 @@
       "severity": "error",
       "comment": "packages/cli/src/commands can only depends on packages/cli/src/commands (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/commands(?!/analyze(?=/|\\.))(?!/open(?=/|\\.))"
+        "path": "^packages/cli/src/commands(?!/analyze(?=/|\\.))(?!/dashboard(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -99,15 +99,15 @@
       }
     },
     {
-      "name": "archi-cli-commands-open",
+      "name": "archi-cli-commands-dashboard",
       "severity": "error",
-      "comment": "packages/cli/src/commands/open can only depends on packages/cli/src/commands/open, packages/cli/src/server (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/commands/dashboard can only depends on packages/cli/src/commands/dashboard, packages/cli/src/server (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/commands/open"
+        "path": "^packages/cli/src/commands/dashboard"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/commands/open",
+          "packages/cli/src/commands/dashboard",
           "packages/cli/src/server"
         ],
         "dependencyTypes": [

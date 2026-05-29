@@ -6,12 +6,12 @@ The system SHALL use `.dc-reporter/` as the workspace directory under the path s
 
 #### Scenario: Default cwd
 
-- **WHEN** `dep-report open` is executed without `--cwd`
+- **WHEN** `dep-report dashboard` is executed without `--cwd`
 - **THEN** the workspace directory SHALL default to `.dc-reporter/` in the current working directory
 
 #### Scenario: Custom cwd
 
-- **WHEN** `dep-report open --cwd /path/to/project` is executed
+- **WHEN** `dep-report dashboard --cwd /path/to/project` is executed
 - **THEN** the workspace directory SHALL be `/path/to/project/.dc-reporter/`
 
 #### Scenario: Workspace subdirectories
@@ -43,9 +43,9 @@ The system SHALL detect the presence of `.dc-reporter/` on startup and expose th
 
 The `dep-report` CLI SHALL accept a global `--cwd` option.
 
-#### Scenario: open with --cwd
+#### Scenario: dashboard with --cwd
 
-- **WHEN** user executes `dep-report open --cwd ./my-project`
+- **WHEN** user executes `dep-report dashboard --cwd ./my-project`
 - **THEN** the server SHALL resolve `.dc-reporter/` relative to `./my-project`
 - **AND** the server SHALL read C4 files from `./my-project/.dc-reporter/architecture/`
 

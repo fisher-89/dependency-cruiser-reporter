@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { program } from 'commander';
-import { analyze, archiToRules, open } from '../commands/index.js';
+import { analyze, archiToRules, dashboard } from '../commands/index.js';
 
-program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
+program.name('dep-reporter').description('dependency-cruiser result visualizer').version('0.1.0');
 
 program.option('--cwd <path>', 'Workspace root directory', '.');
 
@@ -20,18 +20,18 @@ program
       config: options.config,
       cwd,
     });
-    console.log(`\nTo view the result, run:\n  dep-report open -f ${graphFile}`);
+    console.log(`\nTo view the result, run:\n  dep-report dashboard -f ${graphFile}`);
   });
 
 program
-  .command('open')
-  .description('Open web viewer with HTTP server')
+  .command('dashboard')
+  .description('Start dashboard web viewer with HTTP server')
   .option('-f, --file <path>', 'Pre-processed graph JSON to load')
   .option('-p, --port <number>', 'Server port', '3000')
   .option('--host <host>', 'Server host', 'localhost')
   .action(async (options) => {
     const cwd = program.opts().cwd;
-    await open({
+    await dashboard({
       file: options.file,
       port: Number.parseInt(options.port, 10),
       host: options.host,

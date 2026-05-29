@@ -8,7 +8,7 @@
 
 ### Requirement: 命令接口
 
-系统 SHALL 提供三个命令：`analyze`、`open` 和 `archi-to-rules`，均支持全局 `--cwd` 选项。
+系统 SHALL 提供三个命令：`analyze`、`dashboard` 和 `archi-to-rules`，均支持全局 `--cwd` 选项。
 
 #### analyze 命令
 
@@ -41,10 +41,10 @@ dep-report analyze [options]
 - THEN 输出文件默认保存到 `./my-project/.dc-reporter/scans/`
 - AND 若 `.dc-reporter/scans/` 不存在则自动创建
 
-#### open 命令
+#### dashboard 命令
 
 ```bash
-dep-report open [options]
+dep-report dashboard [options]
 ```
 
 | 选项 | 默认值 | 描述 |
@@ -54,21 +54,21 @@ dep-report open [options]
 | `--host <host>` | `localhost` | 服务器主机 |
 | `--cwd <path>` | `"."` | 工作区根目录 |
 
-##### Scenario: open 执行（不传 --file，默认文件存在）
+##### Scenario: dashboard 执行（不传 --file，默认文件存在）
 
-- **WHEN** 用户执行 `dep-report open`
+- **WHEN** 用户执行 `dep-report dashboard`
 - **AND** `<cwd>/.dc-reporter/scans/<cwd-basename>-graph.json` 存在
 - **THEN** 系统加载该文件，打印 "Using graph file: <path>"
 
-##### Scenario: open 执行（不传 --file，默认文件不存在）
+##### Scenario: dashboard 执行（不传 --file，默认文件不存在）
 
-- **WHEN** 用户执行 `dep-report open`
+- **WHEN** 用户执行 `dep-report dashboard`
 - **AND** `<cwd>/.dc-reporter/scans/<cwd-basename>-graph.json` 不存在
 - **THEN** 服务器正常启动，不预加载图文件
 
-##### Scenario: open 执行（带 --cwd）
+##### Scenario: dashboard 执行（带 --cwd）
 
-- WHEN 用户执行 `dep-report open --cwd ./my-project`
+- WHEN 用户执行 `dep-report dashboard --cwd ./my-project`
 - THEN 系统启动 Express 服务器
 - AND 服务器从 `./my-project/.dc-reporter/` 读取 C4 文件和图文件
 - AND `/api/config` 返回该工作区的配置
@@ -235,7 +235,7 @@ packages/cli/
 │   │   ├── index.ts     # 命令导出
 │   │   ├── analyze.ts   # analyze 命令
 │   │   ├── archi-to-rules.ts  # archi-to-rules 命令
-│   │   └── open.ts      # open 命令
+│   │   └── dashboard.ts      # dashboard 命令
 │   ├── server/
 │   │   ├── server.ts    # Express HTTP 服务器
 │   │   └── architecture/
@@ -253,7 +253,7 @@ packages/cli/
 dep-report analyze --path ./my-project
 
 # 2. 打开结果（按需聚合）
-dep-report open -f my-project-graph.json
+dep-report dashboard -f my-project-graph.json
 ```
 
 #### Scenario: 外部 dependency-cruiser 输出
@@ -263,7 +263,7 @@ dep-report open -f my-project-graph.json
 npx dependency-cruiser --output-type json src/ > cruise.json
 
 # 2. 查看结果（服务器自动检测格式）
-dep-report open -f cruise.json
+dep-report dashboard -f cruise.json
 ```
 
 ## References

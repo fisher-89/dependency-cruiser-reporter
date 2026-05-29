@@ -1,6 +1,6 @@
 {
   "name": "dependency-cruiser-reporter",
-  "version": "0.1.16",
+  "version": "0.2.0",
   "exports": {
     ".": {
       "types": "./packages/cli/bin/cli.d.ts",
@@ -21,9 +21,9 @@
     "build:rust": "node scripts/build-rust.js",
     "build:ts": "pnpm -r build",
     "analyze": "node packages/cli/bin/cli.js analyze",
-    "open": "node packages/cli/bin/cli.js open",
+    "dashboard": "node packages/cli/bin/cli.js dashboard",
     "archi-to-rules": "node packages/cli/bin/cli.js archi-to-rules",
-    "demo": "pnpm run analyze -p demo && pnpm run open -f demo-graph.json",
+    "demo": "pnpm run analyze -p demo && pnpm run dashboard -f demo-graph.json",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix"

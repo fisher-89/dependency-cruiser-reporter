@@ -39,7 +39,7 @@ dependency-cruiser 是 JavaScript/TypeScript 静态分析工具，检测：
 
 | 组件 | 路径 | 职责 |
 |------|------|------|
-| CLI | `packages/cli/` | 命令行工具 (`dep-report`)：`analyze`（运行 dependency-cruiser）、`open`（启动 Web 查看器）。导出编程式 Express 服务器。 |
+| CLI | `packages/cli/` | 命令行工具 (`dep-report`)：`analyze`（运行 dependency-cruiser）、`dashboard`（启动 Web 查看器）、`archi-to-rules`（转换 C4 架构模型为规则）。导出编程式 Express 服务器。 |
 | Rust 后端 | `packages/rust/` | WASM 模块：解析 dependency-cruiser 输出、混合聚合、布局计算。Node.js 回退在 `convert.ts`。 |
 | React 前端 | `packages/frontend/` | 交互式可视化：Graph/Report/Metrics 视图。 |
 
@@ -47,13 +47,13 @@ dependency-cruiser 是 JavaScript/TypeScript 静态分析工具，检测：
 
 ```
 dependency-cruiser JSON → CLI (analyze) → Raw JSON 文件
-Raw JSON → HTTP Server (open) → WASM/Node.js 聚合 → ProcessedGraph
+Raw JSON → HTTP Server (dashboard) → WASM/Node.js 聚合 → ProcessedGraph
 ProcessedGraph → React Frontend → AntV G6 渲染
 ```
 
 ### 关键设计决策
 
-1. **延迟转换 + 混合聚合**：`analyze` 保存原始 dependency-cruiser JSON，聚合在 `open` 时按需发生，支持交互式钻取
+1. **延迟转换 + 混合聚合**：`analyze` 保存原始 dependency-cruiser JSON，聚合在 `dashboard` 时按需发生，支持交互式钻取
 2. **WASM + tsify**：Rust 编译为 WASM，通过 tsify 自动生成 TypeScript 类型，单一类型真相来源
 3. **Node.js 回退**：WASM 不可用时优雅降级
 
