@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+
 import { type TKey, useT } from '../i18n';
 import type { GraphEdge, GraphNode, ViolationInfo } from '../types';
 
@@ -67,7 +68,7 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
     if (!node) return [];
     return violations.filter(
       (v) =>
-        v.from === node.label || v.to === node.label || v.from === node.path || v.to === node.path
+        v.from === node.label || v.to === node.label || v.from === node.path || v.to === node.path,
     );
   }, [node, violations]);
 

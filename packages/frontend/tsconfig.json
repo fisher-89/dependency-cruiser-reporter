@@ -12,10 +12,5 @@
     },
     "types": ["node", "@testing-library/jest-dom"]
   },
-  "include": ["src", "e2e"],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+  "include": ["src", "e2e"]
 }

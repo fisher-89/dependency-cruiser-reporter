@@ -65,8 +65,6 @@ cargo fmt --check        # 格式检查
 ```bash
 cd packages/frontend
 pnpm dev                 # 启动开发服务器 (http://localhost:5173)
-pnpm typecheck           # 类型检查
-pnpm lint                # 代码检查
 pnpm build               # 生产构建
 pnpm preview             # 预览生产构建
 ```

@@ -1,4 +1,5 @@
 import type { ComboData, EdgeData, GraphData, NodeData } from '@antv/g6';
+
 import type { EdgeType, NodeType, ProcessedGraph } from '../../types';
 
 /** G6 node data payload */

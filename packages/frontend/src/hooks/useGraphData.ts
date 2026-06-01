@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+
 import type { ProcessedGraph } from '../types';
 
 export interface UseGraphDataReturn {
@@ -61,9 +62,9 @@ export function useGraphData(): UseGraphDataReturn {
         next.add(dir);
       }
       setExpandedDirs(next);
-      fetchGraph(Array.from(next));
+      void fetchGraph(Array.from(next));
     },
-    [expandedDirs, fetchGraph]
+    [expandedDirs, fetchGraph],
   );
 
   return { data, loading, error, expandedDirs, fetchGraph, refresh, toggleDir };

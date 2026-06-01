@@ -12,10 +12,11 @@
  *   - File upload then route switching
  */
 
-import App from '@/App';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
+import App from '@/App';
 
 // Stub File.prototype.text for jsdom (not available in jsdom)
 if (!File.prototype.text) {
@@ -117,7 +118,7 @@ function stubIntersectionObserver() {
       observe: vi.fn(),
       unobserve: vi.fn(),
       disconnect: vi.fn(),
-    }))
+    })),
   );
 }
 
@@ -145,7 +146,7 @@ function renderApp() {
   return render(
     <BrowserRouter>
       <App />
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 }
 

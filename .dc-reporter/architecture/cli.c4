@@ -7,21 +7,47 @@ model {
     }
 
     commands = module {
-      analyze = module
+      analyze = module {
+        -[dependency]-> ROOT.cli.actions.analyze
+      }
+      archi-to-rules = module {
+        -[dependency]-> ROOT.cli.actions.archi-to-rules
+      }
       dashboard = module {
         -[dependency]-> ROOT.cli.server
       }
+    }
+
+    server = module {
+
+      dashboard = module {
+        -> ROOT.frontend 'express启动frontend/dist'
+      }
+
+      architecture = module 'architecture' 'c4模型相关接口' {
+        -[dependency]-> ROOT.cli.actions.archi-to-rules
+      }
+
+      dep = module 'dep' '依赖相关接口' {
+        analyze = module {
+          -[dependency]-> ROOT.cli.actions.analyze
+        }
+
+        graph = module {
+          -[dependency]-> ROOT.cli.utils.convert
+        }
+      }
+    }
+
+    actions = module {
+      analyze = module 'analyze' '使用dependency-cruiser扫描工程，生成json报告' {}
+      archi-to-rules = module {}
     }
 
     utils = module 'utils' {
       convert = module {
         -[dependency]-> ROOT.rust
       }
-    }
-
-    server = module {
-      -[dependency]-> ROOT.cli.utils.convert
-      -> ROOT.frontend 'express启动frontend/dist'
     }
   }
 }

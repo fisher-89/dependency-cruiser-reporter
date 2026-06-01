@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
+
 import type { Element as C4Element, Link as C4Link } from '@likec4/core';
 
 // ---------------------------------------------------------------------------
@@ -94,7 +95,7 @@ function virtualPathToModule(url: string): string {
  * The path separator `/` is not escaped.
  */
 function escapeRegex(str: string): string {
-  return str.replace(/[.+*?\\()\[\]{}^$|]/g, '\\$&');
+  return str.replace(/[.+*?\\()[\]{}^$|]/g, '\\$&');
 }
 
 /**
@@ -104,9 +105,7 @@ function escapeRegex(str: string): string {
  * @param elements - Array of elements with `id` (FQN) fields
  * @returns Map where keys are parent FQNs and values are arrays of direct child FQN suffixes
  */
-function buildParentChildMap(
-  elements: ReadonlyArray<{ id: string }>
-): Map<string, string[]> {
+function buildParentChildMap(elements: ReadonlyArray<{ id: string }>): Map<string, string[]> {
   const result = new Map<string, string[]>();
   const allFqns = new Set(elements.map((el) => el.id));
 
@@ -148,7 +147,7 @@ function buildParentChildMap(
 function collectAncestorDeps(
   elementFqn: string,
   dependencyMap: Map<string, Set<string>>,
-  _allElements: Map<string, C4Element>
+  _allElements: Map<string, C4Element>,
 ): string[] {
   const inherited = new Set<string>();
   const ancestors = ancestorFqns(elementFqn);
@@ -185,7 +184,7 @@ function collectAncestorDeps(
 export function resolveElementPath(
   fqn: string,
   links: ReadonlyArray<C4Link> | null | undefined,
-  allElements: Map<string, C4Element>
+  allElements: Map<string, C4Element>,
 ): string {
   // Tier 1: Own link
   if (links && links.length > 0 && links[0].relative) {
@@ -286,7 +285,7 @@ export function buildForbiddenRule(
   elementFqn: string,
   resolvedPath: string,
   dependencyPaths: string[],
-  childExclusionSuffixes?: string[]
+  childExclusionSuffixes?: string[],
 ): ForbiddenRule {
   // Combine self path with dependency paths and deduplicate
   const uniquePaths = [...new Set([resolvedPath, ...dependencyPaths])];
@@ -324,7 +323,7 @@ export function buildRulesFile(
     resolvedPath: string;
     dependencyPaths: string[];
     childExclusionSuffixes?: string[];
-  }>
+  }>,
 ): { forbidden: ForbiddenRule[] } {
   return {
     forbidden: elements.map((el) =>
@@ -332,8 +331,8 @@ export function buildRulesFile(
         el.elementFqn,
         el.resolvedPath,
         el.dependencyPaths,
-        el.childExclusionSuffixes
-      )
+        el.childExclusionSuffixes,
+      ),
     ),
   };
 }
@@ -403,7 +402,7 @@ export function updateDependencyCruiserConfig(configPath: string, extendsValue: 
 
   if (!exportMatch) {
     console.warn(
-      'Could not detect module.exports or export default in config file, skipping extends update'
+      'Could not detect module.exports or export default in config file, skipping extends update',
     );
     return false;
   }

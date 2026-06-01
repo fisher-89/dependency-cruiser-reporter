@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, relative, resolve } from 'node:path';
-import type { ICruiseOptions } from 'dependency-cruiser';
-import { cruise } from 'dependency-cruiser';
+
+import { cruise, type ICruiseOptions } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
 
@@ -14,13 +14,13 @@ export interface AnalyzeOptions {
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<string> {
-  const { path: analyzePath = '.', output, config, cwd: workspaceRoot = '.' } = options;
+  const { path: analyzePath, output, config, cwd: workspaceRoot = '.' } = options;
   const absCwd = resolve(workspaceRoot);
 
   // Resolve absolute path
   const absAnalyzePath = resolve(absCwd, analyzePath);
-  const outputPath = output
-    || resolve(absCwd, '.dc-reporter', 'scans', `${basename(absAnalyzePath)}-graph.json`);
+  const outputPath =
+    output || resolve(absCwd, '.dc-reporter', 'scans', `${basename(absAnalyzePath)}-graph.json`);
 
   // Ensure output directory exists
   const parentDir = dirname(outputPath);
@@ -77,13 +77,16 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
 
   console.log(`Analyzing: ${absAnalyzePath}`);
   const startAt = Date.now();
-  const relativeAnalyzePath = relative(String(cruiseOptions.baseDir) ?? process.cwd(), absAnalyzePath);
+  const relativeAnalyzePath = relative(
+    String(cruiseOptions.baseDir ?? process.cwd()),
+    absAnalyzePath,
+  );
   // Run dependency-cruiser via API
   const cruiseResult = await cruise(
     [relativeAnalyzePath],
     cruiseOptions,
     undefined, // resolveOptions (webpack)
-    transpilerOptions
+    transpilerOptions,
   );
 
   if (!cruiseResult.output) {

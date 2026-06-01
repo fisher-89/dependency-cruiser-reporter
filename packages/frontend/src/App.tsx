@@ -1,12 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
 import { GraphViewLayout } from './components/GraphViewLayout';
 import { SettingsDropdown } from './components/settings';
 import { useGraphData } from './hooks/useGraphData';
-import { useT } from './i18n';
-import type { TKey } from './i18n';
+import { useT, type TKey } from './i18n';
 import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
@@ -51,13 +51,13 @@ function App() {
   // but location.pathname retains the original case (e.g. "/Report" → "/report").
   useEffect(() => {
     if (GRAPH_ROUTES.has(location.pathname.toLowerCase()) && !data && !loading && !error) {
-      fetchGraph();
+      void fetchGraph();
     }
   }, [location.pathname, data, loading, error, fetchGraph]);
 
   const handleRefresh = useCallback(() => {
     setSelectedNodeId(null);
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
@@ -243,7 +243,7 @@ function MetricsView({ data }: { data: ProcessedGraph }) {
       acc[e.edge_type] = (acc[e.edge_type] || 0) + 1;
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
 
   return (

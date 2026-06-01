@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
+
 import { type ServerOptions, createServer } from '../server/server.js';
 
 export interface DashboardOptions {
@@ -18,7 +19,13 @@ const DEFAULT_MAX_NODES = 500;
  * Start dashboard web viewer with HTTP server
  */
 export async function dashboard(options: DashboardOptions): Promise<void> {
-  const { file, port = 3000, host = 'localhost', maxNodes = DEFAULT_MAX_NODES, cwd = '.' } = options;
+  const {
+    file,
+    port = 3000,
+    host = 'localhost',
+    maxNodes = DEFAULT_MAX_NODES,
+    cwd = '.',
+  } = options;
 
   let resolvedFile = file;
   if (!resolvedFile) {

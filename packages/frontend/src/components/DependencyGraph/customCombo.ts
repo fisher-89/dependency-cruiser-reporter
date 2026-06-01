@@ -1,4 +1,10 @@
-import { ExtensionCategory, Point, RectCombo, RectComboStyleProps, register } from '@antv/g6';
+import {
+  ExtensionCategory,
+  RectCombo,
+  register,
+  type Point,
+  type RectComboStyleProps,
+} from '@antv/g6';
 
 export function registerCustomCombo() {
   register(ExtensionCategory.COMBO, 'directory', DirectoryCombo);

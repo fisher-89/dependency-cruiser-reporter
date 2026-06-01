@@ -1,12 +1,6 @@
 {
   "name": "dependency-cruiser-reporter",
   "version": "0.2.0",
-  "exports": {
-    ".": {
-      "types": "./packages/cli/bin/cli.d.ts",
-      "import": "./packages/cli/bin/cli.js"
-    }
-  },
   "bin": {
     "dep-report": "./bin/cli.js"
   },
@@ -14,6 +8,13 @@
     "package.json",
     "bin/"
   ],
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./packages/cli/bin/cli.d.ts",
+      "import": "./packages/cli/bin/cli.js"
+    }
+  },
   "scripts": {
     "init": "pnpm run build:rust && pnpm i",
     "build": "pnpm run build:rust && pnpm run build:ts",
@@ -25,11 +26,10 @@
     "archi-to-rules": "node packages/cli/bin/cli.js archi-to-rules",
     "demo": "pnpm run analyze -p demo && pnpm run dashboard -f demo-graph.json",
     "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "lint:fix": "pnpm -r lint:fix"
+    "check": "vp check",
+    "check:fix": "vp check --fix"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4",
     "@types/node": "^20.19.39",
     "@voidzero-dev/vite-plus-win32-x64-msvc": "^0.1.14",
     "typescript": "catalog:",

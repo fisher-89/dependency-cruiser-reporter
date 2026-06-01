@@ -1,16 +1,20 @@
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite-plus';
+import { defineConfig, mergeConfig } from 'vite-plus';
 
-export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      '@': '/src',
+import checkConfig from '../../vite-check.config.ts';
+
+export default defineConfig(
+  mergeConfig(checkConfig, {
+    plugins: [react()],
+    resolve: {
+      alias: {
+        '@': '/src',
+      },
     },
-  },
-  build: {
-    outDir: 'dist',
-    emptyOutDir: true,
-    sourcemap: true,
-  },
-});
+    build: {
+      outDir: 'dist',
+      emptyOutDir: true,
+      sourcemap: true,
+    },
+  }),
+);

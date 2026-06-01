@@ -1,5 +1,6 @@
 import { LikeC4ModelProvider, ReactLikeC4 } from '@likec4/diagram';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+
 import { useT } from '../i18n';
 import { RefreshIcon } from './icons';
 
@@ -70,7 +71,7 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
   }, [viewId]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   return { state, reload: load };

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+
 import { expect, test } from '@playwright/test';
 
 const sampleGraphData = {

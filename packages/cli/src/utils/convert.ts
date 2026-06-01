@@ -30,7 +30,7 @@ async function initWasm(): Promise<void> {
 export async function convert(
   dcJson: string,
   maxNodes = 200,
-  expandedDirs?: string[]
+  expandedDirs?: string[],
 ): Promise<ProcessedGraph> {
   await initWasm();
   if (!wasmAggregate) {

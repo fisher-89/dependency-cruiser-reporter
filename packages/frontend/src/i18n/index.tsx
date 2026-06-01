@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState } from 'react';
+
 import en from './en';
 import zhCN from './zh-CN';
 
@@ -50,7 +51,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       }
       return current as string;
     },
-    [lang]
+    [lang],
   );
 
   return <I18nContext.Provider value={{ lang, setLang, t }}>{children}</I18nContext.Provider>;

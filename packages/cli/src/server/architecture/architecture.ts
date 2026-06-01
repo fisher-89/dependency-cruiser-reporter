@@ -1,6 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+
 import { type Express, type Request, type Response } from 'express';
+
 import mainC4Template from './main.c4.template';
 
 export function setupArchitectureRoutes(app: Express, cwd: string): void {
@@ -15,7 +17,7 @@ export function setupArchitectureRoutes(app: Express, cwd: string): void {
 
     let files: string[];
     try {
-      files = readdirSync(archDir).filter(f => f.endsWith('.c4'));
+      files = readdirSync(archDir).filter((f) => f.endsWith('.c4'));
     } catch {
       res.status(500).json({ error: 'Failed to read architecture directory' });
       return;

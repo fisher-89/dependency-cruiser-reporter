@@ -13,7 +13,7 @@
   --color-btn-bg: #e2e8f0;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --color-bg: #171718;
   --color-surface: #272829;
   --color-border: #334155;

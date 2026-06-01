@@ -1,18 +1,22 @@
-import { defineConfig } from 'vite-plus';
+import { defineConfig, mergeConfig } from 'vite-plus';
 
-export default defineConfig({
-  pack: {
-    entry: ['./src/bin/cli.ts'],
-    loader: {
-      '.template': 'text'
+import checkConfig from '../../vite-check.config.ts';
+
+export default defineConfig(
+  mergeConfig(checkConfig, {
+    pack: {
+      entry: ['./src/bin/cli.ts'],
+      loader: {
+        '.template': 'text',
+      },
+      outputOptions: {
+        dir: './bin',
+        entryFileNames: 'cli.js',
+      },
+      format: 'es',
+      dts: true,
+      sourcemap: true,
+      clean: ['./bin'],
     },
-    outputOptions: {
-      dir: './bin',
-      entryFileNames: 'cli.js',
-    },
-    format: 'es',
-    dts: true,
-    sourcemap: true,
-    clean: ['./bin'],
-  },
-});
+  }),
+);

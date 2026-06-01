@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+
 import { useT } from '../../i18n';
 import { useTheme } from '../../theme';
 import { MonitorIcon, MoonIcon, SettingsIcon, SunIcon } from '../icons';

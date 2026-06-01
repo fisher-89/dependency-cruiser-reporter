@@ -3,6 +3,8 @@
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
     "outDir": "dist",
     "rootDir": "src",
     "esModuleInterop": true,
@@ -11,12 +13,6 @@
     "sourceMap": true,
     "types": ["vite-plus"]
   },
-  "include": [
-    "src/**/*",
-    "global.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*", "global.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -13,10 +13,11 @@
  *   - B-8:  accessing trailing-slash URL like "/report/" redirects to "/graph"
  */
 
-import App from '@/App';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+
+import App from '@/App';
 
 // ---------------------------------------------------------------------------
 // Mock ArchitectureView (lazy-loaded) to be synchronous in unit tests
@@ -105,7 +106,7 @@ function renderAtRoute(initialRoute: string) {
   return render(
     <MemoryRouter initialEntries={[initialRoute]}>
       <App />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -119,7 +120,7 @@ function stubIntersectionObserver() {
       observe: vi.fn(),
       unobserve: vi.fn(),
       disconnect: vi.fn(),
-    }))
+    })),
   );
 }
 

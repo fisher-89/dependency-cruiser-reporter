@@ -1,6 +1,12 @@
-import type { ComboData, Element as G6Element, GraphData, IPointerEvent } from '@antv/g6';
-import { Graph } from '@antv/g6';
+import {
+  Graph,
+  type ComboData,
+  type Element as G6Element,
+  type GraphData,
+  type IPointerEvent,
+} from '@antv/g6';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+
 import { useT } from '../../i18n';
 import { useTheme } from '../../theme';
 import {
@@ -10,8 +16,7 @@ import {
   LIGHT_NODE_STYLES,
 } from '../../theme/constants';
 import type { EdgeType, NodeType, ProcessedGraph } from '../../types';
-import type { G6Node } from './buildGraphData';
-import { buildGraphData } from './buildGraphData';
+import { buildGraphData, type G6Node } from './buildGraphData';
 
 export { registerCustomCombo } from './customCombo';
 
@@ -34,29 +39,35 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
 
   const NODE_STYLES: Record<NodeType, { fill: string; stroke: string }> = useMemo(
     () => (resolvedTheme === 'dark' ? DARK_NODE_STYLES : LIGHT_NODE_STYLES),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
   const EDGE_STYLES: Record<EdgeType, { stroke: string; lineDash: number[] }> = useMemo(
     () => (resolvedTheme === 'dark' ? DARK_EDGE_STYLES : LIGHT_EDGE_STYLES),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
   const SELECTED_COLOR = useMemo(
     () => (resolvedTheme === 'dark' ? '#60a5fa' : '#1890FF'),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
   const LABEL_FILL = useMemo(
     () => (resolvedTheme === 'dark' ? '#f1f5f9' : '#1e293b'),
-    [resolvedTheme]
+    [resolvedTheme],
   );
 
   const graphData = useMemo(() => buildGraphData(data), [data]);
 
   if (!data?.nodes || !data?.edges || !data?.meta) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+      <div
+        style={{
+          padding: '24px',
+          textAlign: 'center',
+          color: 'var(--color-text-secondary)',
+        }}
+      >
         {t('graph.noData')}
       </div>
     );
@@ -88,7 +99,7 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
         onToggleDir(node.path);
       }
     },
-    [data.nodes, onToggleDir]
+    [data.nodes, onToggleDir],
   );
 
   const handleComboDblClick = useCallback(
@@ -106,7 +117,7 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
         onToggleDir(rawPath);
       }
     },
-    [onToggleDir]
+    [onToggleDir],
   );
 
   useEffect(() => {
@@ -167,7 +178,11 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
       },
       edge: {
         style: (d: {
-          data?: { edge_type?: EdgeType; error_count?: number; warn_count?: number };
+          data?: {
+            edge_type?: EdgeType;
+            error_count?: number;
+            warn_count?: number;
+          };
         }) => {
           const edgeType = d.data?.edge_type ?? 'local';
           const s = EDGE_STYLES[edgeType] ?? EDGE_STYLES.local;
@@ -236,7 +251,7 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
     if (graphDataRef.current !== graphData) {
       graphDataRef.current = graphData;
       graph.setData(graphData);
-      graph.render();
+      void graph.render().catch(console.error);
     }
   }, [graphData]);
 
@@ -248,16 +263,20 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
 
     if (prevSelectedRef.current && prevSelectedRef.current !== selectedNodeId) {
       const prevStates = graph.getElementState(prevSelectedRef.current);
-      graph.setElementState(
-        prevSelectedRef.current,
-        prevStates.filter((s) => s !== 'selected')
-      );
+      void graph
+        .setElementState(
+          prevSelectedRef.current,
+          prevStates.filter((s) => s !== 'selected'),
+        )
+        .catch(console.error);
     }
 
     if (selectedNodeId) {
       const currStates = graph.getElementState(selectedNodeId);
       if (!currStates.includes('selected')) {
-        graph.setElementState(selectedNodeId, [...currStates, 'selected']);
+        void graph
+          .setElementState(selectedNodeId, [...currStates, 'selected'])
+          .catch(console.error);
       }
     }
 

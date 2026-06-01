@@ -28,7 +28,7 @@ model {
       link ../../packages/frontend
     }
 
-    rust = package 'rust' '自动聚合节点并计算布局' {
+    rust = package 'rust' '高性能计算（自动聚合节点并计算布局）' {
       link ../../packages/rust
     }
   }

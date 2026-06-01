@@ -1,1 +1,40 @@
-{"modules": [{"source": "src/index.ts", "dependencies": []}, {"source": "src/app.ts", "dependencies": [{"module": "./utils", "moduleSystem": "es6", "resolved": "src/utils.ts", "dependencyTypes": ["local"]}]}, {"source": "src/utils.ts", "dependencies": []}, {"source": "src/components/Button.tsx", "dependencies": [{"module": "../utils", "moduleSystem": "es6", "resolved": "src/utils.ts", "dependencyTypes": ["local"]}]}, {"source": "src/components/Input.tsx", "dependencies": [{"module": "../utils", "moduleSystem": "es6", "resolved": "src/utils.ts", "dependencyTypes": ["local"]}]}], "summary": {"violations": [], "error": 0, "warn": 0, "info": 0}}
+{
+  "modules": [
+    { "source": "src/index.ts", "dependencies": [] },
+    {
+      "source": "src/app.ts",
+      "dependencies": [
+        {
+          "module": "./utils",
+          "moduleSystem": "es6",
+          "resolved": "src/utils.ts",
+          "dependencyTypes": ["local"]
+        }
+      ]
+    },
+    { "source": "src/utils.ts", "dependencies": [] },
+    {
+      "source": "src/components/Button.tsx",
+      "dependencies": [
+        {
+          "module": "../utils",
+          "moduleSystem": "es6",
+          "resolved": "src/utils.ts",
+          "dependencyTypes": ["local"]
+        }
+      ]
+    },
+    {
+      "source": "src/components/Input.tsx",
+      "dependencies": [
+        {
+          "module": "../utils",
+          "moduleSystem": "es6",
+          "resolved": "src/utils.ts",
+          "dependencyTypes": ["local"]
+        }
+      ]
+    }
+  ],
+  "summary": { "violations": [], "error": 0, "warn": 0, "info": 0 }
+}

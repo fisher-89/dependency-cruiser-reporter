@@ -1,14 +1,14 @@
 {
   "name": "@dcr-reporter/cli",
   "version": "0.1.0",
-  "type": "module",
   "description": "CLI and HTTP server for dependency-cruiser-reporter",
+  "type": "module",
   "scripts": {
     "build": "pnpm run typecheck && vp pack",
     "dev": "vp",
     "typecheck": "tsc --noEmit",
-    "lint": "biome check src/",
-    "lint:fix": "biome check src/ --write"
+    "lint": "vp check",
+    "lint:fix": "vp check --fix"
   },
   "dependencies": {
     "@dcr-reporter/frontend": "workspace:*",

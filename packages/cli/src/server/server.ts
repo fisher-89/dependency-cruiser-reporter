@@ -1,9 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import express, { type Express, type Request, type Response } from 'express';
+
 import { convert } from '../utils/convert.js';
 import { setupArchitectureRoutes } from './architecture/architecture.js';
-import { fileURLToPath } from 'node:url';
 
 export interface ServerOptions {
   port: number;
@@ -89,7 +91,9 @@ export class DcrServer {
       if (existsSync(indexPath)) {
         res.sendFile(indexPath);
       } else {
-        res.status(404).send(`Frontend not built. Run 'pnpm build' in packages/frontend.(PATH:${indexPath})`);
+        res
+          .status(404)
+          .send(`Frontend not built. Run 'pnpm build' in packages/frontend.(PATH:${indexPath})`);
       }
     });
   }
