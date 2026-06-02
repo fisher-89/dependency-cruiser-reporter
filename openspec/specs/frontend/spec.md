@@ -45,10 +45,7 @@ main.tsx
 #### Scenario: App 根组件
 
 - WHEN App 挂载
-- THEN 调用 `GET /api/config` 检查服务器配置
-- AND 响应包含 `{ cwd, hasArchitectureDir, hasGraphFile }`
-- IF `hasArchitectureDir` 或 `hasGraphFile` 为 true THEN 显示导航栏和对应视图
-- IF 两者均为 false THEN 显示目录选择器
+- AND 检查是否已加载图文件
 - AND 所有文本通过 `useT()` hook 获取翻译
 
 #### Scenario: 视图切换
@@ -57,6 +54,27 @@ main.tsx
 - THEN 切换 `viewMode` 状态（`'architecture'` | `'graph'` | `'report'` | `'metrics'`）
 - AND 条件渲染对应视图组件
 - AND Architecture 视图使用 `React.lazy` 动态加载
+
+#### Scenario: GraphViewLayout 扩展 props
+
+- **WHEN** `GraphViewLayout` 渲染且 `onScan` prop 已提供
+- **THEN** action bar 中 Refresh 按钮右侧显示 "Scan" 按钮
+- **AND** `scanning` 为 true 时按钮 disabled 且图标旋转
+- **AND** `onScan` 为 undefined 时不显示按钮（向后兼容）
+
+#### Scenario: ArchitectureView action bar 扩展
+
+- **WHEN** `ArchitectureView` 渲染且 `state.status === 'ready'`
+- **THEN** action bar 中 Refresh 按钮右侧显示 "Generate Rules" 按钮
+- **AND** 点击后调用 `POST /api/archi-to-rules`
+- **AND** 按钮在 loading/error/empty 状态下不显示
+
+#### Scenario: App handleScan
+
+- **WHEN** `App` 渲染 Graph/Report/Metrics 视图
+- **THEN** `handleScan` 回调传递给 `GraphViewLayout` 的 `onScan` prop
+- **AND** `scanning` 状态传递给 `GraphViewLayout` 的 `scanning` prop
+- **AND** `handleScan` 发送 `POST /api/analyze` 并在完成/失败后更新 `scanning` 状态
 
 ### Requirement: 状态管理
 
@@ -69,25 +87,15 @@ main.tsx
 | `loading` | `boolean` | App |
 | `error` | `string \| null` | App |
 | `selectedNodeId` | `string \| null` | App |
-| `config` | `AppConfig \| null` | App |
-
-其中 `AppConfig` 包含：
-```typescript
-interface AppConfig {
-  cwd: string;
-  hasArchitectureDir: boolean;
-  hasGraphFile: boolean;
-}
-```
 
 主题和语言状态 SHALL 由各自 Provider 管理（非 App 本地状态）。
 
 #### Scenario: 状态转换
 
 ```
-Idle → Loading (配置加载)
-Loading → WorkspaceReady (hasArchitectureDir || hasGraphFile)
-Loading → NoWorkspace (两者均为 false)
+Idle → Loading
+Loading → WorkspaceReady (加载成功)
+Loading → NoWorkspace (无图文件)
 WorkspaceReady → ArchitectureView/GraphView/ReportView/MetricsView (视图切换)
 NoWorkspace → DirectoryPicker (选择项目目录)
 Error → Loading (重试)
@@ -120,7 +128,7 @@ Error → Loading (重试)
 
 #### Scenario: 无工作区
 
-- WHEN `GET /api/config` 返回 `hasArchitectureDir: false` 且 `hasGraphFile: false`
+- WHEN 无图文件加载
 - THEN 显示目录选择器界面
 - AND 用户可选择项目目录或上传 JSON 文件
 
@@ -130,7 +138,7 @@ Error → Loading (重试)
 
 #### Scenario: Architecture nav tab rendering
 
-- **WHEN** Header 渲染且 `hasArchitectureDir` 为 true
+- **WHEN** Header 渲染
 - **THEN** 导航栏显示 "Architecture" 标签作为第一个标签
 - **AND** 标签使用 `t('nav.architecture')` 获取本地化文本
 - **AND** 样式与现有标签一致
@@ -148,14 +156,14 @@ Error → Loading (重试)
 
 #### Scenario: 目录选择器显示
 
-- **WHEN** `GET /api/config` 返回 `hasArchitectureDir: false` 且 `hasGraphFile: false`
+- **WHEN** `hasArchitectureDir` 为 false 且 `hasGraphFile` 为 false
 - **THEN** 显示目录选择器，提示用户选择项目目录
 - **AND** 同时保留文件上传区域作为备选
 
 #### Scenario: 选择目录后
 
 - **WHEN** 用户在目录选择器中选择或输入项目路径
-- **THEN** 系统重新调用 `GET /api/config?cwd=<path>` 检查新路径
+- **THEN** 系统重新检查新路径
 - **AND** 若找到 `.dc-reporter/` 则显示对应视图
 
 ### Requirement: Graph 视图
@@ -294,6 +302,12 @@ Error → Loading (重试)
 
 深色模式 SHALL 通过 `[data-theme="dark"]` 选择器覆盖变量值。`<html>` 元素的 `data-theme` 属性由 ThemeProvider 管理。
 
+#### Scenario: 操作按钮样式
+
+- **WHEN** 新增 Scan 和 Generate Rules 按钮
+- **THEN** 按钮复用现有 `actionBtn` 样式
+- **AND** 不新增 CSS 变量
+
 ### Requirement: 项目结构
 
 前端 SHALL 按以下结构组织：
@@ -324,6 +338,12 @@ packages/frontend/
 ├── vite.config.ts
 └── package.json
 ```
+
+#### Scenario: Dashboard 操作按钮修改
+
+- **WHEN** 实现 Dashboard 操作按钮
+- **THEN** 修改 `GraphViewLayout.tsx`、`ArchitectureView.tsx`、`App.tsx`
+- **AND** 无新增文件
 
 ### Requirement: 命令
 

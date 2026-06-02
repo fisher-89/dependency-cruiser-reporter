@@ -1,17 +1,23 @@
 specification {
   element outer {
+    description '[系统外实体（例：用户、其他服务）]'
     style {
       color muted
       size small
     }
   }
   element project {
+    description '[系统工程根目录]'
     style {
       shape browser
     }
   }
-  element package
-  element module
+  element package {
+    description '[包（可独立构建）]'
+  }
+  element module {
+    description '[模块/组件]'
+  }
 
   relationship dependency {
     line solid
@@ -26,6 +32,8 @@ model {
 
     frontend = package 'frontend' {
       link ../../packages/frontend
+
+      
     }
 
     rust = package 'rust' '高性能计算（自动聚合节点并计算布局）' {

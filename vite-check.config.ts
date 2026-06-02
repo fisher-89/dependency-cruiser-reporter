@@ -14,8 +14,14 @@ export default defineConfig({
     },
     rules: {
       'no-duplicate-imports': ['error'],
-      'typescript/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
+      'no-unused-vars': 'error',
       'import/no-duplicates': 'error',
+      'typescript/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
+      'typescript/non-nullable-type-assertion-style': 'error',
+      'typescript/no-explicit-any': 'error',
+      'typescript/no-non-null-assertion': 'error',
+      'typescript/no-unnecessary-type-assertion': 'error',
+      'typescript/no-unsafe-type-assertion': 'error',
     },
     overrides: [
       { files: ['*.test.ts', '*.spec.ts'], rules: { 'typescript/no-floating-promises': 'off' } },

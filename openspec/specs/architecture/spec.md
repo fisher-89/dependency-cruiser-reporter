@@ -20,7 +20,7 @@
 
 - WHEN 用户执行 `dep-report dashboard`
 - THEN CLI 启动 Express 服务器
-- AND 前端从 `/api/config` 和 `/api/graph` 加载数据
+- AND 前端从 `/api/graph` 加载数据
 - AND Rust 后端（WASM）执行聚合计算
 
 ### Requirement: 数据流管道
@@ -50,8 +50,7 @@ dependency-cruiser JSON → analyze (保存原始) → dashboard (按需聚合) 
 #### Scenario: 前端交互
 
 - WHEN 浏览器加载前端
-- THEN 调用 `GET /api/config` 检查是否有图文件
-- AND 调用 `POST /api/graph` 加载图数据
+- THEN 调用 `POST /api/graph` 加载图数据
 - AND 可选在 POST body 中指定 `expandedDirs` 控制聚合
 
 ### Requirement: 混合聚合策略

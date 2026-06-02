@@ -2,7 +2,7 @@ import { LikeC4ModelProvider, ReactLikeC4 } from '@likec4/diagram';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { useT } from '../i18n';
-import { RefreshIcon } from './icons';
+import { GenerateRulesIcon, RefreshIcon } from './icons';
 
 type State =
   | { status: 'loading' }
@@ -21,7 +21,10 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
           setState({ status: 'empty' });
         } else {
           const body = await res.json().catch(() => ({ error: res.statusText }));
-          setState({ status: 'error', message: body.details || body.error || res.statusText });
+          setState({
+            status: 'error',
+            message: body.details || body.error || res.statusText,
+          });
         }
         return;
       }
@@ -66,7 +69,10 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
         ),
       });
     } catch (err) {
-      setState({ status: 'error', message: err instanceof Error ? err.message : String(err) });
+      setState({
+        status: 'error',
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
   }, [viewId]);
 
@@ -82,6 +88,8 @@ export function ArchitectureView() {
   const { state, reload } = useArchitectureDiagram();
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [rulesGenerating, setRulesGenerating] = useState(false);
+  const [rulesGenerateError, setRulesGenerateError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const prevState = useRef(state);
 
@@ -115,6 +123,22 @@ export function ArchitectureView() {
     }
   }, [reload]);
 
+  const handleGenerateRules = useCallback(async () => {
+    setRulesGenerating(true);
+    setRulesGenerateError(null);
+    try {
+      const res = await fetch('/api/archi-to-rules', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        setRulesGenerateError(body.details || body.error || res.statusText);
+      }
+    } catch (err) {
+      setRulesGenerateError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setRulesGenerating(false);
+    }
+  }, []);
+
   if (state.status === 'loading') {
     return (
       <div style={styles.center} data-testid="architecture-view">
@@ -144,7 +168,10 @@ export function ArchitectureView() {
         {generateError && <p style={styles.errorDetail}>{generateError}</p>}
         <button
           type="button"
-          style={{ ...styles.retryBtn, ...(generating ? styles.btnDisabled : {}) }}
+          style={{
+            ...styles.retryBtn,
+            ...(generating ? styles.btnDisabled : {}),
+          }}
           onClick={handleGenerate}
           disabled={generating}
           data-testid="generate-architecture-btn"
@@ -161,6 +188,19 @@ export function ArchitectureView() {
         <button
           type="button"
           style={styles.actionBtn}
+          onClick={handleGenerateRules}
+          disabled={rulesGenerating}
+          title={t('action.generateRules')}
+          aria-label={t('action.generateRules')}
+        >
+          <span className={rulesGenerating ? 'spinning' : undefined} style={styles.actionBtnIcon}>
+            <GenerateRulesIcon />
+          </span>
+          {rulesGenerating ? t('action.generatingRules') : t('action.generateRules')}
+        </button>
+        <button
+          type="button"
+          style={styles.actionBtn}
           onClick={handleRefresh}
           disabled={refreshing}
           title={t('nav.refresh')}
@@ -172,6 +212,11 @@ export function ArchitectureView() {
           {t('nav.refresh')}
         </button>
       </div>
+      {rulesGenerateError && (
+        <div style={styles.errorText}>
+          {t('action.generateRulesError')}: {rulesGenerateError}
+        </div>
+      )}
       <div style={styles.diagramContainer}>{state.ArchitectureDiagram}</div>
     </div>
   );
@@ -188,6 +233,7 @@ const styles: Record<string, React.CSSProperties> = {
   actionBar: {
     display: 'flex',
     alignItems: 'center',
+    gap: '8px',
     paddingBottom: '12px',
     flexShrink: 0,
   },
@@ -266,5 +312,10 @@ const styles: Record<string, React.CSSProperties> = {
   diagramContainer: {
     flex: 1,
     minHeight: 0,
+  },
+  errorText: {
+    color: 'var(--color-error)',
+    fontSize: '13px',
+    paddingBottom: '8px',
   },
 };

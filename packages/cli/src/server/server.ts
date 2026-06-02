@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import express, { type Express, type Request, type Response } from 'express';
 
 import { convert } from '../utils/convert.js';
+import { setupActionRoutes } from './actions/actions.js';
 import { setupArchitectureRoutes } from './architecture/architecture.js';
 
 export interface ServerOptions {
@@ -49,6 +50,7 @@ export class DcrServer {
       ? _devFrontend
       : fileURLToPath(new URL('./frontend', import.meta.url).href);
     setupArchitectureRoutes(this.app, this.cwd);
+    setupActionRoutes(this.app, { cwd: this.cwd });
 
     // API: Get graph data (auto-converts raw dependency-cruiser JSON)
     this.app.post('/api/graph', async (req: Request, res: Response) => {

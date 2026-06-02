@@ -10,7 +10,12 @@ export default {
   upload: {
     loading: '加载中...',
   },
-  report: { errors: '错误', warnings: '警告', info: '信息', noViolations: '未发现违规' },
+  report: {
+    errors: '错误',
+    warnings: '警告',
+    info: '信息',
+    noViolations: '未发现违规',
+  },
   detail: {
     clickHint: '点击节点查看详情',
     nodeDetails: '节点详情',
@@ -44,5 +49,13 @@ export default {
     createBtn: '一键生成架构模型',
     creating: '正在生成...',
     createError: '生成架构模型失败',
+  },
+  action: {
+    scan: '扫描',
+    scanning: '扫描中...',
+    scanError: '扫描失败',
+    generateRules: '生成规则',
+    generatingRules: '生成中...',
+    generateRulesError: '生成规则失败',
   },
 } as const;

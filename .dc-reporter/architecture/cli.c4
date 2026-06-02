@@ -14,7 +14,7 @@ model {
         -[dependency]-> ROOT.cli.actions.archi-to-rules
       }
       dashboard = module {
-        -[dependency]-> ROOT.cli.server
+        -[dependency]-> ROOT.cli.server.dashboard
       }
     }
 

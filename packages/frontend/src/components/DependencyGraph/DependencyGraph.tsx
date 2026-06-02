@@ -78,7 +78,7 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current);
     }
-    const nodeId = event.target.id as string;
+    const nodeId = event.target.id;
     clickTimerRef.current = setTimeout(() => {
       clickTimerRef.current = null;
       onNodeSelectRef.current?.(nodeId);

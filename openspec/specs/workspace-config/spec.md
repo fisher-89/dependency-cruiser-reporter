@@ -25,19 +25,10 @@ The system SHALL use `.dc-reporter/` as the workspace directory under the path s
 
 The system SHALL detect the presence of `.dc-reporter/` on startup and expose this via the API.
 
-#### Scenario: Config API reports workspace status
-
-- **WHEN** `GET /api/config` is called
-- **THEN** the response SHALL include:
-  - `cwd`: the resolved workspace root path
-  - `hasArchitectureDir`: true if `.dc-reporter/architecture/` exists
-  - `hasGraphFile`: true if a graph file is configured (existing behavior)
-
 #### Scenario: No workspace found
 
 - **WHEN** `.dc-reporter/` does not exist at the cwd
-- **THEN** `hasArchitectureDir` SHALL be `false`
-- **AND** the frontend SHALL display a directory picker prompting the user to select a project directory
+- **THEN** the frontend SHALL display a directory picker prompting the user to select a project directory
 
 ### Requirement: CLI --cwd flag
 

@@ -1,0 +1,7 @@
+model {
+  extend ROOT.rust {
+    aggregate = module '聚合节点' {}
+    layout = module '计算布局' {}
+    violations = module '统计违规依赖' {}
+  }
+}

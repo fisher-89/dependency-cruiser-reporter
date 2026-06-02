@@ -23,6 +23,9 @@ model {
     components = module {
       -[dependency]-> ROOT.frontend.i18n
       -[dependency]-> ROOT.frontend.styles
+      -[dependency]-> ROOT.frontend.hooks
     }
+
+    hooks = module { }
   }
 }

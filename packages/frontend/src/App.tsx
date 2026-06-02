@@ -1,12 +1,12 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
-import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 
 import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
 import { DetailPanel } from './components/DetailPanel';
 import { GraphViewLayout } from './components/GraphViewLayout';
 import { SettingsDropdown } from './components/settings';
 import { useGraphData } from './hooks/useGraphData';
-import { useT, type TKey } from './i18n';
+import { type TKey, useT } from './i18n';
 import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
@@ -31,8 +31,18 @@ const routeConfigs: RouteConfig[] = [
     needsData: false,
   },
   { path: '/graph', label: 'nav.graph', testId: 'nav-graph', needsData: true },
-  { path: '/report', label: 'nav.report', testId: 'nav-report', needsData: true },
-  { path: '/metrics', label: 'nav.metrics', testId: 'nav-metrics', needsData: true },
+  {
+    path: '/report',
+    label: 'nav.report',
+    testId: 'nav-report',
+    needsData: true,
+  },
+  {
+    path: '/metrics',
+    label: 'nav.metrics',
+    testId: 'nav-metrics',
+    needsData: true,
+  },
 ];
 
 const DEFAULT_VIEW = '/graph';
@@ -45,6 +55,8 @@ function App() {
   const location = useLocation();
   const { data, loading, error, fetchGraph, refresh, toggleDir } = useGraphData();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
 
   // Lazy-load graph data when entering a route that needs it.
   // Normalize to lowercase because React Router matches routes case-insensitively
@@ -59,6 +71,22 @@ function App() {
     setSelectedNodeId(null);
     void refresh();
   }, [refresh]);
+
+  const handleScan = useCallback(async () => {
+    setScanning(true);
+    setScanError(null);
+    try {
+      const res = await fetch('/api/analyze', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        setScanError(body.details || body.error || res.statusText);
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setScanning(false);
+    }
+  }, []);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -109,7 +137,13 @@ function App() {
     switch (config.path) {
       case '/graph':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            onScan={handleScan}
+            scanning={scanning}
+            scanError={scanError}
+          >
             <div style={styles.graphSplitLayout} data-testid="graph-view">
               <DependencyGraph
                 data={data}
@@ -128,13 +162,25 @@ function App() {
         );
       case '/report':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            onScan={handleScan}
+            scanning={scanning}
+            scanError={scanError}
+          >
             <ReportView violations={data.violations} />
           </GraphViewLayout>
         );
       case '/metrics':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            onScan={handleScan}
+            scanning={scanning}
+            scanError={scanError}
+          >
             <MetricsView data={data} />
           </GraphViewLayout>
         );

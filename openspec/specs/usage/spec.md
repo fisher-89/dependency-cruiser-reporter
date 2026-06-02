@@ -112,7 +112,7 @@ dep-report dashboard -f graph.json -p 8080  # 自定义端口
 
 - WHEN 服务器启动
 - THEN 服务前端静态文件
-- AND 服务 `/api/config` 和 `/api/graph` 端点
+- AND 服务 `/api/graph` 端点
 - AND 自动加载图文件（若提供 `-f`）
 
 ### Requirement: 上传界面

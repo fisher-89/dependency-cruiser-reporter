@@ -483,16 +483,15 @@ async function loadC4Model(cwd: string): Promise<LoadedModel> {
   const archDir = join(resolve(cwd), '.dc-reporter', 'architecture');
 
   if (!existsSync(archDir)) {
-    console.error(`Architecture directory not found: ${archDir}`);
-    console.error('Create .c4 files in .dc-reporter/architecture/ to define your architecture.');
-    process.exit(1);
+    throw new Error(
+      `Architecture directory not found: ${archDir}. Create .c4 files in .dc-reporter/architecture/ to define your architecture.`,
+    );
   }
 
   const files = readdirSync(archDir).filter((f) => f.endsWith('.c4'));
 
   if (files.length === 0) {
-    console.error(`No .c4 files found in ${archDir}`);
-    process.exit(1);
+    throw new Error(`No .c4 files found in ${archDir}`);
   }
 
   const sources: Record<string, string> = {};
@@ -505,12 +504,13 @@ async function loadC4Model(cwd: string): Promise<LoadedModel> {
 
   if (likec4.hasErrors()) {
     const errors = likec4.getErrors();
-    console.error('C4 parse errors:');
-    for (const err of errors) {
-      const pos = `${err.sourceFsPath}:${err.range.start.line + 1}:${err.range.start.character + 1}`;
-      console.error(`  ${pos} - ${err.message}`);
-    }
-    process.exit(1);
+    const errorMessages = errors
+      .map((err) => {
+        const pos = `${err.sourceFsPath}:${err.range.start.line + 1}:${err.range.start.character + 1}`;
+        return `${pos} - ${err.message}`;
+      })
+      .join('\n');
+    throw new Error(`C4 parse errors:\n${errorMessages}`);
   }
 
   const computed = likec4.syncComputedModel();
@@ -678,11 +678,8 @@ export async function archiToRules(options: ArchiToRulesOptions = {}): Promise<v
   }
 
   if (failedPaths.length > 0) {
-    console.warn('The following resolved paths do not exist on disk:');
-    for (const [elementFqn, path] of failedPaths) {
-      console.warn(`  ${elementFqn} -> ${path}`);
-    }
-    process.exit(1);
+    const failedPathsMsg = failedPaths.map(([fqn, p]) => `  ${fqn} -> ${p}`).join('\n');
+    throw new Error(`The following resolved paths do not exist on disk:\n${failedPathsMsg}`);
   }
 
   console.log(`Architecture rules written to: ${outputPath}`);

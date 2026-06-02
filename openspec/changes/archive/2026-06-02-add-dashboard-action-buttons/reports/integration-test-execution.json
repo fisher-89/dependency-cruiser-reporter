@@ -1,0 +1,13 @@
+{
+  "phase": "08-integration-test",
+  "command": "node --test \"D:\\Projects\\dependency-cruiser-reporter\\openspec\\changes\\add-dashboard-action-buttons\\tests\\integration\\cli-commands.test.ts\" \"D:\\Projects\\dependency-cruiser-reporter\\openspec\\changes\\add-dashboard-action-buttons\\tests\\integration\\server-actions.test.ts\" --test-reporter=spec 2>&1",
+  "timestamp": "2026-06-02T07:50:00.000Z",
+  "total": 18,
+  "passed": 18,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": 0,
+  "duration_ms": 10104,
+  "failures": [],
+  "findings": "All 18 integration tests pass (8 CLI + 7 server action endpoints + 3 DcrServer lifecycle). B-14 now correctly uses `dep-report analyze -p nonexistent-dir` (non-existent path) which triggers the analyze() error path and causes process.exit(1). The CLI test file required a fix for ESM `__dirname` support: added `fileURLToPath(import.meta.url)` + `dirname()` since the project uses `\"type\": \"module\"`. The relative path `../../../../../packages/cli/bin/cli.js` (5 levels up) correctly resolves to the CLI binary from the test's directory at `openspec/changes/add-dashboard-action-buttons/tests/integration/`. Server action tests use a minimal HTTP server with mock route handlers to verify HTTP response codes for both success and error paths. DcrServer lifecycle tests are skeleton tests (assert.ok(true)) awaiting full implementation."
+}

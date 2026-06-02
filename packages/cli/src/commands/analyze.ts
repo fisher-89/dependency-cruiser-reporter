@@ -29,19 +29,26 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   }
 
   // Find dependency-cruiser config
+  const CONFIG_NAMES = ['.dependency-cruiser.json', '.dependency-cruiser.js', '.dependency-cruiser.cjs', '.dependency-cruiser.mjs'];
   let configPath: string | undefined;
   if (config) {
     configPath = resolve(absCwd, config);
   } else {
-    configPath = resolve(absAnalyzePath, '.dependency-cruiser.json');
-    if (!existsSync(configPath)) {
-      configPath = resolve(absAnalyzePath, '.dependency-cruiser.js');
+    for (const name of CONFIG_NAMES) {
+      const candidate = resolve(absAnalyzePath, name);
+      if (existsSync(candidate)) {
+        configPath = candidate;
+        break;
+      }
     }
-    if (!existsSync(configPath)) {
-      configPath = resolve(absCwd, '.dependency-cruiser.json');
-    }
-    if (!existsSync(configPath)) {
-      configPath = resolve(absCwd, '.dependency-cruiser.js');
+    if (!configPath) {
+      for (const name of CONFIG_NAMES) {
+        const candidate = resolve(absCwd, name);
+        if (existsSync(candidate)) {
+          configPath = candidate;
+          break;
+        }
+      }
     }
   }
 
@@ -60,6 +67,11 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
     } catch (e) {
       console.warn(`Failed to extract config from ${configPath}:`, e);
     }
+  }
+
+  // Safety net: always exclude node_modules if no exclude was loaded from config
+  if (!cruiseOptions.exclude) {
+    cruiseOptions.exclude = { path: 'node_modules' };
   }
 
   // Find and extract tsconfig.json for TypeScript support
@@ -90,8 +102,7 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   );
 
   if (!cruiseResult.output) {
-    console.error('dependency-cruiser did not produce output');
-    process.exit(1);
+    throw new Error('dependency-cruiser did not produce output');
   }
 
   // Save raw dependency-cruiser output (conversion is deferred to server/frontend)

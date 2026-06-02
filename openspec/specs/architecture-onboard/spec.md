@@ -4,17 +4,6 @@
 
 The Architecture nav tab SHALL be rendered regardless of whether `.dc-reporter/architecture/` exists or contains `.c4` files.
 
-#### Scenario: Tab visible without architecture directory
-
-- **WHEN** the frontend loads and `GET /api/config` returns `hasArchitectureDir: false`
-- **THEN** the Architecture tab SHALL still be visible in the nav bar
-- **AND** the tab label SHALL display the localized text from `t('nav.architecture')`
-
-#### Scenario: Tab visible without C4 files
-
-- **WHEN** `.dc-reporter/architecture/` exists but contains no `.c4` files
-- **THEN** the Architecture tab SHALL still be visible in the nav bar
-
 ### Requirement: Onboard prompt when no C4 model exists
 
 When no C4 files are available, the Architecture view SHALL display an onboard prompt that explains the feature and offers to generate a starter model.
@@ -67,7 +56,7 @@ After successful generation, the Architecture view SHALL automatically reload th
 - **WHEN** `POST /api/architecture/generate` returns success
 - **THEN** the Architecture view SHALL re-fetch `GET /api/architecture/model`
 - **AND** upon receiving the parsed model, SHALL transition from the onboard prompt to the rendered diagram
-- **AND** the frontend SHALL re-fetch `GET /api/config` to update `hasArchitectureDir`
+- **AND** the frontend SHALL update `hasArchitectureDir`
 
 #### Scenario: Generation in progress state
 

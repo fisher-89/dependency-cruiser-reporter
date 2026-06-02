@@ -14,14 +14,19 @@ program
   .option('-o, --output <path>', 'Output graph JSON file')
   .option('-c, --config <path>', 'dependency-cruiser config file')
   .action(async (options) => {
-    const cwd = program.opts().cwd;
-    const graphFile = await analyze({
-      path: options.path,
-      output: options.output,
-      config: options.config,
-      cwd,
-    });
-    console.log(`\nTo view the result, run:\n  dep-report dashboard -f ${graphFile}`);
+    try {
+      const cwd = program.opts().cwd;
+      const graphFile = await analyze({
+        path: options.path,
+        output: options.output,
+        config: options.config,
+        cwd,
+      });
+      console.log(`\nTo view the result, run:\n  dep-report dashboard -f ${graphFile}`);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
   });
 
 program
@@ -45,11 +50,16 @@ program
   .description('Convert C4 architecture model to dependency-cruiser rules')
   .option('-o, --output <path>', 'Output rules JSON file path')
   .action(async (options) => {
-    const cwd = program.opts().cwd;
-    await archiToRules({
-      cwd,
-      output: options.output,
-    });
+    try {
+      const cwd = program.opts().cwd;
+      await archiToRules({
+        cwd,
+        output: options.output,
+      });
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exit(1);
+    }
   });
 
 program.parse();

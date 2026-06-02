@@ -52,4 +52,12 @@ export default {
     creating: 'Generating...',
     createError: 'Failed to generate architecture model',
   },
+  action: {
+    scan: 'Scan',
+    scanning: 'Scanning...',
+    scanError: 'Scan failed',
+    generateRules: 'Generate Rules',
+    generatingRules: 'Generating...',
+    generateRulesError: 'Failed to generate rules',
+  },
 } as const;

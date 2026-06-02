@@ -71,7 +71,6 @@ dep-report dashboard [options]
 - WHEN 用户执行 `dep-report dashboard --cwd ./my-project`
 - THEN 系统启动 Express 服务器
 - AND 服务器从 `./my-project/.dc-reporter/` 读取 C4 文件和图文件
-- AND `/api/config` 返回该工作区的配置
 
 #### archi-to-rules 命令
 
@@ -111,6 +110,20 @@ dep-report archi-to-rules [options]
 - **THEN** 命令输出错误信息，exit code 为 1
 - **AND** 没有规则文件被写入
 
+##### Scenario: analyze 核心函数重构
+
+- **WHEN** `analyze()` 执行中发生错误
+- **THEN** 函数 SHALL 抛出异常（而非调用 `process.exit(1)`）
+- **AND** CLI 命令层捕获异常后调用 `process.exit(1)`
+- **AND** HTTP 端点捕获异常后返回 HTTP 500
+
+##### Scenario: archiToRules 核心函数重构
+
+- **WHEN** `archiToRules()` 执行中发生错误
+- **THEN** 函数 SHALL 抛出异常（而非调用 `process.exit(1)`）
+- **AND** CLI 命令层捕获异常后调用 `process.exit(1)`
+- **AND** HTTP 端点捕获异常后返回 HTTP 500
+
 ### Requirement: HTTP API 端点
 
 系统 SHALL 提供以下 HTTP 端点：
@@ -118,18 +131,11 @@ dep-report archi-to-rules [options]
 | 端点 | 方法 | 描述 |
 |------|------|------|
 | `/` | GET | 服务前端 index.html (SPA) |
-| `/api/config` | GET | 返回 `{ cwd, hasArchitectureDir, hasGraphFile }` |
 | `/api/graph` | POST | 返回图 JSON |
+| `/api/analyze` | POST | 扫描当前工作目录（新增） |
 | `/api/architecture/model` | GET | 读取并解析 `.dc-reporter/architecture/` 下所有 `.c4` 文件，返回合并后的 `$ModelData` JSON |
+| `/api/archi-to-rules` | POST | 从 C4 模型生成规则（新增） |
 | `/assets/*` | GET | 静态资源 (JS, CSS) |
-
-#### Scenario: /api/config 端点（更新）
-
-- WHEN 前端调用 `GET /api/config`
-- THEN 返回 `{ cwd: string, hasArchitectureDir: boolean, hasGraphFile: boolean }`
-- AND `cwd` 为服务器启动时指定的工作区路径
-- AND `hasArchitectureDir` 为 true 当 `.dc-reporter/architecture/` 目录存在时
-- AND `hasGraphFile` 指示是否预加载了图文件（已有行为）
 
 #### Scenario: /api/architecture/model 端点
 
@@ -150,6 +156,31 @@ dep-report archi-to-rules [options]
 - IF 原始 dc 格式 THEN 调用 `convertWithFallback`
 - IF ProcessedGraph 格式 THEN 直接使用
 - AND 返回 `ProcessedGraph` JSON
+
+### Requirement: Dashboard 操作 API 端点
+
+系统 SHALL 新增以下 HTTP 端点以支持 Dashboard 操作按钮：
+
+| 端点 | 方法 | 描述 |
+|------|------|------|
+| `/api/analyze` | POST | 扫描当前工作目录，生成 dependency-cruiser 图文件 |
+| `/api/archi-to-rules` | POST | 从 C4 模型生成 dependency-cruiser 规则文件 |
+
+#### Scenario: /api/analyze 端点
+
+- **WHEN** 前端调用 `POST /api/analyze`
+- **THEN** 服务器调用 `analyze({ path: '.', cwd })`
+- **AND** 扫描结果写入 `<cwd>/.dc-reporter/scans/` 目录
+- **AND** 返回 `{ success: true, outputPath: string }` 及 HTTP 200
+- **IF** 扫描失败 THEN 返回 `{ error: string }` 及 HTTP 500
+
+#### Scenario: /api/archi-to-rules 端点
+
+- **WHEN** 前端调用 `POST /api/archi-to-rules`
+- **THEN** 服务器调用 `archiToRules({ cwd })`
+- **AND** 规则文件写入 `<cwd>/.dc-reporter/archi-rules.json`
+- **AND** 返回 `{ success: true, outputPath: string }` 及 HTTP 200
+- **IF** 生成失败 THEN 返回 `{ error: string }` 及 HTTP 500
 
 ### Requirement: Node.js 转换器
 
