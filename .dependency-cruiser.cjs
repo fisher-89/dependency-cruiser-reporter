@@ -204,7 +204,7 @@ module.exports = {
     // Which modules to exclude
     exclude: {
       // path: an array of regular expressions in strings to match against
-      path: '(^node:|node_modules|dist|openspec|demo|\\.claude|packages/cli/bin|[.](test|spec)[.](?:ts|tsx|js|jsx)+$)',
+      path: '(^node:|node_modules|dist|openspec|demo|bin|\\.claude|packages/cli/bin|[.](test|spec)[.](?:ts|tsx|js|jsx)+$)',
     },
 
     // Which modules to exclusively include (array of regular expressions in strings)

@@ -333,7 +333,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     background: 'var(--color-surface)',
-    borderBottom: '1px solid var(--color-border)',
+    boxShadow: '0 1px 0 0 var(--color-border)',
     padding: '16px 24px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -361,6 +361,7 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     borderRadius: '6px',
     fontSize: '14px',
+    lineHeight: '16px',
     color: 'var(--color-text-secondary)',
     textDecoration: 'none',
   },
