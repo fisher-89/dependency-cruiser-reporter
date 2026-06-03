@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
-import { type ServerOptions, createServer } from '../server/server.js';
+import { type ServerOptions, createServer } from '../../server/server.js';
 
 export interface DashboardOptions {
   file?: string;

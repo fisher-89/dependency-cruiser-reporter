@@ -272,6 +272,31 @@ import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
 | `test_four_level_deep_nested_sibling_combos` | 验证四层深层嵌套 sibling combo 不重叠 |
 | `test_mixed_nodes_and_combos_nested` | 验证混合节点和 combo 的嵌套布局 |
 
+### Requirement: C4 架构模型 — Rust Types 模块
+
+C4 架构模型 SHALL 在 `rust.c4` 中定义 `types` 模块，正确反映 `types.rs` 作为 Rust 后端核心数据结构的真实模块位置。
+
+#### Scenario: rust.c4 包含 types 模块定义
+
+- **WHEN** 查看 `.dc-reporter/architecture/rust.c4`
+- **THEN** `extend ROOT.rust` 中包含 `types = module` 定义
+- **AND** `aggregate` 模块声明对 `ROOT.rust.types` 的 dependency
+- **AND** `layout` 模块声明对 `ROOT.rust.types` 的 dependency
+- **AND** `violations` 模块声明对 `ROOT.rust.types` 的 dependency
+
+### Requirement: C4 架构模型 — Rust Lib 模块
+
+C4 架构模型 SHALL 在 `rust.c4` 中定义 `lib` 模块，反映 `lib.rs` 作为 crate 根入口和 WASM 导出点的角色。
+
+#### Scenario: rust.c4 包含 lib 模块定义
+
+- **WHEN** 查看 `.dc-reporter/architecture/rust.c4`
+- **THEN** `extend ROOT.rust` 中包含 `lib = module` 定义
+- **AND** `lib` 模块声明对 `ROOT.rust.aggregate` 的 dependency
+- **AND** `lib` 模块声明对 `ROOT.rust.layout` 的 dependency
+- **AND** `lib` 模块声明对 `ROOT.rust.types` 的 dependency
+- **AND** `lib` 模块声明对 `ROOT.rust.violations` 的 dependency
+
 ## References
 
 - Rust 源码：`packages/rust/src/`

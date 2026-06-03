@@ -410,6 +410,24 @@ pnpm lint          # Biome 代码检查
 - WHEN 首次加载且 localStorage 无 `theme` 值
 - THEN 默认模式为 `auto`
 
+### Requirement: C4 架构模型 — Types 模块
+
+C4 架构模型 SHALL 在 `frontend.c4` 中定义 `types` 模块，正确反映 `types.ts` 作为前端共享类型定义的真实模块间依赖关系。
+
+#### Scenario: frontend.c4 包含 types 模块定义
+
+- **WHEN** 查看 `.dc-reporter/architecture/frontend.c4`
+- **THEN** `extend ROOT.frontend` 中包含 `types = module` 定义
+- **AND** `App` 模块声明对 `ROOT.frontend.types` 的 dependency
+- **AND** `components` 模块声明对 `ROOT.frontend.types` 的 dependency
+- **AND** `hooks` 模块声明对 `ROOT.frontend.types` 的 dependency
+
+#### Scenario: types 模块无外部依赖
+
+- **WHEN** 查看 `frontend.c4` 中 `types` 模块定义
+- **THEN** `types` 模块不声明任何对其他模块的 dependency 关系
+- **AND** 对应 `types.ts` 为纯类型定义文件，不依赖前端其他模块
+
 ## References
 
 - 前端源码：`packages/frontend/src/`

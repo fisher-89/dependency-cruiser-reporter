@@ -29,7 +29,12 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   }
 
   // Find dependency-cruiser config
-  const CONFIG_NAMES = ['.dependency-cruiser.json', '.dependency-cruiser.js', '.dependency-cruiser.cjs', '.dependency-cruiser.mjs'];
+  const CONFIG_NAMES = [
+    '.dependency-cruiser.json',
+    '.dependency-cruiser.js',
+    '.dependency-cruiser.cjs',
+    '.dependency-cruiser.mjs',
+  ];
   let configPath: string | undefined;
   if (config) {
     configPath = resolve(absCwd, config);

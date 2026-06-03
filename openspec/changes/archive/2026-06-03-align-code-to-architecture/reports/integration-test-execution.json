@@ -1,0 +1,13 @@
+{
+  "phase": "08-integration-test",
+  "command": "node --test \"D:\\Projects\\dependency-cruiser-reporter\\openspec\\changes\\align-code-to-architecture\\tests\\integration\\*.test.ts\" 2>&1",
+  "timestamp": "2026-06-03T10:50:05.557Z",
+  "total": 8,
+  "passed": 8,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": 0,
+  "duration_ms": 8073,
+  "failures": [],
+  "findings": "All 8 integration tests pass after fixing 3 issues in archi-rules-validation.test.ts: (1) the rules array key is 'forbidden' not 'rules' in generated archi-rules.json, (2) from.path values are regex patterns (^ prefix, lookahead groups) not plain filesystem paths, (3) path validation must resolve bare names (e.g., 'analyze') to files with extensions (e.g., 'analyze.ts') via parent-directory sibling scan."
+}

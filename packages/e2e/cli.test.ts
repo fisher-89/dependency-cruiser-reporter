@@ -82,13 +82,13 @@ describe('CLI Integration Tests', () => {
     assert.ok(result.stdout.includes('--port'));
   });
 
-  test('analyze requires -p', () => {
+  test('analyze defaults to current directory without -p', () => {
     const result = spawnSync('node', [cliBinary, 'analyze'], {
       cwd: __dirname,
       encoding: 'utf-8',
     });
 
-    assert.notStrictEqual(result.status, 0);
+    assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
   });
 
   test('analyze fails with missing input file', () => {

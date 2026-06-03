@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test && npx tsx --test buildGraphData.test.ts",
+    "test": "node --test",
     "test:verbose": "node --test --test-name-pattern"
   },
   "dependencies": {

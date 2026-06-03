@@ -5,7 +5,7 @@
       "severity": "error",
       "comment": "packages/cli can only depends on packages/cli (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli(?!/bin(?=/|\\.))(?!/commands(?=/|\\.))(?!/server(?=/|\\.))(?!/utils(?=/|\\.))"
+        "path": "^packages/cli(?!/bin(?=/|\\.))(?!/commands(?=/|\\.))(?!/server(?=/|\\.))(?!/actions(?=/|\\.))(?!/utils(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -52,14 +52,29 @@
     {
       "name": "archi-cli-server",
       "severity": "error",
-      "comment": "packages/cli/src/server can only depends on packages/cli/src/server, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/server can only depends on packages/cli/src/server (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/server(?!/actions(?=/|\\.))(?!/architecture(?=/|\\.))(?!/config(?=/|\\.))"
+        "path": "^packages/cli/src/server(?!/dashboard(?=/|\\.))(?!/architecture(?=/|\\.))(?!/dep(?=/|\\.))"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/server",
-          "packages/cli/src/utils/convert"
+          "packages/cli/src/server"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-actions",
+      "severity": "error",
+      "comment": "packages/cli/src/actions can only depends on packages/cli/src/actions (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/actions(?!/analyze(?=/|\\.))(?!/archi-to-rules(?=/|\\.))"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/actions"
         ],
         "dependencyTypes": [
           "local"
@@ -85,13 +100,14 @@
     {
       "name": "archi-cli-commands-analyze",
       "severity": "error",
-      "comment": "packages/cli/src/commands/analyze can only depends on packages/cli/src/commands/analyze (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/commands/analyze can only depends on packages/cli/src/commands/analyze, packages/cli/src/actions/analyze (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/cli/src/commands/analyze"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/commands/analyze"
+          "packages/cli/src/commands/analyze",
+          "packages/cli/src/actions/analyze"
         ],
         "dependencyTypes": [
           "local"
@@ -101,13 +117,14 @@
     {
       "name": "archi-cli-commands-archi-to-rules",
       "severity": "error",
-      "comment": "packages/cli/src/commands/archi-to-rules can only depends on packages/cli/src/commands/archi-to-rules (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/commands/archi-to-rules can only depends on packages/cli/src/commands/archi-to-rules, packages/cli/src/actions/archi-to-rules (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/cli/src/commands/archi-to-rules"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/commands/archi-to-rules"
+          "packages/cli/src/commands/archi-to-rules",
+          "packages/cli/src/actions/archi-to-rules"
         ],
         "dependencyTypes": [
           "local"
@@ -117,14 +134,14 @@
     {
       "name": "archi-cli-commands-dashboard",
       "severity": "error",
-      "comment": "packages/cli/src/commands/dashboard can only depends on packages/cli/src/commands/dashboard, packages/cli/src/server (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/commands/dashboard can only depends on packages/cli/src/commands/dashboard, packages/cli/src/server/dashboard (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/cli/src/commands/dashboard"
       },
       "to": {
         "pathNot": [
           "packages/cli/src/commands/dashboard",
-          "packages/cli/src/server"
+          "packages/cli/src/server/dashboard"
         ],
         "dependencyTypes": [
           "local"
@@ -132,18 +149,15 @@
       }
     },
     {
-      "name": "archi-cli-server-actions",
+      "name": "archi-cli-server-dashboard",
       "severity": "error",
-      "comment": "packages/cli/src/server/actions can only depends on packages/cli/src/server/actions, packages/cli/src/commands/analyze, packages/cli/src/commands/archi-to-rules, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/server/dashboard can only depends on packages/cli/src/server/dashboard (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/server/actions"
+        "path": "^packages/cli/src/server/dashboard"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/server/actions",
-          "packages/cli/src/commands/analyze",
-          "packages/cli/src/commands/archi-to-rules",
-          "packages/cli/src/utils/convert"
+          "packages/cli/src/server/dashboard"
         ],
         "dependencyTypes": [
           "local"
@@ -153,15 +167,14 @@
     {
       "name": "archi-cli-server-architecture",
       "severity": "error",
-      "comment": "packages/cli/src/server/architecture can only depends on packages/cli/src/server/architecture, packages/cli/src/commands/archi-to-rules, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/server/architecture can only depends on packages/cli/src/server/architecture, packages/cli/src/actions/archi-to-rules (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/cli/src/server/architecture"
       },
       "to": {
         "pathNot": [
           "packages/cli/src/server/architecture",
-          "packages/cli/src/commands/archi-to-rules",
-          "packages/cli/src/utils/convert"
+          "packages/cli/src/actions/archi-to-rules"
         ],
         "dependencyTypes": [
           "local"
@@ -169,16 +182,47 @@
       }
     },
     {
-      "name": "archi-cli-server-config",
+      "name": "archi-cli-server-dep",
       "severity": "error",
-      "comment": "packages/cli/src/server/config can only depends on packages/cli/src/server/config, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "comment": "packages/cli/src/server/dep can only depends on packages/cli/src/server/dep (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/cli/src/server/config"
+        "path": "^packages/cli/src/server/dep(?!/analyze(?=/|\\.))(?!/graph(?=/|\\.))"
       },
       "to": {
         "pathNot": [
-          "packages/cli/src/server/config",
-          "packages/cli/src/utils/convert"
+          "packages/cli/src/server/dep"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-actions-analyze",
+      "severity": "error",
+      "comment": "packages/cli/src/actions/analyze can only depends on packages/cli/src/actions/analyze (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/actions/analyze"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/actions/analyze"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-actions-archi-to-rules",
+      "severity": "error",
+      "comment": "packages/cli/src/actions/archi-to-rules can only depends on packages/cli/src/actions/archi-to-rules (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/actions/archi-to-rules"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/actions/archi-to-rules"
         ],
         "dependencyTypes": [
           "local"
@@ -203,11 +247,45 @@
       }
     },
     {
+      "name": "archi-cli-server-dep-analyze",
+      "severity": "error",
+      "comment": "packages/cli/src/server/dep/analyze can only depends on packages/cli/src/server/dep/analyze, packages/cli/src/actions/analyze (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/server/dep/analyze"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/server/dep/analyze",
+          "packages/cli/src/actions/analyze"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-cli-server-dep-graph",
+      "severity": "error",
+      "comment": "packages/cli/src/server/dep/graph can only depends on packages/cli/src/server/dep/graph, packages/cli/src/utils/convert (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/cli/src/server/dep/graph"
+      },
+      "to": {
+        "pathNot": [
+          "packages/cli/src/server/dep/graph",
+          "packages/cli/src/utils/convert"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
       "name": "archi-frontend",
       "severity": "error",
       "comment": "packages/frontend can only depends on packages/frontend (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/frontend(?!/main(?=/|\\.))(?!/theme(?=/|\\.))(?!/i18n(?=/|\\.))(?!/styles(?=/|\\.))(?!/App(?=/|\\.))(?!/components(?=/|\\.))(?!/hooks(?=/|\\.))"
+        "path": "^packages/frontend(?!/main(?=/|\\.))(?!/theme(?=/|\\.))(?!/i18n(?=/|\\.))(?!/styles(?=/|\\.))(?!/App(?=/|\\.))(?!/components(?=/|\\.))(?!/hooks(?=/|\\.))(?!/types(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -289,7 +367,7 @@
     {
       "name": "archi-frontend-App",
       "severity": "error",
-      "comment": "packages/frontend/src/App can only depends on packages/frontend/src/App, packages/frontend/src/i18n, packages/frontend/src/styles, packages/frontend/src/components (Auto-generated from C4 architecture model)",
+      "comment": "packages/frontend/src/App can only depends on packages/frontend/src/App, packages/frontend/src/i18n, packages/frontend/src/styles, packages/frontend/src/components, packages/frontend/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/frontend/src/App"
       },
@@ -298,7 +376,8 @@
           "packages/frontend/src/App",
           "packages/frontend/src/i18n",
           "packages/frontend/src/styles",
-          "packages/frontend/src/components"
+          "packages/frontend/src/components",
+          "packages/frontend/src/types"
         ],
         "dependencyTypes": [
           "local"
@@ -308,7 +387,7 @@
     {
       "name": "archi-frontend-components",
       "severity": "error",
-      "comment": "packages/frontend/src/components can only depends on packages/frontend/src/components, packages/frontend/src/i18n, packages/frontend/src/styles, packages/frontend/src/hooks (Auto-generated from C4 architecture model)",
+      "comment": "packages/frontend/src/components can only depends on packages/frontend/src/components, packages/frontend/src/i18n, packages/frontend/src/styles, packages/frontend/src/hooks, packages/frontend/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/frontend/src/components"
       },
@@ -317,7 +396,8 @@
           "packages/frontend/src/components",
           "packages/frontend/src/i18n",
           "packages/frontend/src/styles",
-          "packages/frontend/src/hooks"
+          "packages/frontend/src/hooks",
+          "packages/frontend/src/types"
         ],
         "dependencyTypes": [
           "local"
@@ -327,13 +407,30 @@
     {
       "name": "archi-frontend-hooks",
       "severity": "error",
-      "comment": "packages/frontend/src/hooks can only depends on packages/frontend/src/hooks (Auto-generated from C4 architecture model)",
+      "comment": "packages/frontend/src/hooks can only depends on packages/frontend/src/hooks, packages/frontend/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/frontend/src/hooks"
       },
       "to": {
         "pathNot": [
-          "packages/frontend/src/hooks"
+          "packages/frontend/src/hooks",
+          "packages/frontend/src/types"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-frontend-types",
+      "severity": "error",
+      "comment": "packages/frontend/src/types can only depends on packages/frontend/src/types (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/frontend/src/types"
+      },
+      "to": {
+        "pathNot": [
+          "packages/frontend/src/types"
         ],
         "dependencyTypes": [
           "local"
@@ -345,7 +442,7 @@
       "severity": "error",
       "comment": "packages/rust can only depends on packages/rust (Auto-generated from C4 architecture model)",
       "from": {
-        "path": "^packages/rust(?!/aggregate(?=/|\\.))(?!/layout(?=/|\\.))(?!/violations(?=/|\\.))"
+        "path": "^packages/rust(?!/aggregate(?=/|\\.))(?!/layout(?=/|\\.))(?!/violations(?=/|\\.))(?!/types(?=/|\\.))(?!/lib(?=/|\\.))"
       },
       "to": {
         "pathNot": [
@@ -359,13 +456,14 @@
     {
       "name": "archi-rust-aggregate",
       "severity": "error",
-      "comment": "packages/rust/src/aggregate can only depends on packages/rust/src/aggregate (Auto-generated from C4 architecture model)",
+      "comment": "packages/rust/src/aggregate can only depends on packages/rust/src/aggregate, packages/rust/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/rust/src/aggregate"
       },
       "to": {
         "pathNot": [
-          "packages/rust/src/aggregate"
+          "packages/rust/src/aggregate",
+          "packages/rust/src/types"
         ],
         "dependencyTypes": [
           "local"
@@ -375,13 +473,14 @@
     {
       "name": "archi-rust-layout",
       "severity": "error",
-      "comment": "packages/rust/src/layout can only depends on packages/rust/src/layout (Auto-generated from C4 architecture model)",
+      "comment": "packages/rust/src/layout can only depends on packages/rust/src/layout, packages/rust/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/rust/src/layout"
       },
       "to": {
         "pathNot": [
-          "packages/rust/src/layout"
+          "packages/rust/src/layout",
+          "packages/rust/src/types"
         ],
         "dependencyTypes": [
           "local"
@@ -391,12 +490,49 @@
     {
       "name": "archi-rust-violations",
       "severity": "error",
-      "comment": "packages/rust/src/violations can only depends on packages/rust/src/violations (Auto-generated from C4 architecture model)",
+      "comment": "packages/rust/src/violations can only depends on packages/rust/src/violations, packages/rust/src/types (Auto-generated from C4 architecture model)",
       "from": {
         "path": "^packages/rust/src/violations"
       },
       "to": {
         "pathNot": [
+          "packages/rust/src/violations",
+          "packages/rust/src/types"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-rust-types",
+      "severity": "error",
+      "comment": "packages/rust/src/types can only depends on packages/rust/src/types (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/rust/src/types"
+      },
+      "to": {
+        "pathNot": [
+          "packages/rust/src/types"
+        ],
+        "dependencyTypes": [
+          "local"
+        ]
+      }
+    },
+    {
+      "name": "archi-rust-lib",
+      "severity": "error",
+      "comment": "packages/rust/src/lib can only depends on packages/rust/src/lib, packages/rust/src/aggregate, packages/rust/src/layout, packages/rust/src/types, packages/rust/src/violations (Auto-generated from C4 architecture model)",
+      "from": {
+        "path": "^packages/rust/src/lib"
+      },
+      "to": {
+        "pathNot": [
+          "packages/rust/src/lib",
+          "packages/rust/src/aggregate",
+          "packages/rust/src/layout",
+          "packages/rust/src/types",
           "packages/rust/src/violations"
         ],
         "dependencyTypes": [

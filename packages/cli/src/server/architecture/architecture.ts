@@ -3,9 +3,20 @@ import { join, resolve } from 'node:path';
 
 import { type Express, type Request, type Response } from 'express';
 
+import { archiToRules } from '../../actions/archi-to-rules.js';
 import mainC4Template from './main.c4.template';
 
 export function setupArchitectureRoutes(app: Express, cwd: string): void {
+  // API: Generate architecture rules from C4 model
+  app.post('/api/archi-to-rules', async (_req: Request, res: Response) => {
+    try {
+      await archiToRules({ cwd });
+      res.json({ success: true });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ error: 'Failed to generate rules', details: message });
+    }
+  });
   // API: Get architecture model (C4 parsing)
   app.get('/api/architecture/model', async (_req: Request, res: Response) => {
     const archDir = join(resolve(cwd), '.dc-reporter', 'architecture');

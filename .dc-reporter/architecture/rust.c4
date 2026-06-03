@@ -1,7 +1,24 @@
 model {
   extend ROOT.rust {
-    aggregate = module '聚合节点' {}
-    layout = module '计算布局' {}
-    violations = module '统计违规依赖' {}
+    aggregate = module '聚合节点' {
+      -[dependency]-> ROOT.rust.types
+    }
+
+    layout = module '计算布局' {
+      -[dependency]-> ROOT.rust.types
+    }
+
+    violations = module '统计违规依赖' {
+      -[dependency]-> ROOT.rust.types
+    }
+
+    types = module '共享数据结构定义'
+
+    lib = module 'crate根入口' {
+      -[dependency]-> ROOT.rust.aggregate
+      -[dependency]-> ROOT.rust.layout
+      -[dependency]-> ROOT.rust.types
+      -[dependency]-> ROOT.rust.violations
+    }
   }
 }

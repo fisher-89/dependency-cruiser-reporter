@@ -18,14 +18,20 @@ model {
       -[dependency]-> ROOT.frontend.i18n
       -[dependency]-> ROOT.frontend.styles
       -[dependency]-> ROOT.frontend.components
+      -[dependency]-> ROOT.frontend.types
     }
 
     components = module {
       -[dependency]-> ROOT.frontend.i18n
       -[dependency]-> ROOT.frontend.styles
       -[dependency]-> ROOT.frontend.hooks
+      -[dependency]-> ROOT.frontend.types
     }
 
-    hooks = module { }
+    hooks = module {
+      -[dependency]-> ROOT.frontend.types
+    }
+
+    types = module
   }
 }

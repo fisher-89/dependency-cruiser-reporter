@@ -1,3 +1,3 @@
-export { analyze } from './analyze.js';
-export { dashboard } from './dashboard.js';
-export { archiToRules } from './archi-to-rules.js';
+export { analyze } from './analyze/index.js';
+export { dashboard } from './dashboard/index.js';
+export { archiToRules } from './archi-to-rules/index.js';

@@ -8,4 +8,3 @@ export type {
 } from '@dcr-reporter/wasm';
 
 export type ViewMode = 'architecture' | 'graph' | 'report' | 'metrics';
-

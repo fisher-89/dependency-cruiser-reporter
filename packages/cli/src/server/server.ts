@@ -1,12 +1,9 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import express, { type Express } from 'express';
 
-import express, { type Express, type Request, type Response } from 'express';
-
-import { convert } from '../utils/convert.js';
-import { setupActionRoutes } from './actions/actions.js';
 import { setupArchitectureRoutes } from './architecture/architecture.js';
+import { setupDashboardRoutes } from './dashboard/index.js';
+import { setupAnalyzeDepRoute } from './dep/analyze.js';
+import { setupGraphRoute } from './dep/graph.js';
 
 export interface ServerOptions {
   port: number;
@@ -43,61 +40,17 @@ export class DcrServer {
   }
 
   private setupRoutes(): void {
-    // Auto-detect frontend dist: dev mode resolves to packages/frontend/dist/,
-    // bundle mode falls back to ./frontend alongside cli.js
-    const _devFrontend = fileURLToPath(new URL('../../frontend/dist', import.meta.url).href);
-    const frontendDist = existsSync(_devFrontend)
-      ? _devFrontend
-      : fileURLToPath(new URL('./frontend', import.meta.url).href);
+    // Architecture routes (GET /api/architecture/model, POST /api/architecture/generate, POST /api/archi-to-rules)
     setupArchitectureRoutes(this.app, this.cwd);
-    setupActionRoutes(this.app, { cwd: this.cwd });
 
-    // API: Get graph data (auto-converts raw dependency-cruiser JSON)
-    this.app.post('/api/graph', async (req: Request, res: Response) => {
-      if (!this.graphFile) {
-        res.status(404).json({ error: 'No graph file specified' });
-        return;
-      }
+    // Dep analyze route (POST /api/analyze)
+    setupAnalyzeDepRoute(this.app, { cwd: this.cwd });
 
-      if (!existsSync(this.graphFile)) {
-        res.status(404).json({ error: `Graph file not found: ${this.graphFile}` });
-        return;
-      }
+    // Dep graph route (POST /api/graph)
+    setupGraphRoute(this.app, { graphFile: this.graphFile, maxNodes: this.maxNodes });
 
-      try {
-        const content = readFileSync(this.graphFile, 'utf-8');
-        const parsed = JSON.parse(content);
-        const expandedDirs: string[] | undefined = req.body?.expanded_dirs?.length
-          ? req.body.expanded_dirs
-          : undefined;
-
-        if (parsed.modules && Array.isArray(parsed.modules)) {
-          const graph = await convert(content, this.maxNodes, expandedDirs);
-          res.json(graph);
-          return;
-        }
-
-        // Unknown format
-        res.status(400).json({ error: 'Unrecognized graph file format' });
-      } catch (error) {
-        res.status(500).json({ error: 'Failed to read graph file', details: String(error) });
-      }
-    });
-
-    // Serve frontend static files
-    this.app.use(express.static(frontendDist));
-
-    // SPA fallback
-    this.app.get('*', (_req: Request, res: Response) => {
-      const indexPath = resolve(frontendDist, 'index.html');
-      if (existsSync(indexPath)) {
-        res.sendFile(indexPath);
-      } else {
-        res
-          .status(404)
-          .send(`Frontend not built. Run 'pnpm build' in packages/frontend.(PATH:${indexPath})`);
-      }
-    });
+    // Dashboard static file serving and SPA fallback
+    setupDashboardRoutes(this.app);
   }
 
   async start(): Promise<void> {
