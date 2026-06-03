@@ -96,7 +96,7 @@ function mockFetchSuccess() {
   return vi.spyOn(globalThis, 'fetch').mockResolvedValue({
     ok: true,
     json: async () => sampleGraphData,
-  } as Response);
+  } as unknown as Response);
 }
 
 // ---------------------------------------------------------------------------

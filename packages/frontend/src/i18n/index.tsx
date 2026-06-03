@@ -19,10 +19,14 @@ type Paths<T> = {
 
 export type TKey = Paths<TranslationDict>;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 interface I18nContextValue {
   lang: Lang;
   setLang: (lang: Lang) => void;
-  t: (key: TKey) => string;
+  t: (key: string) => string;
 }
 
 function detectLang(): Lang {
@@ -43,13 +47,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: TKey): string => {
+    (key: string): string => {
       const parts = key.split('.');
       let current: unknown = translations[lang];
       for (const part of parts) {
-        current = (current as Record<string, unknown>)[part];
+        if (!isRecord(current)) return key;
+        current = current[part];
       }
-      return current as string;
+      return typeof current === 'string' ? current : key;
     },
     [lang],
   );

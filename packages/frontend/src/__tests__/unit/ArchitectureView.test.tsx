@@ -120,7 +120,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
     fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ elements: {}, relations: {}, views: {} }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -140,7 +140,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
     fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({ elements: {}, relations: {}, views: {} }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -166,7 +166,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
       ok: false,
       status: 404,
       json: async () => ({ error: 'Not found' }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -185,7 +185,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
       ok: false,
       status: 500,
       json: async () => ({ error: 'Internal server error' }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -205,7 +205,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
       ok: false,
       status: 404,
       json: async () => ({ error: 'Architecture directory not found' }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -228,7 +228,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
       ok: false,
       status: 500,
       json: async () => ({ error: 'Internal server error' }),
-    } as Response);
+    } as unknown as Response);
 
     render(<ArchitectureView />);
 
@@ -253,13 +253,13 @@ describe('ArchitectureView -- Generate Rules button', () => {
           return {
             ok: true,
             json: async () => ({ elements: {}, relations: {}, views: {} }),
-          } as Response;
+          } as unknown as Response;
         }
         if (url === '/api/archi-to-rules' && init?.method === 'POST') {
           return {
             ok: true,
             json: async () => ({ success: true }),
-          } as Response;
+          } as unknown as Response;
         }
         return new Response(null, { status: 404 });
       });
@@ -287,14 +287,14 @@ describe('ArchitectureView -- Generate Rules button', () => {
   it('B-4: generating=true disables Generate Rules button and shows loading text', async () => {
     fetchMock = vi
       .spyOn(globalThis, 'fetch')
-      .mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      .mockImplementation((input: RequestInfo | URL, _init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         // Initial model fetch resolves
         if (url === '/api/architecture/model') {
           return Promise.resolve({
             ok: true,
             json: async () => ({ elements: {}, relations: {}, views: {} }),
-          } as Response);
+          } as unknown as Response);
         }
         // archi-to-rules request stays pending (keeps generating=true)
         return createPendingPromise();
@@ -330,14 +330,14 @@ describe('ArchitectureView -- Generate Rules button', () => {
           return {
             ok: true,
             json: async () => ({ elements: {}, relations: {}, views: {} }),
-          };
+          } as unknown as Response;
         }
         if (url === '/api/archi-to-rules' && init?.method === 'POST') {
           return {
             ok: false,
             status: 500,
             json: async () => ({ error: 'Failed to generate rules' }),
-          };
+          } as unknown as Response;
         }
         return new Response(null, { status: 404 });
       });
@@ -368,7 +368,7 @@ describe('ArchitectureView -- Generate Rules button', () => {
           return {
             ok: true,
             json: async () => ({ elements: {}, relations: {}, views: {} }),
-          } as Response;
+          } as unknown as Response;
         }
         if (url === '/api/archi-to-rules' && init?.method === 'POST') {
           throw new Error('Network error');

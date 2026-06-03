@@ -267,7 +267,7 @@ function ReportView({ violations }: { violations: ViolationInfo[] }) {
               data-testid={`violation-${i}`}
             >
               <div style={styles.violationRule}>
-                <span style={styles.violationSeverity}>{t(`severity.${v.severity}` as TKey)}</span>
+                <span style={styles.violationSeverity}>{t(`severity.${v.severity}`)}</span>
                 {v.rule}
               </div>
               <div style={styles.violationFrom}>

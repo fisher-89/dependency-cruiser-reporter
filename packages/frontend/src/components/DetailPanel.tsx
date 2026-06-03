@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { type TKey, useT } from '../i18n';
+import { useT } from '../i18n';
 import type { GraphEdge, GraphNode, ViolationInfo } from '../types';
 
 interface Props {
@@ -238,7 +238,7 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
                         background: SEVERITY_VARS[v.severity] ?? 'var(--color-text-muted)',
                       }}
                     >
-                      {t(`severity.${v.severity}` as TKey)}
+                      {t(`severity.${v.severity}`)}
                     </span>
                     <span style={styles.violationRule}>{v.rule}</span>
                   </div>

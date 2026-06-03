@@ -28,7 +28,7 @@ export function useGraphData(): UseGraphDataReturn {
         body: JSON.stringify({ expanded_dirs: newExpandedDirs }),
       });
       if (res.ok) {
-        const graphData = (await res.json()) as ProcessedGraph;
+        const graphData: ProcessedGraph = await res.json();
         if (graphData.nodes && graphData.edges && graphData.meta) {
           setData(graphData);
           if (graphData.meta.expanded_dirs) {

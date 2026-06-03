@@ -12,7 +12,11 @@ export function SettingsDropdown() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        e.target instanceof Node &&
+        !containerRef.current.contains(e.target)
+      ) {
         setIsOpen(false);
       }
     }

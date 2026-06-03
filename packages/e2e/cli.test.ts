@@ -5,7 +5,7 @@ import { resolve, dirname } from 'node:path';
 import { test, describe, before, after } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import type { aggregate } from '@dcr-reporter/wasm';
+import type { ProcessedGraph, aggregate } from '@dcr-reporter/wasm';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = resolve(__dirname, 'fixtures');
@@ -109,7 +109,7 @@ describe('WASM Module Tests', () => {
     }
 
     const content = readFileSync(sampleCruise, 'utf-8');
-    const graph = wasmModule.aggregate(content, 5000, null) as any;
+    const graph: ProcessedGraph = wasmModule.aggregate(content, 5000, null);
 
     assert.ok(graph.nodes, 'Should have nodes');
     assert.ok(graph.edges, 'Should have edges');
@@ -123,7 +123,7 @@ describe('WASM Module Tests', () => {
     }
 
     const content = readFileSync(sampleCruise, 'utf-8');
-    const graph = wasmModule.aggregate(content, 5000, null) as any;
+    const graph: ProcessedGraph = wasmModule.aggregate(content, 5000, null);
 
     assert.strictEqual(graph.meta.original_node_count, graph.meta.aggregated_node_count);
   });
@@ -135,7 +135,7 @@ describe('WASM Module Tests', () => {
     }
 
     const content = readFileSync(sampleCruise, 'utf-8');
-    const graph = wasmModule.aggregate(content, 5000, ['src']) as any;
+    const graph: ProcessedGraph = wasmModule.aggregate(content, 5000, ['src']);
 
     assert.ok(graph.meta.expanded_dirs, 'Should have expanded_dirs in meta');
   });
@@ -159,7 +159,7 @@ describe('Dashboard Command Tests', () => {
 
     try {
       const res = await fetch(`http://localhost:${port}/api/graph`, { method: 'POST' });
-      const graph = (await res.json()) as any;
+      const graph = (await res.json()) as ProcessedGraph;
 
       assert.ok(graph.nodes, 'should have nodes array');
       assert.ok(graph.edges, 'should have edges array');

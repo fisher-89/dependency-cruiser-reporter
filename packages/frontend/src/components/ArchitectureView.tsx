@@ -39,9 +39,9 @@ export function useArchitectureDiagram(): { state: State; reload: () => void } {
       const model = LikeC4Model.create(data);
       const layouted = await layoutLikeC4Model(model);
 
-      const rawData = layouted.$data as unknown as Record<string, unknown>;
+      const rawData = layouted.$data;
       if (!viewId) {
-        const viewIds = Object.keys((rawData.views as Record<string, unknown>) || {});
+        const viewIds = Object.keys(rawData.views || {});
         setViewId(viewIds.includes('all') ? 'all' : viewIds[0] || 'index');
       }
       setState({
