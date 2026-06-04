@@ -11,10 +11,7 @@
  *   - AC-2: Clicking Scan button triggers onScan callback
  *   - AC-3: scanning=true shows disabled button with loading text
  *   - AC-3: scanning transition triggers spinning class
- *   - AC-6: scanError displays error message
  *   - B-1:  disabled button during scanning prevents repeated clicks
- *   - B-2:  scan completes without auto-refresh
- *   - B-3:  network error is displayed via scanError prop
  *   - B-19: loading and scanning states are independent
  */
 
@@ -181,31 +178,6 @@ describe('GraphViewLayout -- Scan button', () => {
   });
 
   // =========================================================================
-  // AC-6: scanError shows error message
-  // =========================================================================
-  it('AC-6: scanError displays error message element', () => {
-    render(
-      <GraphViewLayout
-        {...createDefaultProps({ scanError: 'dependency-cruiser did not produce output' })}
-      />,
-    );
-
-    // The error text is formatted as "{t('action.scanError')}: {scanError}"
-    expect(
-      screen.getByText('Scan failed: dependency-cruiser did not produce output'),
-    ).toBeInTheDocument();
-  });
-
-  // =========================================================================
-  // AC-6: scanError=null hides error element
-  // =========================================================================
-  it('AC-6: scanError=null hides error element', () => {
-    render(<GraphViewLayout {...createDefaultProps({ scanError: null })} />);
-
-    expect(screen.queryByText(/Scan failed/)).not.toBeInTheDocument();
-  });
-
-  // =========================================================================
   // B-1: disabled button during scanning prevents repeated onScan calls
   // =========================================================================
   it('B-1: clicking Scan button while scanning=true does not call onScan again', () => {
@@ -250,25 +222,6 @@ describe('GraphViewLayout -- Scan button', () => {
 
     // onRefresh should NOT have been called -- no auto-refresh
     expect(onRefresh).not.toHaveBeenCalled();
-  });
-
-  // =========================================================================
-  // B-3: Scan button displays error state via scanError prop
-  // =========================================================================
-  it('B-3: Scan button displays error state when scanError is set', () => {
-    render(
-      <GraphViewLayout
-        {...createDefaultProps({
-          scanning: false,
-          scanError: 'Network request failed: TypeError: Failed to fetch',
-        })}
-      />,
-    );
-
-    expect(screen.getByText(/Network request failed/)).toBeInTheDocument();
-
-    // Button should NOT be disabled after error (scanning=false)
-    expect(screen.getByRole('button', { name: 'Scan' })).not.toBeDisabled();
   });
 
   // =========================================================================

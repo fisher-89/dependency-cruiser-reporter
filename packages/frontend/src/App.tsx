@@ -55,8 +55,6 @@ function App() {
   const location = useLocation();
   const { data, loading, error, fetchGraph, refresh, toggleDir } = useGraphData();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [scanning, setScanning] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
 
   // Lazy-load graph data when entering a route that needs it.
   // Normalize to lowercase because React Router matches routes case-insensitively
@@ -71,22 +69,6 @@ function App() {
     setSelectedNodeId(null);
     void refresh();
   }, [refresh]);
-
-  const handleScan = useCallback(async () => {
-    setScanning(true);
-    setScanError(null);
-    try {
-      const res = await fetch('/api/analyze', { method: 'POST' });
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({ error: res.statusText }));
-        setScanError(body.details || body.error || res.statusText);
-      }
-    } catch (err) {
-      setScanError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setScanning(false);
-    }
-  }, []);
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
@@ -137,13 +119,7 @@ function App() {
     switch (config.path) {
       case '/graph':
         return (
-          <GraphViewLayout
-            loading={loading}
-            onRefresh={handleRefresh}
-            onScan={handleScan}
-            scanning={scanning}
-            scanError={scanError}
-          >
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <div style={styles.graphSplitLayout} data-testid="graph-view">
               <DependencyGraph
                 data={data}
@@ -162,25 +138,13 @@ function App() {
         );
       case '/report':
         return (
-          <GraphViewLayout
-            loading={loading}
-            onRefresh={handleRefresh}
-            onScan={handleScan}
-            scanning={scanning}
-            scanError={scanError}
-          >
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <ReportView violations={data.violations} />
           </GraphViewLayout>
         );
       case '/metrics':
         return (
-          <GraphViewLayout
-            loading={loading}
-            onRefresh={handleRefresh}
-            onScan={handleScan}
-            scanning={scanning}
-            scanError={scanError}
-          >
+          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
             <MetricsView data={data} />
           </GraphViewLayout>
         );

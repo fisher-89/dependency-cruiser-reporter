@@ -1,45 +1,69 @@
-import type { ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 
 import { useT } from '../i18n';
 import { RefreshIcon, ScanIcon } from './icons';
+import { ScanOverlay } from './ScanOverlay';
 
 interface GraphViewLayoutProps {
   loading: boolean;
   onRefresh: () => void;
-  onScan?: () => void;
-  scanning?: boolean;
-  scanError?: string | null;
   children: ReactNode;
 }
 
-export function GraphViewLayout({
-  loading,
-  onRefresh,
-  onScan,
-  scanning,
-  scanError,
-  children,
-}: GraphViewLayoutProps) {
+export function GraphViewLayout({ loading, onRefresh, children }: GraphViewLayoutProps) {
   const { t } = useT();
+
+  const [scanning, setScanning] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  const handleScan = useCallback(async () => {
+    const startTime = Date.now();
+    setScanning(true);
+    setScanError(null);
+    try {
+      const res = await fetch('/api/analyze', { method: 'POST' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        setScanError(body.details || body.error || res.statusText);
+        return;
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    // Success: ensure minimum display time of 500ms
+    const elapsed = Date.now() - startTime;
+    const minDisplay = 500;
+    if (elapsed < minDisplay) {
+      await new Promise((r) => setTimeout(r, minDisplay - elapsed));
+    }
+    setScanning(false);
+    onRefresh();
+  }, [onRefresh]);
+
+  const handleDismissScan = useCallback(() => {
+    setScanning(false);
+    setScanError(null);
+  }, []);
+
+  const scanOverlayStatus = scanning && scanError ? 'error' : ('scanning' as 'scanning' | 'error');
 
   return (
     <div style={styles.pageWrapper}>
       <div style={styles.actionBar}>
-        {onScan && (
-          <button
-            type="button"
-            style={styles.actionBtn}
-            onClick={onScan}
-            disabled={scanning}
-            title={t('action.scan')}
-            aria-label={t('action.scan')}
-          >
-            <span className={scanning ? 'spinning' : undefined} style={styles.actionBtnIcon}>
-              <ScanIcon />
-            </span>
-            {scanning ? t('action.scanning') : t('action.scan')}
-          </button>
-        )}
+        <button
+          type="button"
+          style={styles.actionBtn}
+          onClick={handleScan}
+          disabled={scanning}
+          title={t('action.scan')}
+          aria-label={t('action.scan')}
+        >
+          <span className={scanning ? 'spinning' : undefined} style={styles.actionBtnIcon}>
+            <ScanIcon />
+          </span>
+          {scanning ? t('action.scanning') : t('action.scan')}
+        </button>
         <button
           type="button"
           style={styles.actionBtn}
@@ -54,12 +78,13 @@ export function GraphViewLayout({
           {t('nav.refresh')}
         </button>
       </div>
-      {scanError && (
-        <div style={styles.errorText}>
-          {t('action.scanError')}: {scanError}
-        </div>
-      )}
       {children}
+      <ScanOverlay
+        visible={scanning}
+        status={scanOverlayStatus}
+        errorMessage={scanError}
+        onDismiss={handleDismissScan}
+      />
     </div>
   );
 }
@@ -93,10 +118,5 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  errorText: {
-    color: 'var(--color-error)',
-    fontSize: '13px',
-    paddingBottom: '8px',
   },
 };

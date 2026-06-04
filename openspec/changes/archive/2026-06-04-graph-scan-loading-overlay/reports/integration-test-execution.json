@@ -1,0 +1,29 @@
+{
+  "phase": "08-integration-test",
+  "command": "pnpm test (vp test in packages/frontend)",
+  "timestamp": "2026-06-03T18:42:00.000Z",
+  "total": 108,
+  "passed": 108,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": 0,
+  "duration_ms": 10180,
+  "test_files_run": 13,
+  "test_files_details": [
+    "src/__tests__/unit/SyncUrlRedirects.test.tsx (6 tests)",
+    "src/__tests__/unit/GraphViewLayout.test.tsx (10 tests)",
+    "src/__tests__/unit/GraphViewLayout.noScanError.test.tsx (5 tests)",
+    "src/__tests__/unit/SyncUrlRouting.test.tsx (6 tests)",
+    "src/__tests__/unit/ArchitectureView.test.tsx (12 tests)",
+    "src/__tests__/unit/ScanOverlay.test.tsx (10 tests)",
+    "src/__tests__/unit/ScanOverlay.minDisplayTime.test.tsx (2 tests)",
+    "src/__tests__/integration/AppRouting.test.tsx (13 tests)",
+    "src/__tests__/from-change/App.test.tsx (14 tests)",
+    "src/__tests__/from-change/GraphViewLayout.test.tsx (13 tests)",
+    "src/__tests__/from-change/i18n.test.ts (2 tests)",
+    "src/__tests__/from-change/ScanOverlay.test.tsx (13 tests)",
+    "src/__tests__/from-change/scan-flow.integration.test.tsx (8 tests)"
+  ],
+  "failures": [],
+  "findings": "All 108 tests pass. The change-specific integration test file at openspec/changes/graph-scan-loading-overlay/tests/integration/scan-flow.test.tsx was a skeleton with all assertions commented out. A working integration test was implemented at packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx, covering AC-1 to AC-7, AC-10, B-5, and B-8 with 8 integration tests. The existing AppRouting.test.tsx also has 2 passing scan overlay integration tests. All unit tests for ScanOverlay component, App handleScan logic, GraphViewLayout scanError removal, and i18n keys pass."
+}

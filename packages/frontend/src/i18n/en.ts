@@ -56,6 +56,7 @@ export default {
     scan: 'Scan',
     scanning: 'Scanning...',
     scanError: 'Scan failed',
+    scanOverlayClose: 'Close',
     generateRules: 'Generate Rules',
     generatingRules: 'Generating...',
     generateRulesError: 'Failed to generate rules',

@@ -1,0 +1,3 @@
+{
+  "static_analysis": "pnpm run -C ./plugins/dev-team/bin check"
+}

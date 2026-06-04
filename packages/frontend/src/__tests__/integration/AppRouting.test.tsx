@@ -47,6 +47,16 @@ vi.mock('@/components/DetailPanel', () => ({
   DetailPanel: () => <div data-testid="detail-panel">DetailPanel Mock</div>,
 }));
 
+vi.mock('@/components/icons', () => ({
+  ScanIcon: () => <span data-testid="scan-icon" />,
+  RefreshIcon: () => <span data-testid="refresh-icon" />,
+  SettingsIcon: () => <span data-testid="settings-icon" />,
+  SunIcon: () => <span />,
+  MoonIcon: () => <span />,
+  MonitorIcon: () => <span />,
+  GenerateRulesIcon: () => <span />,
+}));
+
 // ---------------------------------------------------------------------------
 // Mock i18n hook
 // ---------------------------------------------------------------------------
@@ -335,6 +345,102 @@ describe('AppRouting (Integration)', () => {
     // The sample data has 1 violation
     expect(screen.getByTestId('violation-list')).toBeInTheDocument();
     expect(screen.getByTestId('violation-0')).toBeInTheDocument();
+  });
+
+  // =========================================================================
+  // ScanOverlay integration: scan button triggers overlay, error shows dismiss
+  // =========================================================================
+  it('scan overlay appears when Scan button is clicked and shows error on failure', async () => {
+    fetchMock = mockFetchSuccess();
+
+    renderApp();
+
+    // Wait for initial data load
+    await screen.findByTestId('graph-view');
+
+    // Mock analyze endpoint to return failure for this test
+    fetchMock.mockRestore();
+    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/api/analyze')) {
+        return Promise.resolve({
+          ok: false,
+          status: 500,
+          statusText: 'Internal Server Error',
+          json: async () => ({ error: 'Scan failed: server error' }),
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => sampleGraphData,
+      } as Response);
+    });
+
+    // Find and click Scan button (i18n mock returns keys, so aria-label is action.scan)
+    const scanBtn = screen.getByRole('button', { name: 'action.scan' });
+    fireEvent.click(scanBtn);
+
+    // ScanOverlay should appear
+    const overlay = await screen.findByTestId('scan-overlay');
+    expect(overlay).toBeInTheDocument();
+
+    // Wait for error state to display (i18n returns key: action.scanOverlayClose)
+    const closeBtn = await screen.findByRole('button', { name: 'action.scanOverlayClose' });
+    expect(closeBtn).toBeInTheDocument();
+
+    expect(screen.getByText('Scan failed: server error')).toBeInTheDocument();
+
+    // Click Close to dismiss
+    fireEvent.click(closeBtn);
+
+    // Overlay should disappear
+    expect(screen.queryByTestId('scan-overlay')).not.toBeInTheDocument();
+
+    // UI should be interactive again
+    expect(screen.getByRole('button', { name: 'action.scan' })).toBeInTheDocument();
+  });
+
+  // =========================================================================
+  // Scan overlay success: scan completes, overlay closes
+  // =========================================================================
+  it('scan overlay closes automatically on successful scan', async () => {
+    fetchMock = mockFetchSuccess();
+
+    renderApp();
+
+    await screen.findByTestId('graph-view');
+
+    // Mock analyze to succeed
+    fetchMock.mockRestore();
+    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/api/analyze')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ status: 'ok' }),
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => sampleGraphData,
+      } as Response);
+    });
+
+    // Click Scan (i18n mock returns keys)
+    fireEvent.click(screen.getByRole('button', { name: 'action.scan' }));
+
+    // Overlay should appear
+    expect(await screen.findByTestId('scan-overlay')).toBeInTheDocument();
+
+    // Overlay should eventually close (scan completes)
+    // Use waitFor to handle the 500ms min display time
+    await vi.waitFor(
+      () => {
+        expect(screen.queryByTestId('scan-overlay')).not.toBeInTheDocument();
+      },
+      { timeout: 2000 },
+    );
+
+    // Graph view should still be visible
+    expect(screen.getByTestId('graph-view')).toBeInTheDocument();
   });
 
   // =========================================================================

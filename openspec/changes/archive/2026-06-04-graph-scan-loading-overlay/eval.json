@@ -1,0 +1,617 @@
+[
+  {
+    "phase": "01-proposal",
+    "timestamp": "2026-06-03T07:13:26.454Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "Evaluated proposal.md against 10-item checklist. All pass: problem has concrete background and 4 issues; scope 7 in/6 out; 4 risks with specific mitigations; 10 ACs with verification methods; consistent with CLAUDE.md; no TODOs/placeholders; all sections substantive; 1 new + 1 modified capability; 2 spec files match 1:1; no proposal-spec conflicts.",
+    "items": [
+      {
+        "item": "问题描述清晰，包含背景和动机",
+        "pass": true,
+        "evidence": "问题部分包含背景（当前 Scan 按钮行为）、4 条具体问题描述和 4 条明确目标",
+        "notes": "问题不是泛泛的'改进X'，而是列举了具体缺陷"
+      },
+      {
+        "item": "范围明确划分为 in_scope 和 out_of_scope",
+        "pass": true,
+        "evidence": "范围内列出 7 项，范围外列出 6 项",
+        "notes": "两个列表均满足至少一项的要求"
+      },
+      {
+        "item": "风险包含具体的缓解措施",
+        "pass": true,
+        "evidence": "4 个风险均有具体缓解措施：z-index:9999+E2E测试、最小显示500ms、CSS transform GPU合成、finally块中执行refresh",
+        "notes": "每个缓解措施均非泛化表述"
+      },
+      {
+        "item": "验收标准可测试且有验证方法",
+        "pass": true,
+        "evidence": "10 个 AC 每个都有验证方法列，如 mock 返回 200/500、切换主题、切换标签页等",
+        "notes": "所有 AC 指定了如何验证（手动测试、mock 测试等）"
+      },
+      {
+        "item": "提案与项目 CLAUDE.md 约定一致",
+        "pass": true,
+        "evidence": "仅涉及前端的 React 组件/样式/i18n 修改，不涉及 CLI 或 Rust 后端，符合架构分层",
+        "notes": "无与项目架构或编码指南矛盾之处"
+      },
+      {
+        "item": "无占位符或 TODO 内容",
+        "pass": true,
+        "evidence": "全文搜索未出现 TODO/TBD/placeholder/{{...}}",
+        "notes": "无占位符或待办标记"
+      },
+      {
+        "item": "所有非能力的模板章节已填写实质性内容",
+        "pass": true,
+        "evidence": "问题、方案、变更范围、验收标准、风险五个章节均有实质性内容，无空章节或占位符",
+        "notes": "所有模板章节填写完整"
+      },
+      {
+        "item": "能力章节存在且至少有一个新增或修改条目",
+        "pass": true,
+        "evidence": "能力章节包含 1 个新增能力（scanning-overlay）和 1 个修改的能力（frontend）",
+        "notes": "两个子章节均非空"
+      },
+      {
+        "item": "specs/ 文件与能力章节一一对应",
+        "pass": true,
+        "evidence": "新增能力 scanning-overlay → specs/scanning-overlay/spec.md；修改的能力 frontend → specs/frontend/spec.md",
+        "notes": "2 个能力对应 2 个 spec 文件，无多余或缺失"
+      },
+      {
+        "item": "proposal.md 与 specs/ 之间无逻辑冲突",
+        "pass": true,
+        "evidence": "能力声明类型与 spec 内容一致（新增/修改）；AC ID 在 specs 中有对应 scenarios；变更范围与 spec scenarios 无矛盾",
+        "notes": "交叉验证通过"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "02-dev-design",
+    "timestamp": "2026-06-03T07:17:27.098Z",
+    "attempt": 1,
+    "verdict": "fail",
+    "report": "Evaluated design.md and tasks.md. D1-D8 pass: component tables have 4+ columns with specific paths, no TBD; data flow traces click-to-output with state machine; all 7 decisions include reasons and rejected alternatives; all 10 ACs from proposal covered; tasks exist with checkboxes in phases; tasks are specific; deps listed in component tables; consistent with CLAUDE.md. D9 FAIL: expected chapters 路由设计, 依赖, and 风险 are missing as dedicated sections (content inlined or absent). Verdict: fail.",
+    "items": [
+      {
+        "item": "架构组件已列出职责、依赖、技术栈和文件路径",
+        "pass": true,
+        "evidence": "ScanOverlay/App/GraphViewLayout/i18n/CSS each have 4+ columns (文件/职责/依赖/技术), no \"TBD\" tech stack, paths point to specific files like packages/frontend/src/components/ScanOverlay.tsx",
+        "notes": "所有组件表填写完整"
+      },
+      {
+        "item": "数据流描述有具体步骤",
+        "pass": true,
+        "evidence": "数据流 section traces complete path: user click -> handleScan -> setScanning -> fetch -> success (setScanning(false)+refresh()) / error (setScanError+error overlay), plus state machine diagram",
+        "notes": "完整路径追踪"
+      },
+      {
+        "item": "关键决策包含理由和被拒绝的备选方案",
+        "pass": true,
+        "evidence": "All 7 decisions (derived status, auto-refresh, keep scanning on error, CSS animation, 500ms min display, pointer-events blocking, separate component) each have reason AND rejected alternative",
+        "notes": "全部决策均含被拒方案"
+      },
+      {
+        "item": "设计覆盖 proposal.md 中每个验收标准",
+        "pass": true,
+        "evidence": "AC-1 (z-index:9999), AC-2 (event blocking), AC-3 (progress+text), AC-4 (refresh on success), AC-5 (resume interaction), AC-6 (error+close), AC-7 (dismiss), AC-8 (CSS vars), AC-9 (CSS animation), AC-10 (catch path) all explicitly covered",
+        "notes": "10/10 ACs covered in design"
+      },
+      {
+        "item": "tasks.md 存在且所有任务遵循依赖顺序",
+        "pass": true,
+        "evidence": "tasks.md exists with 37 tasks, checkboxes present, grouped into 8 phases. Phase 1(CSS) -> Phase 2(ScanOverlay) -> Phase 3(App.tsx) logical. Minor: Phase 2.3 uses t('action.scanOverlayClose') key added in Phase 5, but t() gracefully falls back",
+        "notes": "Phases logically ordered; minor ordering note on i18n key"
+      },
+      {
+        "item": "任务具体且可执行",
+        "pass": true,
+        "evidence": "Each task describes concrete operations: e.g. '1.1 add @keyframes scan-progress with translateX(-100%) to translateX(400%)', '2.1 create ScanOverlay.tsx with props visible/status/errorMessage/onDismiss', '3.1 modify handleScan with startTime/try-catch'",
+        "notes": "所有任务描述具体操作，无模糊表述"
+      },
+      {
+        "item": "依赖项（运行时和构建/测试）已列出",
+        "pass": true,
+        "evidence": "Component dependency tables list runtime deps: React, useT(), react-router-dom, useGraphData(), CSS. Build/test deps are project-level (pnpm). No unknown or 'TBD' dependencies",
+        "notes": "依赖在组件表中列出"
+      },
+      {
+        "item": "设计与项目架构一致（CLAUDE.md）",
+        "pass": true,
+        "evidence": "Components placed in packages/frontend/src/components/ (existing pattern), use React 19+TypeScript (per CLAUDE.md stack), use existing i18n useT() hook, CSS variables for theming (per dark mode spec), test files in __tests__/unit/ and __tests__/integration/",
+        "notes": "与现有架构模式一致"
+      },
+      {
+        "item": "所有模板章节已填写实质性内容",
+        "pass": false,
+        "evidence": "Expected chapters: 架构(架构组件 ✓), 数据流(数据流 ✓), 路由设计(missing section), 决策(关键决策 ✓), 依赖(no dedicated section, inlined in tables), 风险(no dedicated section, only 影响分析:数据竞争). 3 of 6 expected chapters not present as identifiable sections",
+        "notes": "缺少路由设计/依赖/风险独立章节"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "02-dev-design",
+    "timestamp": "2026-06-03T07:20:35.838Z",
+    "attempt": 2,
+    "verdict": "pass",
+    "report": "All 9 items pass. D1: 6 tables, 4+ cols, specific paths, no TBD. D2: Full click-to-output flow with 3 branches. D3: 7 decisions with reasons and rejected alts. D4: All 10 ACs covered. D5: 37 tasks, 8 phases, logical order. D6: Concrete tasks (keyframes, props, code). D7: Deps section with runtime/build/test tables. D8: Matches CLAUDE.md. D9: All 6 sections substantive.",
+    "items": [
+      {
+        "item": "架构组件已列出职责、依赖、技术栈和文件路径",
+        "pass": true,
+        "evidence": "6 component tables (ScanOverlay, App, GraphViewLayout, i18n en/zh-CN, CSS) each have 4+ columns: file, 职责, 依赖, 技术. No TBD tech stacks. All file paths specific like packages/frontend/src/components/ScanOverlay.tsx.",
+        "notes": "All component tables complete."
+      },
+      {
+        "item": "数据流描述有具体步骤",
+        "pass": true,
+        "evidence": "Data flow section traces complete path: user click -> handleScan -> setScanning(true) -> fetch -> 3 branches (success with 500ms min display / error / network exception) -> overlay show/hide + refresh(). State machine diagram: IDLE -> SCANNING -> IDLE | ERROR -> IDLE. Data model table for scanning/scanError states.",
+        "notes": "Complete input->processing->output path."
+      },
+      {
+        "item": "关键决策包含理由和被拒绝的备选方案",
+        "pass": true,
+        "evidence": "All 7 decisions include reasons and rejected alternatives: (1) derived status vs separate useState, (2) auto-refresh vs finally block, (3) keep scanning on error vs auto-close, (4) CSS animation vs JS setInterval, (5) 500ms min display vs no min, (6) pointer-events vs global listeners, (7) separate file vs inline.",
+        "notes": "All decisions have rejected alternatives."
+      },
+      {
+        "item": "设计覆盖 proposal.md 中每个验收标准",
+        "pass": true,
+        "evidence": "10/10 ACs explicitly covered: AC-1 (z-index:9999), AC-2 (event blocking Decision 6), AC-3 (progress+text states table), AC-4 (auto-refresh Decision 2), AC-5 (resume data flow), AC-6 (error state), AC-7 (handleDismissScan), AC-8 (CSS vars Risk R5), AC-9 (CSS animation tab switch Decision 4), AC-10 (network catch path).",
+        "notes": "All acceptance criteria from proposal addressed."
+      },
+      {
+        "item": "tasks.md 存在且所有任务遵循依赖顺序",
+        "pass": true,
+        "evidence": "tasks.md exists with 37 tasks, checkboxes present, 8 phases. Phase 1(CSS) -> 2(ScanOverlay) -> 3(i18n) -> 4(App.tsx) -> 5(GraphViewLayout) -> 6(tests) -> 7(min display) -> 8(integration). No later task is a dependency of an earlier task. Task 2.4 uses fallback text for i18n key.",
+        "notes": "Phases logically ordered, no reverse dependencies."
+      },
+      {
+        "item": "任务具体且可执行",
+        "pass": true,
+        "evidence": "Tasks describe concrete operations: 1.1 'add @keyframes scan-progress with translateX(-100%) to translateX(400%)', 2.1 'create ScanOverlay.tsx with props visible/status/errorMessage/onDismiss', 4.2 'modify handleScan with startTime/try-catch', 6.2 lists 9 specific test scenarios.",
+        "notes": "All tasks specify concrete operations, not vague 'implement feature'."
+      },
+      {
+        "item": "依赖项（运行时和构建/测试）已列出",
+        "pass": true,
+        "evidence": "Dedicated '依赖' section with runtime (react ^19, react-dom ^19), build (typescript, vite), test (@testing-library/react, vite-plus/test), and CSS variable dependency tables. Each dep has usage description.",
+        "notes": "Comprehensive dependency documentation."
+      },
+      {
+        "item": "设计与项目架构一致（CLAUDE.md）",
+        "pass": true,
+        "evidence": "Components in packages/frontend/src/components/ (existing pattern). React 19 + TypeScript per stack. Uses existing useT() i18n hook. CSS variables for theming. Tests in __tests__/unit/ and __tests__/integration/. No CLI or Rust backend changes.",
+        "notes": "Consistent with all CLAUDE.md conventions."
+      },
+      {
+        "item": "所有模板章节已填写实质性内容",
+        "pass": true,
+        "evidence": "All 6 expected sections present with substantive content: 架构组件 (9-98, props interfaces/state matrix/CSS defs), 数据流 (100-168, flow diagrams/state machine/data model), 路由设计 (171-193, route tables with no-change annotation), 决策 (234-303, 7 decisions), 依赖 (195-231, 4 dependency tables), 风险 (307-353, 5 risks with impact/probability/mitigation/status).",
+        "notes": "All 6 sections present and substantive."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "03-test-design",
+    "timestamp": "2026-06-03T07:24:45.313Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "T1-T8 all pass. All 10 ACs mapped. 18 coverage rows reference tests/ paths. 12 scan-specific boundary cases (timing/response/interaction). Strategy has pyramid, 5 categories, 8 mock targets with lifecycle. All 4 sections substantive. Scope consistent. Idempotency via re-scan-after-failure tests and rapid-click blocking.",
+    "items": [
+      {
+        "item": "proposal.md 中每个验收标准都在 coverage map 中有映射",
+        "pass": true,
+        "evidence": "Coverage map lines 81-98 map AC-1 through AC-10 from proposal lines 107-116. Each of the 10 ACs appears at least once: AC-1 (2 rows), AC-2 (2), AC-3 (2), AC-4 (2), AC-5 (1), AC-6 (2), AC-7 (2), AC-8 (2), AC-9 (1), AC-10 (2).",
+        "notes": "AC-9 mapping covers CSS animation, a feasible sub-aspect of tab-switch state preservation in jsdom."
+      },
+      {
+        "item": "coverage map 条目包含 openspec/changes/<change-name>/tests/ 下的测试文件路径",
+        "pass": true,
+        "evidence": "All 18 coverage-map rows reference paths like tests/unit/frontend/ScanOverlay.test.tsx, tests/integration/scan-flow.test.tsx, tests/unit/frontend/App.test.tsx, tests/unit/frontend/GraphViewLayout.test.tsx, tests/unit/frontend/i18n.test.ts — all under the change's tests/ subdirectory.",
+        "notes": "Paths are relative; all reference files under the change's tests/ directory."
+      },
+      {
+        "item": "边界情况与变更领域相关",
+        "pass": true,
+        "evidence": "Section 4 lists 12 cases (B-1 to B-12) all specific to scan-overlay behavior: fast/slow scan timing (B-1,B-2), non-JSON response (B-3), details+error fields (B-4), re-scan after error (B-5), null errorMessage (B-6), route navigation during scan (B-7), refresh failure post-scan (B-8), loading+scanning concurrency (B-9), refresh throws (B-10), theme switching mid-scan (B-11), 204 No Content (B-12).",
+        "notes": "All are specific edge cases for the scan-overlay change domain, not generic 'null input' tests."
+      },
+      {
+        "item": "测试策略描述了方法和分类",
+        "pass": true,
+        "evidence": "Section 3 has 4 subsections: 3.1 test pyramid with 5 layers and percentage breakdown, 3.2 five test categories (positive, error, state, theme, regression) each with specific scenarios, 3.3 mock strategy with 8 targets + lifecycle hooks, 3.4 detailed test data matrices.",
+        "notes": "Multiple paragraphs of specific details, not vague descriptions."
+      },
+      {
+        "item": "存在外部依赖时描述了 Mock 策略",
+        "pass": true,
+        "evidence": "Section 3.3 provides 8 mock targets: @/i18n, @/components/icons, globalThis.fetch, IntersectionObserver, child components (DependencyGraph/DetailPanel/ArchitectureView), @/theme. Lifecycle described: beforeEach clearAllMocks, afterEach restoreAllMocks+unstubAllGlobals.",
+        "notes": "Every external dependency (API, i18n, theme, icons, child components, browser APIs) has a mock strategy."
+      },
+      {
+        "item": "所有模板章节已填写实质性内容",
+        "pass": true,
+        "evidence": "All expected sections contain detailed content: 测试级别 (4 unit + 1 integration tables, each with 6 attributes), 覆盖率映射 (18 rows), 测试策略 (4 subsections), 边界情况 (12 cases). No TODOs, placeholders, or empty sections.",
+        "notes": "All template sections are complete with implementable content."
+      },
+      {
+        "item": "测试设计与 proposal 范围一致",
+        "pass": true,
+        "evidence": "In-scope items (ScanOverlay, App handleScan+refresh, GraphViewLayout text, i18n, CSS) all have test coverage in dedicated files. Out-of-scope items (server API, WebSocket/SSE, cancel/interrupt, progress stages, other views, file upload) have zero test coverage.",
+        "notes": "Scope boundaries from proposal lines 84-99 are respected."
+      },
+      {
+        "item": "写操作（创建/更新/删除）测试包含幂等性验证",
+        "pass": true,
+        "evidence": "State management tests verify re-scan after success and after error dismissal. B-5 explicitly tests re-scan after error. Rapid-click blocking prevents duplicate calls. Client-side state resets properly after each scan cycle with no side-effect accumulation.",
+        "notes": "Repeated POST /api/analyze calls produce consistent state; no accumulated side effects."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "04-test-gen",
+    "timestamp": "2026-06-03T07:31:18.315Z",
+    "attempt": 1,
+    "verdict": "fail",
+    "report": "G6 FAIL: B-10 (refresh() throws after setScanning(false)) from test-design.md Section 4 has no corresponding test skeleton in App.test.tsx. All other checklist items pass: 5 test files cover all 22 coverage map entries (G1), correct naming/path (G2), valid TypeScript syntax (G3), test skeleton matches design (G4), correct framework imports (G5), no JSON files (G7), all files include cleanup logic (G8).",
+    "items": [
+      {
+        "item": "test-design.md 中每个 coverage map 条目在 tests/ 下都有对应的测试文件",
+        "pass": true,
+        "evidence": "5 个测试文件覆盖 22 个 coverage map 条目：ScanOverlay.test.tsx (AC-1/2/3/6/8/9), App.test.tsx (AC-4/7/10), GraphViewLayout.test.tsx (scanError/regression), i18n.test.ts (action.scanOverlayClose), scan-flow.test.tsx (AC-1~7/10)",
+        "notes": "所有 coverage map 条目都对应到已存在的测试文件"
+      },
+      {
+        "item": "测试文件遵循项目命名规范且位于 tests/",
+        "pass": true,
+        "evidence": "5 个文件均在 openspec/changes/graph-scan-loading-overlay/tests/ 目录下，使用 .test.ts 和 .test.tsx 后缀",
+        "notes": "命名规范与 vitest.config.ts 中 include 模式 src/**/*.test.{ts,tsx} 一致"
+      },
+      {
+        "item": "测试文件语法有效",
+        "pass": true,
+        "evidence": "TypeScript transpileModule 确认 5 个文件均无语法错误",
+        "notes": "AllowImportingTsExtensions 模式下编译通过"
+      },
+      {
+        "item": "测试骨架包含与 test-design 级别匹配的测试结构",
+        "pass": true,
+        "evidence": "每个测试文件都有 describe() 和 it() 块对应其覆盖目标：ScanOverlay 15 个测试, App 11 个测试, GraphViewLayout 12 个测试, i18n 2 个测试, scan-flow 11 个测试",
+        "notes": "部分 App 和集成测试的断言为 TODO 注释，但骨架结构完整"
+      },
+      {
+        "item": "测试文件使用正确的框架和导入",
+        "pass": true,
+        "evidence": "组件文件从 @testing-library/react 导入 render/screen/fireEvent，从 vite-plus/test 导入 vitest 函数；i18n 测试直接从 vite-plus/test 导入并直接引用翻译模块",
+        "notes": "与项目中现有测试模式一致"
+      },
+      {
+        "item": "test-design.md 中的边界情况已覆盖",
+        "pass": false,
+        "evidence": "B-1 至 B-9、B-11、B-12 均有对应 it() 块，但 B-10（refresh() 在 setScanning(false) 后抛出异常）在 App.test.tsx 中无对应测试",
+        "notes": "B-10 缺失：App.test.tsx 中需要添加 refresh() 抛异常时遮罩层不再重新打开的测试"
+      },
+      {
+        "item": "diff 中无 JSON 报告或摘要文件",
+        "pass": true,
+        "evidence": "git diff 显示仅新增 5 个 .ts/.tsx 测试文件，无任何 .json 文件",
+        "notes": "实际 git diff 为空因为文件为 untracked，但 Glob 确认只有测试文件"
+      },
+      {
+        "item": "测试代码包含清理/还原逻辑",
+        "pass": true,
+        "evidence": "全部 5 个文件包含 afterEach/beforeEach 清理：vi.clearAllMocks + vi.restoreAllMocks / fetchMock.mockRestore + vi.unstubAllGlobals / window.history.replaceState",
+        "notes": "i18n.test.ts 为纯数据验证无需 mock，合理免去清理逻辑"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "04-test-gen",
+    "timestamp": "2026-06-03T07:35:37.778Z",
+    "attempt": 2,
+    "verdict": "pass",
+    "report": "评估通过。5个测试文件覆盖全部18个coverage map条目和12个边界情况。文件命名规范、框架导入正确、语法有效、结构完整、含清理逻辑。部分测试(App.test.tsx, scan-flow.test.tsx)存在TODO占位断言，但不影响骨架完整性。diff无JSON报告文件。",
+    "items": [
+      {
+        "item": "G1: test-design.md 中每个 coverage map 条目在 tests/ 下都有对应的测试文件",
+        "pass": true,
+        "evidence": "5个测试文件覆盖coverage map中全部18个AC条目（AC-1至AC-10，含单元和集成层级）",
+        "notes": "逐项交叉验证通过，每个AC条目均有对应测试文件"
+      },
+      {
+        "item": "G2: 测试文件遵循项目命名规范且位于 openspec/changes/<change-name>/tests/",
+        "pass": true,
+        "evidence": "所有5个文件使用.test.tsx/.test.ts后缀，位于openspec/changes/graph-scan-loading-overlay/tests/下",
+        "notes": "项目现有测试文件同样使用.test.tsx/.test.ts命名规范，一致"
+      },
+      {
+        "item": "G3: 测试文件语法有效",
+        "pass": true,
+        "evidence": "TypeScript解析通过，JSX语法正确，import语句格式有效",
+        "notes": "存在TS6133未使用变量警告（因TODO注释导致），但非语法错误；TS2307模块解析错误源于tsconfig未包含此路径，非文件本身问题"
+      },
+      {
+        "item": "G4: 测试骨架包含与 test-design 级别匹配的测试结构",
+        "pass": true,
+        "evidence": "ScanOverlay.test.tsx:13个it块, App.test.tsx:9个it块, GraphViewLayout.test.tsx:10个it块, i18n.test.ts:2个it块, scan-flow.test.tsx:11个it块",
+        "notes": "每个测试文件都有describe/it结构，与test-design.md中的测试级别和覆盖目标对应"
+      },
+      {
+        "item": "G5: 测试文件使用正确的框架和导入",
+        "pass": true,
+        "evidence": "均使用vite-plus/test和@testing-library/react，vi.mock策略符合test-design.md规范",
+        "notes": "导入方式与packages/frontend/src/__tests__/中现有测试文件完全一致"
+      },
+      {
+        "item": "G6: test-design.md 中的边界情况已覆盖",
+        "pass": true,
+        "evidence": "B-1至B-12共12个边界情况均有对应的测试it块",
+        "notes": "B-11（主题切换）在scan-flow.test.tsx AC-8(dark)测试中部分覆盖；部分测试断言为TODO状态，但测试骨架存在"
+      },
+      {
+        "item": "G7: diff 中无 JSON 报告或摘要文件",
+        "pass": true,
+        "evidence": "git status仅显示untracked的test文件，无新增JSON文件；eval.json为workflow阶段日志文件",
+        "notes": "符合要求"
+      },
+      {
+        "item": "G8: 测试代码包含清理/还原逻辑",
+        "pass": true,
+        "evidence": "每个测试文件均有beforeEach/afterEach，包含vi.clearAllMocks/vi.restoreAllMocks/vi.unstubAllGlobals及状态重置",
+        "notes": "i18n.test.ts纯数据验证无需清理逻辑，理由合理"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "05-implement",
+    "timestamp": "2026-06-03T07:44:54.297Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 8 checklist items pass. 6 design components implemented (ScanOverlay.tsx new, App.tsx/GraphViewLayout.tsx/i18n/main.css modified). Data flow matches design: scanning state, 500ms min display, error overlay with dismiss, auto-refresh on success. 49 files pass lint/typecheck, 61 tests pass. All 7 design decisions correctly implemented. No extraneous changes.",
+    "items": [
+      {
+        "item": "design.md 中每个架构组件都有实现代码",
+        "pass": true,
+        "evidence": "ScanOverlay.tsx (NEW), App.tsx, GraphViewLayout.tsx, en.ts, zh-CN.ts, main.css — all 6 design.md components have code coverage",
+        "notes": "All architecture components from design.md section 1-5 are implemented"
+      },
+      {
+        "item": "实现遵循 design.md 描述的数据流",
+        "pass": true,
+        "evidence": "App.tsx:77-99 handleScan with min 500ms delay, setScanning(false) then refresh(); App.tsx:101-104 handleDismissScan; App.tsx:207 derived status from scanning+scanError",
+        "notes": "Success/failure/network-error/dismiss flows all match design.md section data-flow diagrams"
+      },
+      {
+        "item": "代码遵循项目现有规范",
+        "pass": true,
+        "evidence": "PascalCase components, camelCase functions, relative imports, useT() i18n pattern, vite-plus/test + testing-library test patterns, kebab-case CSS classes",
+        "notes": "Matches existing codebase conventions in naming, file organization, and imports"
+      },
+      {
+        "item": "design.md 中所有路由/API 均已实现",
+        "pass": true,
+        "evidence": "Design.md states 'no route or API endpoint modifications'; git diff confirms zero route/API changes",
+        "notes": "No routes were specified to change; none were modified — trivially satisfied"
+      },
+      {
+        "item": "tasks.md 中所有任务均标记 [x]（已完成）",
+        "pass": true,
+        "evidence": "All 8 phases (1.1-8.13), every task in tasks.md has [x] checkbox",
+        "notes": "All implementation tasks checked complete"
+      },
+      {
+        "item": "没有与当前变更任务无关的代码",
+        "pass": true,
+        "evidence": "7 modified + 4 new files all trace to design.md components (ScanOverlay, App, GraphViewLayout, i18n, CSS) or tasks.md phases 6-7 (tests)",
+        "notes": "No unrelated modifications detected in git diff"
+      },
+      {
+        "item": "静态检查通过（lint、类型检查）",
+        "pass": true,
+        "evidence": "pnpm build:ts OK; pnpm check (vite-plus: format+lint+type) passes — 49 files, 0 issues; pnpm test passes — 8 test files, 61 tests",
+        "notes": "Build, type check, lint, and all tests pass"
+      },
+      {
+        "item": "设计决策在实现中得到遵守",
+        "pass": true,
+        "evidence": "D1:derived status App.tsx:207; D2:refresh after close App.tsx:97-98; D3:error keeps scanning=true App.tsx:83-89; D4:CSS animation main.css lines 27-48; D5:500ms min display App.tsx:92-96; D6:keyboard capture ScanOverlay.tsx:19-46; D7:independent file ScanOverlay.tsx",
+        "notes": "All 7 design decisions from design.md sections Decision 1-7 correctly implemented"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "06-unit-test",
+    "timestamp": "2026-06-03T10:35:24.116Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "所有 100 个单元测试通过，0 个失败，0 个跳过。覆盖率 0%。",
+    "items": [
+      {
+        "item": "报告完整性",
+        "pass": true,
+        "evidence": "所有10个必需字段存在且类型正确（phase/command/timestamp/total/passed/failed/skipped/coverage/duration_ms/failures）",
+        "notes": "报告格式验证通过"
+      },
+      {
+        "item": "测试通过率",
+        "pass": true,
+        "evidence": "100/100 通过，0 失败",
+        "notes": "全部通过"
+      },
+      {
+        "item": "决策树分析",
+        "pass": true,
+        "evidence": "无失败，无需应用决策树",
+        "notes": "所有测试通过，直接判定为 pass"
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0",
+    "findings": "诊断分析: 06-unit-test 阶段测试执行结果\n总计: 100 | 通过: 100 | 失败: 0 | 跳过: 0\n覆盖率: 0%\n\n失败详情:\n无\n\n诊断决策树分析:\n- 判定类型: 全部通过\n- 回溯目标: null\n- 根因: 无"
+  },
+  {
+    "phase": "07-code-review",
+    "timestamp": "2026-06-03T10:37:07.291Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 8 checklist items pass. No security issues. Implementation matches design.md: ScanOverlay props/behavior, min-display-time, scanOverlayStatus derivation, GraphViewLayout scanError removal, CSS anims, i18n keys all aligned. Coverage solid: 11 ScanOverlay unit tests, 2 min-display tests, 5 no-scanError tests, 2 integration tests. Minor: React key handlers redundant vs document listeners but intentional defense-in-depth per Decision 6.",
+    "items": [
+      {
+        "item": "变更代码中无安全漏洞",
+        "pass": true,
+        "evidence": "ScanOverlay.tsx:19-34, App.tsx:76-99, GraphViewLayout.tsx:15-59",
+        "notes": "No SQL injection, XSS, command injection, hardcoded secrets, path traversal, or unsafe deserialization. All clean."
+      },
+      {
+        "item": "所有外部输入都有格式检查",
+        "pass": true,
+        "evidence": "App.tsx:82-88, ScanOverlay.tsx:7-12",
+        "notes": "API response text and error messages are typed as strings, displayed as JSX text content. All props TypeScript-typed."
+      },
+      {
+        "item": "变更代码路径有测试覆盖",
+        "pass": true,
+        "evidence": "ScanOverlay.test.tsx, ScanOverlay.minDisplayTime.test.tsx, GraphViewLayout.noScanError.test.tsx, AppRouting.test.tsx",
+        "notes": "ScanOverlay 11 tests, min-display 2 tests, no-scanError 5 tests, integration 2 tests. Every changed function covered."
+      },
+      {
+        "item": "实现与 design.md 意图一致",
+        "pass": true,
+        "evidence": "App.tsx:76-99,207-215, ScanOverlay.tsx:7-86, GraphViewLayout.tsx:6-13",
+        "notes": "Props, handleScan flow, state derivation, GraphViewLayout changes, CSS, i18n all match design."
+      },
+      {
+        "item": "无空值/边界处理遗漏",
+        "pass": true,
+        "evidence": "ScanOverlay.tsx:36,74-80, App.tsx:82-84,87-88",
+        "notes": "visible=false returns null. onDismiss guarded. API JSON catch handled. Error messages always strings in failure paths."
+      },
+      {
+        "item": "无冗余或死代码",
+        "pass": true,
+        "evidence": "ScanOverlay.tsx:38-46, App.tsx:207",
+        "notes": "React key handlers redundant vs document capture listeners but intentional defense-in-depth per Decision 6. Type assertion harmless."
+      },
+      {
+        "item": "代码可读性良好且遵循项目规范",
+        "pass": true,
+        "evidence": "ScanOverlay.tsx, App.tsx:76-104, main.css:26-51",
+        "notes": "camelCase naming, existing component pattern, i18n useT(), CSS variables used consistently."
+      },
+      {
+        "item": "外部数据尽量使用同来源的数据类型",
+        "pass": true,
+        "evidence": "App.tsx:9-11, ScanOverlay.tsx:7-12",
+        "notes": "ProcessedGraph/GraphNode/ViolationInfo from types.ts. ScanOverlayProps custom for new component. No new external types."
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  },
+  {
+    "phase": "08-integration-test",
+    "timestamp": "2026-06-03T10:43:09.726Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 108 tests pass (0 failed, 0 skipped). 13 test files executed: 8 from-change integration tests, 42 from-change unit tests, 45 existing unit tests, 13 existing integration tests. Coverage: 0%. Duration: 10180ms.",
+    "items": [
+      {
+        "item": "Scan flow integration tests (scan-flow.integration.test.tsx)",
+        "pass": true,
+        "evidence": "8 test cases pass covering AC-1 to AC-7, AC-10, B-5, B-8",
+        "notes": ""
+      },
+      {
+        "item": "Change-specific from-change tests",
+        "pass": true,
+        "evidence": "42 unit tests across 4 test files all pass",
+        "notes": ""
+      },
+      {
+        "item": "Existing unit tests (regression)",
+        "pass": true,
+        "evidence": "45 existing unit tests pass, no regression",
+        "notes": ""
+      },
+      {
+        "item": "Existing integration tests (AppRouting.test.tsx)",
+        "pass": true,
+        "evidence": "13 existing integration tests pass including 2 scan overlay tests",
+        "notes": ""
+      },
+      {
+        "item": "GraphViewLayout scanError removal regression",
+        "pass": true,
+        "evidence": "GraphViewLayout.noScanError.test.tsx and GraphViewLayout.test.tsx pass",
+        "notes": ""
+      },
+      {
+        "item": "ScanOverlay component tests",
+        "pass": true,
+        "evidence": "ScanOverlay.test.tsx (10 tests) and ScanOverlay.minDisplayTime.test.tsx (2 tests) pass",
+        "notes": ""
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0",
+    "findings": "诊断分析: 08-integration-test 阶段集成测试执行结果\n总计: 108 | 通过: 108 | 失败: 0 | 跳过: 0\n覆盖率: 0%\n\n失败详情:\n无失败。所有 108 个测试用例全部通过。\n\n诊断决策树分析:\n- 判定类型: 全部通过\n- 回溯目标: null\n- 根因: N/A"
+  },
+  {
+    "phase": "09-acceptance",
+    "timestamp": "2026-06-03T10:44:33.111Z",
+    "attempt": 1,
+    "verdict": "pass",
+    "report": "All 10 ACs verified against implementation with test coverage. In-scope items (ScanOverlay, CSS animations, App handleScan, i18n, GraphViewLayout error removal) fully implemented. No out-of-scope production features found. All 5 risks have code mitigations (z-index 9999, 500ms min display, CSS GPU animations, setScanning before refresh, CSS variables). Tasks.md all checked.",
+    "items": [
+      {
+        "item": "proposal.md 中每个验收标准都有实现证据",
+        "pass": true,
+        "evidence": "AC-1: ScanOverlay.tsx:110-113 (fixed/inset/zIndex 9999), App.tsx:211 (first child). AC-2: ScanOverlay.tsx:19-33 (global keyboard capture), ScanOverlay.tsx:54 (tabIndex). AC-3: ScanOverlay.tsx:61-69 (spinning icon, scanning text, progress bar), main.css:26-51 (keyframes). AC-4: App.tsx:92-99 (setScanning(false) + refresh()). AC-5: ScanOverlay.tsx:36 (visible=false → null), App.tsx:97. AC-6: ScanOverlay.tsx:71-82 (error state + close btn), App.tsx:82-89 (error extraction). AC-7: ScanOverlay.tsx:77 (onDismiss), App.tsx:101-104. AC-8: ScanOverlay.tsx:48 (theme bg), main.css CSS vars. AC-9: main.css:26-33 (GPU-composited keyframes). AC-10: App.tsx:87-89 (catch sets scanError). All ACs covered by unit + integration tests.",
+        "notes": ""
+      },
+      {
+        "item": "无范围蔓延 — 实现不超过 proposal.md 定义的范围",
+        "pass": true,
+        "evidence": "All 7 in-scope items present in production code. No WebSocket, SSE, cancel/abort buttons, or staged progress (verified via grep). No new API endpoints or routes. Test files in __tests__/ are testing artifacts, not production scope creep. GraphViewLayout inline error removal is exactly per proposal.",
+        "notes": ""
+      },
+      {
+        "item": "proposal 中所有 in_scope 项均已实现",
+        "pass": true,
+        "evidence": "1) ScanOverlay component: ScanOverlay.tsx. 2) Indeterminate progress bar CSS: main.css:26-51. 3) App.tsx handleScan refresh: App.tsx:92-99. 4) scanning state binds ScanOverlay: App.tsx:207-216. 5) GraphViewLayout scan button text: GraphViewLayout.tsx:39. 6) i18n entries: en.ts:59, zh-CN.ts:57. 7) Progress bar keyframes: main.css:26-51.",
+        "notes": ""
+      },
+      {
+        "item": "proposal 中 out_of_scope 项未被实现",
+        "pass": true,
+        "evidence": "Grep confirms no WebSocket/SSE push (ScanOverlay.tsx), no cancel/abort/interrupt (App.tsx), no staged progress display. No changes to POST /api/analyze or server code. No file upload mode overlay. Indeterminate progress bar only.",
+        "notes": ""
+      },
+      {
+        "item": "proposal.md 中所有风险都有对应的代码缓解措施",
+        "pass": true,
+        "evidence": "R1 (z-index): ScanOverlay.tsx:113 (zIndex: 9999), App.tsx:211 (first child). R2 (min display): App.tsx:92-96 (500ms min display delay). R3 (CSS perf): main.css:26-33 (transform: translateX() GPU compositing). R4 (refresh blocked): App.tsx:97-98 (setScanning(false) before refresh). R5 (theme): ScanOverlay.tsx:48 (theme-derived bg), CSS vars throughout.",
+        "notes": ""
+      }
+    ],
+    "backtrack_to": null,
+    "schema_version": "1.0"
+  }
+]
