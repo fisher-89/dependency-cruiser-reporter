@@ -80,7 +80,9 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   }
 
   // Find and extract tsconfig.json for TypeScript support
-  const tsConfigPath = resolve(absAnalyzePath, 'tsconfig.json');
+  const tsConfigPath = cruiseOptions.tsConfig?.fileName
+    ? cruiseOptions.tsConfig.fileName
+    : resolve(absAnalyzePath, 'tsconfig.json');
   const transpilerOptions: { tsConfig?: object } = {};
 
   if (existsSync(tsConfigPath)) {

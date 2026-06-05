@@ -10,7 +10,7 @@ export default defineConfig(
       target: 'esnext',
       entry: ['./packages/cli/bin/cli.js'],
       deps: {
-        neverBundle: ['@dcr-reporter/wasm'],
+        neverBundle: ['@dcr-reporter/wasm', 'dependency-cruiser'],
         alwaysBundle: [/.+/],
       },
       outputOptions: {
@@ -28,6 +28,7 @@ export default defineConfig(
       hooks: {
         'build:done': async () => {
           const pkg = await import('./package.json');
+          const cliPkg = await import('./packages/cli/package.json');
           writeFileSync(
             './bin/package.json',
             JSON.stringify(
@@ -35,6 +36,9 @@ export default defineConfig(
                 name: pkg.name,
                 version: pkg.version,
                 bin: { 'dep-reporter': './cli.js' },
+                dependencies: {
+                  'dependency-cruiser':cliPkg.dependencies['dependency-cruiser'],
+                }
               },
               null,
               2,
@@ -44,7 +48,7 @@ export default defineConfig(
       },
       format: 'es',
       dts: false,
-      minify: true,
+      // minify: true,
       sourcemap: false,
       clean: ['./bin'],
     },
