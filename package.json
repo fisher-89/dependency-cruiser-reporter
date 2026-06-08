@@ -1,13 +1,6 @@
 {
   "name": "dependency-cruiser-reporter",
-  "version": "0.2.3",
-  "bin": {
-    "dep-report": "./bin/cli.js"
-  },
-  "files": [
-    "package.json",
-    "bin/"
-  ],
+  "version": "0.2.4",
   "type": "module",
   "exports": {
     ".": {

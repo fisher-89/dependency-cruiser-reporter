@@ -35,7 +35,7 @@ export default defineConfig(
               {
                 name: pkg.name,
                 version: pkg.version,
-                bin: { 'dep-reporter': './cli.js' },
+                bin: { 'dep-report': './cli.js' },
                 dependencies: {
                   'dependency-cruiser':cliPkg.dependencies['dependency-cruiser'],
                 }

@@ -3,7 +3,7 @@ import { program } from 'commander';
 
 import { analyze, archiToRules, dashboard } from '../commands/index.js';
 
-program.name('dep-reporter').description('dependency-cruiser result visualizer').version('0.1.0');
+program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
 
 program.option('--cwd <path>', 'Workspace root directory', '.');
 
