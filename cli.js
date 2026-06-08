@@ -153412,7 +153412,7 @@ async function dashboard(options) {
 async function archiToRules(options) {
 	return archiToRules$1(options);
 }
-program.name("dep-reporter").description("dependency-cruiser result visualizer").version("0.1.0");
+program.name("dep-report").description("dependency-cruiser result visualizer").version("0.1.0");
 program.option("--cwd <path>", "Workspace root directory", ".");
 program.command("analyze").description("Analyze a project directory and generate visualization").option("-p, --path <dir>", "Project directory to analyze", ".").option("-o, --output <path>", "Output graph JSON file").option("-c, --config <path>", "dependency-cruiser config file").action(async (options) => {
 	try {
