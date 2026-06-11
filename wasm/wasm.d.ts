@@ -35,6 +35,7 @@ export interface GraphNode {
     children?: string[];
     combo?: string;
     rect?: Rect;
+    instability?: number;
 }
 
 export interface ProcessedGraph {
