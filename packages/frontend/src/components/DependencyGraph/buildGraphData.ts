@@ -7,6 +7,7 @@ export interface G6NodeData {
   label?: string;
   node_type?: NodeType;
   violation_count?: number;
+  instability?: number;
   [key: string]: unknown;
 }
 
@@ -53,6 +54,7 @@ export function buildGraphData(data: ProcessedGraph): G6GraphData {
       label: n.label,
       node_type: n.node_type,
       violation_count: n.violation_count,
+      instability: n.instability,
     },
     combo: n.combo,
     style: n.rect

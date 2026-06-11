@@ -32,7 +32,7 @@ export function useGraphData(): UseGraphDataReturn {
         if (graphData.nodes && graphData.edges && graphData.meta) {
           setData(graphData);
           if (graphData.meta.expanded_dirs) {
-            setExpandedDirs(new Set(graphData.meta.expanded_dirs));
+            setExpandedDirs(new Set(graphData.meta.expanded_dirs.filter(Boolean)));
           }
         }
       }

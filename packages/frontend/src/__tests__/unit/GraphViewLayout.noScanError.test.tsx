@@ -11,7 +11,7 @@
  *   - scanError prop is accepted but has no visible effect
  */
 
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GraphViewLayout } from '@/components/GraphViewLayout';
@@ -35,6 +35,14 @@ vi.mock('@/i18n', () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock theme (ScanOverlay uses useTheme internally)
+// ---------------------------------------------------------------------------
+vi.mock('@/theme', () => ({
+  useTheme: () => ({ theme: 'light', resolvedTheme: 'light', cycleTheme: vi.fn() }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// ---------------------------------------------------------------------------
 // Mock icon components
 // ---------------------------------------------------------------------------
 vi.mock('@/components/icons', () => ({
@@ -49,9 +57,6 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
   return {
     loading: false,
     onRefresh: vi.fn(),
-    onScan: vi.fn(),
-    scanning: false,
-    scanError: null as string | null,
     children: <div data-testid="child-content">Child content</div>,
     ...overrides,
   } as Parameters<typeof GraphViewLayout>[0];
@@ -62,11 +67,16 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
 // ---------------------------------------------------------------------------
 
 describe('GraphViewLayout -- scanError removed', () => {
+  let fetchMock: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    // Prevent real API calls: component's internal scan hangs
+    fetchMock = vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>(() => {}));
   });
 
   afterEach(() => {
+    fetchMock?.mockRestore();
     vi.restoreAllMocks();
   });
 
@@ -92,7 +102,6 @@ describe('GraphViewLayout -- scanError removed', () => {
     render(
       <GraphViewLayout
         {...createDefaultProps({
-          scanning: false,
           scanError: 'Some error',
         })}
       />,
@@ -104,20 +113,26 @@ describe('GraphViewLayout -- scanError removed', () => {
   });
 
   // =========================================================================
-  // scanError does not interfere with scanning state
+  // scanError does not interfere with internal scanning state
   // =========================================================================
-  it('scanError does not affect disabled state when scanning is true', () => {
+  it('scanError does not affect disabled state when scanning internally', async () => {
     render(
       <GraphViewLayout
         {...createDefaultProps({
-          scanning: true,
           scanError: 'Some error',
         })}
       />,
     );
 
     const scanBtn = screen.getByRole('button', { name: 'Scan' });
-    expect(scanBtn).toBeDisabled();
+    expect(scanBtn).not.toBeDisabled();
+
+    // Click to start internal scanning
+    fireEvent.click(scanBtn);
+
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
     expect(scanBtn).toHaveTextContent('Scanning...');
   });
 

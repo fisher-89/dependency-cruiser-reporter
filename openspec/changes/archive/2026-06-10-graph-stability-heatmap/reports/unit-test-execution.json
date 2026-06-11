@@ -1,0 +1,18 @@
+{
+  "phase": "06-unit-test",
+  "command": "cd packages/frontend && pnpm test (vp test); cd packages/rust && cargo test",
+  "timestamp": "2026-06-09T16:54:00.000Z",
+  "total": 213,
+  "passed": 213,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": null,
+  "coverage_thresholds": { "lines": 80, "branches": 70, "functions": 75 },
+  "coverage_overrides": [],
+  "coverage_pass": false,
+  "coverage_by_framework": [],
+  "html_reports": [],
+  "duration_seconds": 22.0,
+  "failures": [],
+  "findings": "All 213 tests pass (0 failures). Coverage not available: no coverage configuration in project — MCP tool test_detect_frameworks not available, fell back to manual execution. Three Rust fixes applied: (1) init_panic_hook in lib.rs gated with cfg(target_arch = 'wasm32') to prevent 'function not implemented on non-wasm32 targets' panic during native cargo test process shutdown; (2) compute_auto_expanded_dirs in expand.rs rewritten to compute actual node count via compute_node_count helper (counts exact file + directory nodes) instead of using direct-children-only budget estimation, fixing severe budget underestimation (414 actual nodes vs 42 estimated) for deeply nested directories; (3) removed parent-must-be-expanded constraint from candidate filter to allow leaf directory expansion even when ancestor directories are too large to expand. Frontend vitest: 19 files, 148 tests all pass. Rust native: 65 tests all pass (including 25 heatmap-specific: 18 instability tests + 7 types tests). Rust WASM integration tests (9 tests in lib_test.rs wasm_tests module) not run — requires wasm-pack test --node."
+}

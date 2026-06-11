@@ -89,6 +89,7 @@ pub(crate) fn build_hybrid_nodes(
                 children: None,
                 combo: combo_id,
                 rect: None,
+                instability: None,
             });
         }
     }
@@ -149,6 +150,7 @@ pub(crate) fn build_hybrid_nodes(
             children: Some(children.clone()),
             combo: combo_id,
             rect: None,
+            instability: None,
         });
     }
 
@@ -189,7 +191,7 @@ pub(crate) fn build_hybrid_nodes(
         };
 
         let count = child_counts.get(&combo_id).copied().unwrap_or(0);
-        if count > 1 {
+        if count > 0 {
             continue;
         }
 
@@ -234,10 +236,10 @@ pub(crate) fn build_hybrid_nodes(
 
 /// Check if a module path should be expanded (its parent dir or any ancestor is in expanded_set).
 fn is_path_expanded(path: &str, expanded_set: &HashSet<&str>) -> bool {
-    if expanded_set.contains("") {
+    let parts: Vec<&str> = path.split('/').collect();
+    if parts.len() == 1 {
         return true;
     }
-    let parts: Vec<&str> = path.split('/').collect();
     let dir: String = parts[..parts.len() - 1].join("/");
     if expanded_set.contains(dir.as_str()) {
         return true;

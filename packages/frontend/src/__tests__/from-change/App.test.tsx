@@ -184,15 +184,15 @@ describe('App -- handleScan', () => {
     );
 
     // Verify POST /api/analyze was called
-    const analyzeCalls = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/analyze' && init?.method === 'POST',
-    );
+    const analyzeCalls = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/analyze' && init?.method === 'POST');
     expect(analyzeCalls).toHaveLength(1);
 
     // Verify POST /api/graph was called again (initial load + refresh)
-    const graphCalls = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/graph' && init?.method === 'POST',
-    );
+    const graphCalls = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/graph' && init?.method === 'POST');
     expect(graphCalls.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -321,9 +321,9 @@ describe('App -- handleScan', () => {
     );
 
     // Verify refresh was called after scan
-    const graphCalls = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/graph' && init?.method === 'POST',
-    );
+    const graphCalls = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/graph' && init?.method === 'POST');
     expect(graphCalls.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -367,7 +367,10 @@ describe('App -- handleScan', () => {
     await new Promise((r) => setTimeout(r, 600));
 
     // Resolve the scan
-    resolveScan!({ ok: true, json: async () => ({ output: 'output.json' }) } as unknown as Response);
+    resolveScan!({
+      ok: true,
+      json: async () => ({ output: 'output.json' }),
+    } as unknown as Response);
 
     // Since scan took >= 500ms, overlay should close without extra delay
     await vi.waitFor(
@@ -499,9 +502,9 @@ describe('App -- handleScan', () => {
     );
 
     // Verify refresh was called
-    const graphCalls = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/graph' && init?.method === 'POST',
-    );
+    const graphCalls = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/graph' && init?.method === 'POST');
     expect(graphCalls.length).toBeGreaterThanOrEqual(2);
   });
 

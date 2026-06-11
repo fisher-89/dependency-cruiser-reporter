@@ -1,13 +1,21 @@
 #![warn(unreachable_pub)]
 use wasm_bindgen::prelude::*;
 use std::collections::HashSet;
+use std::sync::Once;
 
-// Set up panic hook for better error messages in WASM
+// Set up panic hook once for better error messages in WASM
+static INIT_PANIC_HOOK: Once = Once::new();
+
 fn init_panic_hook() {
-    std::panic::set_hook(Box::new(|info| {
-        let msg = info.to_string();
-        web_sys::console::error_1(&msg.into());
-    }));
+    INIT_PANIC_HOOK.call_once(|| {
+        std::panic::set_hook(Box::new(|info| {
+            let msg = info.to_string();
+            #[cfg(target_arch = "wasm32")]
+            web_sys::console::error_1(&msg.into());
+            #[cfg(not(target_arch = "wasm32"))]
+            eprintln!("{}", msg);
+        }));
+    });
 }
 
 mod aggregate;
@@ -16,7 +24,7 @@ mod types;
 mod violations;
 
 use types::*;
-use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, extract_edges};
+use aggregate::{aggregate_edges, build_hybrid_nodes, compute_auto_expanded_dirs, compute_instability, extract_edges};
 use layout::compute_layout;
 use violations::{build_edge_violations, compute_violation_counts, parse_violations};
 
@@ -76,6 +84,9 @@ pub fn aggregate(
 
     // Aggregate edges
     let edges = aggregate_edges(&all_edges, &node_lookup, &edge_violations, max_nodes);
+
+    // Compute instability for each node based on aggregated edges
+    compute_instability(&mut nodes, &edges);
 
     let meta = GraphMeta {
         original_node_count: module_count,

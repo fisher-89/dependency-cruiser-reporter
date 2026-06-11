@@ -20,14 +20,57 @@ import { buildGraphData, type G6Node } from './buildGraphData';
 
 export { registerCustomCombo } from './customCombo';
 
+/**
+ * Compute shadow color with continuous gradient from transparent to orange to red.
+ *
+ * Mapping (from design.md):
+ *   0 < I < 0.2  → green      (rgba(140,250,22,alpha), alpha 50%→60%)
+ *   0.2 < I < 0.7  → green → orange      (rgba(250,140,22,alpha), alpha 60%→75%)
+ *   0.5 <= I < 1 → orange → warm red          (rgba(245,34,45,alpha), alpha 75%→100%)
+ *   I === 1.0    → warm red at 50% opacity   (rgba(245,34,45,1))
+ */
+function getShadowColor(instability: number): string {
+  const alpha = 0.5 + instability * 0.5;
+  if (instability < 0.2) {
+    return `rgba(140, 250, 20, ${alpha.toFixed(4)})`;
+  }
+  if (instability < 0.7) {
+    return `rgba(250, 140, 20, ${alpha.toFixed(4)})`;
+  }
+  if (instability < 1.0) {
+    return `rgba(250, 20, 45, ${alpha.toFixed(4)})`;
+  }
+  return 'rgba(250, 20, 45, 1)';
+}
+
+/**
+ * Compute shadow blur radius linearly mapped from instability.
+ *
+ * Mapping (from design.md):
+ *   I === 0      → 0
+ *   0 < I < 0.5  → 12-14px  linear
+ *   0.5 <= I < 1 → 14-16px linear
+ *   I === 1.0    → 16px
+ */
+function getShadowBlur(instability: number): number {
+  return Math.round(20 + instability * 10);
+}
+
 interface Props {
   data: ProcessedGraph;
   onToggleDir?: (dir: string) => void;
   onNodeSelect?: (nodeId: string) => void;
   selectedNodeId?: string | null;
+  stabilityHeatmap?: boolean;
 }
 
-export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeId }: Props) {
+export function DependencyGraph({
+  data,
+  onToggleDir,
+  onNodeSelect,
+  selectedNodeId,
+  stabilityHeatmap,
+}: Props) {
   const { t } = useT();
   const { resolvedTheme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +79,8 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onNodeSelectRef = useRef(onNodeSelect);
   onNodeSelectRef.current = onNodeSelect;
+  const stabilityHeatmapRef = useRef(stabilityHeatmap);
+  stabilityHeatmapRef.current = stabilityHeatmap;
 
   const NODE_STYLES: Record<NodeType, { fill: string; stroke: string }> = useMemo(
     () => (resolvedTheme === 'dark' ? DARK_NODE_STYLES : LIGHT_NODE_STYLES),
@@ -95,8 +140,13 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
       if (!onToggleDir) return;
       const nodeId = event.target.id;
       const node = data.nodes.find((n) => n.id === nodeId);
-      if (node?.path) {
-        onToggleDir(node.path);
+      if (!node?.path) return;
+
+      // For file nodes, toggle the immediate parent directory
+      const togglePath =
+        node.node_type === 'file' ? node.path.split('/').slice(0, -1).join('/') : node.path;
+      if (togglePath) {
+        onToggleDir(togglePath);
       }
     },
     [data.nodes, onToggleDir],
@@ -145,6 +195,22 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
           const nodeData = d.data;
           const nodeType = nodeData?.node_type ?? 'file';
           const s = NODE_STYLES[nodeType] ?? NODE_STYLES.file;
+          const isHeatmapOn = stabilityHeatmapRef.current;
+          const inst = nodeData?.instability;
+          if (isHeatmapOn && inst !== undefined && inst !== null) {
+            return {
+              fill: s.fill,
+              stroke: s.stroke,
+              lineWidth: 2,
+              labelText: nodeData?.label ?? '',
+              labelPlacement: 'bottom',
+              labelFill: LABEL_FILL,
+              halo: true,
+              haloLineWidth: getShadowBlur(inst),
+              haloStroke: getShadowColor(inst),
+              haloFilter: 'blur(8px)',
+            };
+          }
           return {
             fill: s.fill,
             stroke: s.stroke,
@@ -242,6 +308,7 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
     EDGE_STYLES,
     SELECTED_COLOR,
     LABEL_FILL,
+    stabilityHeatmapRef,
   ]);
 
   useEffect(() => {
@@ -262,13 +329,17 @@ export function DependencyGraph({ data, onToggleDir, onNodeSelect, selectedNodeI
     if (!graph) return;
 
     if (prevSelectedRef.current && prevSelectedRef.current !== selectedNodeId) {
-      const prevStates = graph.getElementState(prevSelectedRef.current);
-      void graph
-        .setElementState(
-          prevSelectedRef.current,
-          prevStates.filter((s) => s !== 'selected'),
-        )
-        .catch(console.error);
+      try {
+        const prevStates = graph.getElementState(prevSelectedRef.current);
+        void graph
+          .setElementState(
+            prevSelectedRef.current,
+            prevStates.filter((s) => s !== 'selected'),
+          )
+          .catch(console.error);
+      } catch {
+        // 之前选择的节点被折叠，prevStates不存在
+      }
     }
 
     if (selectedNodeId) {

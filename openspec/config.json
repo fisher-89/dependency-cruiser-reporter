@@ -1,3 +1,10 @@
 {
-  "static_analysis": "pnpm run -C ./plugins/dev-team/bin check"
+  "static_analysis": "pnpm run -C ./plugins/dev-team/bin check",
+  "test": {
+    "overrides": [
+      { "file": "packages/frontend", "framework": "vite-plus" },
+      { "file": "packages/cli", "framework": "vite-plus" },
+      { "file": "packages/rust", "framework": "rust" }
+    ]
+  }
 }

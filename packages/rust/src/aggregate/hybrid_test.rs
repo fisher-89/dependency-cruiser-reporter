@@ -6,31 +6,33 @@ fn test_is_path_expanded() {
     assert!(is_path_expanded("src/index.ts", &set));
     assert!(is_path_expanded("src/components/Button.tsx", &set));
     assert!(!is_path_expanded("lib/utils.ts", &set));
-    assert!(!is_path_expanded("index.ts", &set));
+    assert!(is_path_expanded("index.ts", &set));
 }
 
 #[test]
 fn test_is_path_expanded_root() {
-    let set: HashSet<&str> = [""].into_iter().collect();
+    let set: HashSet<&str> = [].into_iter().collect();
     assert!(is_path_expanded("index.ts", &set));
-    assert!(is_path_expanded("src/mod.ts", &set));
+    assert!(is_path_expanded("src", &set));
+    assert!(!is_path_expanded("src/mod.ts", &set));
 }
 
 #[test]
 fn test_is_path_expanded_ancestor() {
-    // If "src" is expanded, all files under src (including nested dirs) should be expanded
+    // Only the direct parent directory matters — ancestor expansion does NOT
+    // cascade to nested subdirectories
     let set: HashSet<&str> = ["src"].into_iter().collect();
     assert!(
         is_path_expanded("src/index.ts", &set),
         "direct child of src"
     );
     assert!(
-        is_path_expanded("src/components/Button.tsx", &set),
-        "nested file under src"
+        !is_path_expanded("src/components/Button.tsx", &set),
+        "nested file — direct parent (src/components) is not expanded"
     );
     assert!(
-        is_path_expanded("src/utils/helpers/format.ts", &set),
-        "deeply nested file under src"
+        !is_path_expanded("src/utils/helpers/format.ts", &set),
+        "deeply nested file — direct parent not expanded"
     );
     assert!(!is_path_expanded("lib/utils.ts", &set), "file outside src");
 }
@@ -72,20 +74,21 @@ fn test_build_hybrid_nodes_with_expanded_dirs() {
 
     let (nodes, _, _) = build_hybrid_nodes(&modules, &violation_counts, &expanded_set);
 
-    // src/index.ts and src/components/Button.tsx should be file nodes (expanded)
+    // src/index.ts should be a file node (direct parent "src" is expanded)
     let src_index = nodes.iter().find(|n| n.id == "src/index.ts");
-    let src_button = nodes.iter().find(|n| n.id == "src/components/Button.tsx");
-    let lib_node = nodes.iter().find(|n| n.id == "lib");
-
     assert!(src_index.is_some(), "src/index.ts should be a file node");
     assert_eq!(src_index.unwrap().node_type, NodeType::File);
 
+    // src/components/Button.tsx should be collapsed into a directory node
+    // because its direct parent "src/components" is NOT in expanded_set
+    let components_dir = nodes.iter().find(|n| n.id == "src/components");
     assert!(
-        src_button.is_some(),
-        "src/components/Button.tsx should be a file node"
+        components_dir.is_some(),
+        "src/components should be a directory node (parent not expanded)"
     );
-    assert_eq!(src_button.unwrap().node_type, NodeType::File);
+    assert_eq!(components_dir.unwrap().node_type, NodeType::Directory);
 
+    let lib_node = nodes.iter().find(|n| n.id == "lib");
     assert!(lib_node.is_some(), "lib should be a directory node");
     assert_eq!(lib_node.unwrap().node_type, NodeType::Directory);
 }

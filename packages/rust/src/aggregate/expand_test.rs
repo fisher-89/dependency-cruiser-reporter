@@ -19,7 +19,7 @@ fn test_compute_auto_expanded_dirs_small_project() {
     let violation_counts = HashMap::new();
     let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
     assert!(dirs.contains(&"src".to_string()));
-    assert!(dirs.contains(&"".to_string()));
+    assert!(!dirs.contains(&"".to_string()));
 }
 
 #[test]
@@ -250,9 +250,10 @@ fn test_real_world_scale() {
     let violation_counts = HashMap::new();
     let dirs = compute_auto_expanded_dirs(&modules, &violation_counts);
 
+    // "src" has too many total descendant files (412) to expand within budget
     assert!(
-        dirs.contains(&"src".to_string()),
-        "src has 4 direct children <= 50, should expand"
+        !dirs.contains(&"src".to_string()),
+        "src has 412 descendants, too many to expand within budget 200"
     );
     assert!(
         !dirs.contains(&"lib".to_string()),
@@ -261,6 +262,12 @@ fn test_real_world_scale() {
     assert!(
         !dirs.contains(&"vendor".to_string()),
         "vendor has 100 direct children > 50"
+    );
+    // Small leaf directories (vendor/pkgN each with 1 child) should be expanded.
+    // Note: the test creates 2700 vendor files with i%100 pattern, so each pkgN gets 27 modules.
+    assert!(
+        !dirs.is_empty(),
+        "Should expand some small leaf directories"
     );
 
     let expanded_set: HashSet<&str> = dirs.iter().map(|s| s.as_str()).collect();

@@ -55,6 +55,7 @@ export default {
     scanning: '扫描中...',
     scanError: '扫描失败',
     scanOverlayClose: '关闭',
+    stabilityHeatmap: '稳定性热力图',
     generateRules: '生成规则',
     generatingRules: '生成中...',
     generateRulesError: '生成规则失败',

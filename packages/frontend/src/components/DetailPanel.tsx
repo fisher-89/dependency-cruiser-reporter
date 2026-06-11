@@ -56,8 +56,8 @@ export function DetailPanel({ node, edges, violations, nodeMap }: Props) {
     let ce = 0;
     let ca = 0;
     for (const e of edges) {
-      if (e.source === node.id) ce++;
-      if (e.target === node.id) ca++;
+      if (e.source === node.id) ce += e.weight;
+      if (e.target === node.id) ca += e.weight;
     }
     const total = ce + ca;
     if (total === 0) return null;

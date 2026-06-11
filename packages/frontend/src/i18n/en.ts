@@ -57,6 +57,7 @@ export default {
     scanning: 'Scanning...',
     scanError: 'Scan failed',
     scanOverlayClose: 'Close',
+    stabilityHeatmap: 'Heatmap',
     generateRules: 'Generate Rules',
     generatingRules: 'Generating...',
     generateRulesError: 'Failed to generate rules',

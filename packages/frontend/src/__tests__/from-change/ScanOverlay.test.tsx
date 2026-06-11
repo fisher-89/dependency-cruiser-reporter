@@ -261,9 +261,7 @@ describe('ScanOverlay', () => {
   // =========================================================================
   it('B-6: status=error with errorMessage=null shows fallback/empty error area', () => {
     const onDismiss = vi.fn();
-    render(
-      <ScanOverlay visible={true} status="error" errorMessage={null} onDismiss={onDismiss} />,
-    );
+    render(<ScanOverlay visible={true} status="error" errorMessage={null} onDismiss={onDismiss} />);
 
     // Close button should still be visible
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
@@ -278,9 +276,7 @@ describe('ScanOverlay', () => {
   // =========================================================================
   it('B-6: status=error with errorMessage="" displays empty error area with close button', () => {
     const onDismiss = vi.fn();
-    render(
-      <ScanOverlay visible={true} status="error" errorMessage="" onDismiss={onDismiss} />,
-    );
+    render(<ScanOverlay visible={true} status="error" errorMessage="" onDismiss={onDismiss} />);
 
     // Close button should still be visible regardless of error message content
     expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();

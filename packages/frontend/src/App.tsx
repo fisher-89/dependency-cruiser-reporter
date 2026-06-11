@@ -55,6 +55,7 @@ function App() {
   const location = useLocation();
   const { data, loading, error, fetchGraph, refresh, toggleDir } = useGraphData();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [stabilityHeatmap, setStabilityHeatmap] = useState(false);
 
   // Lazy-load graph data when entering a route that needs it.
   // Normalize to lowercase because React Router matches routes case-insensitively
@@ -72,6 +73,10 @@ function App() {
 
   const handleNodeSelect = useCallback((nodeId: string) => {
     setSelectedNodeId(nodeId);
+  }, []);
+
+  const handleStabilityHeatmapChange = useCallback((value: boolean) => {
+    setStabilityHeatmap(value);
   }, []);
 
   const selectedNode = useMemo(() => {
@@ -119,13 +124,19 @@ function App() {
     switch (config.path) {
       case '/graph':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            stabilityHeatmap={stabilityHeatmap}
+            onStabilityHeatmapChange={handleStabilityHeatmapChange}
+          >
             <div style={styles.graphSplitLayout} data-testid="graph-view">
               <DependencyGraph
                 data={data}
                 onToggleDir={toggleDir}
                 onNodeSelect={handleNodeSelect}
                 selectedNodeId={selectedNodeId}
+                stabilityHeatmap={stabilityHeatmap}
               />
               <DetailPanel
                 node={selectedNode}
@@ -138,13 +149,23 @@ function App() {
         );
       case '/report':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            stabilityHeatmap={stabilityHeatmap}
+            onStabilityHeatmapChange={handleStabilityHeatmapChange}
+          >
             <ReportView violations={data.violations} />
           </GraphViewLayout>
         );
       case '/metrics':
         return (
-          <GraphViewLayout loading={loading} onRefresh={handleRefresh}>
+          <GraphViewLayout
+            loading={loading}
+            onRefresh={handleRefresh}
+            stabilityHeatmap={stabilityHeatmap}
+            onStabilityHeatmapChange={handleStabilityHeatmapChange}
+          >
             <MetricsView data={data} />
           </GraphViewLayout>
         );

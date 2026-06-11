@@ -15,7 +15,7 @@
  *   - B-19: loading and scanning states are independent
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GraphViewLayout } from '@/components/GraphViewLayout';
@@ -42,6 +42,14 @@ vi.mock('@/i18n', () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock theme (ScanOverlay uses useTheme internally)
+// ---------------------------------------------------------------------------
+vi.mock('@/theme', () => ({
+  useTheme: () => ({ theme: 'light', resolvedTheme: 'light', cycleTheme: vi.fn() }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// ---------------------------------------------------------------------------
 // Mock icon components
 // ---------------------------------------------------------------------------
 vi.mock('@/components/icons', () => ({
@@ -56,12 +64,16 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
   return {
     loading: false,
     onRefresh: vi.fn(),
-    onScan: vi.fn(),
-    scanning: false,
-    scanError: null as string | null,
     children: <div data-testid="child-content">Child content</div>,
     ...overrides,
   } as Parameters<typeof GraphViewLayout>[0];
+}
+
+// ---------------------------------------------------------------------------
+// Hanging fetch mock -- never resolves, keeps scanning=true
+// ---------------------------------------------------------------------------
+function mockFetchHanging() {
+  return vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>(() => {}));
 }
 
 // ---------------------------------------------------------------------------
@@ -69,26 +81,29 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
 // ---------------------------------------------------------------------------
 
 describe('GraphViewLayout -- Scan button', () => {
+  let fetchMock: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     tCalls.length = 0;
+    // Default: prevent real API calls by hanging (component will stay in scanning)
+    fetchMock = mockFetchHanging();
   });
 
   afterEach(() => {
+    fetchMock?.mockRestore();
     vi.restoreAllMocks();
   });
 
   // =========================================================================
-  // AC-1: Scan button renders in action bar when onScan is provided
+  // AC-1: Scan button renders in action bar
   // =========================================================================
-  it('AC-1: renders Scan button in action bar when onScan prop is provided', () => {
+  it('AC-1: renders Scan button in action bar alongside children', () => {
     render(<GraphViewLayout {...createDefaultProps()} />);
 
     const scanBtn = screen.getByRole('button', { name: 'Scan' });
     expect(scanBtn).toBeInTheDocument();
     expect(scanBtn).toHaveTextContent('Scan');
-
-    // The Scan button has inline styles (actionBtn equivalent)
     expect(scanBtn).toBeEnabled();
   });
 
@@ -125,133 +140,135 @@ describe('GraphViewLayout -- Scan button', () => {
   });
 
   // =========================================================================
-  // AC-1: Backward compatibility -- no Scan button when onScan is undefined
+  // AC-1: Scan button is always rendered (no external onScan prop needed)
   // =========================================================================
-  it('AC-1: does NOT render Scan button when onScan is undefined (backward compat)', () => {
-    render(<GraphViewLayout {...createDefaultProps({ onScan: undefined })} />);
+  it('AC-1: renders Scan button by default (no onScan prop)', () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
-    expect(screen.queryByRole('button', { name: 'Scan' })).not.toBeInTheDocument();
-
-    // Refresh button should still be present
+    // The Scan button is built into GraphViewLayout -- always present
+    expect(screen.getByRole('button', { name: 'Scan' })).toBeInTheDocument();
+    // Refresh button should also be present
     expect(screen.getByRole('button', { name: 'Refresh data' })).toBeInTheDocument();
   });
 
   // =========================================================================
-  // AC-2: Clicking Scan button triggers onScan callback
+  // AC-2: Clicking Scan button triggers fetch('/api/analyze')
   // =========================================================================
-  it('AC-2: clicking Scan button triggers onScan callback', () => {
-    const onScan = vi.fn();
-    render(<GraphViewLayout {...createDefaultProps({ onScan })} />);
+  it('AC-2: clicking Scan button triggers fetch to /api/analyze', async () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
-    expect(onScan).toHaveBeenCalledTimes(1);
+
+    // The component calls fetch('/api/analyze', { method: 'POST' })
+    expect(fetchMock).toHaveBeenCalledWith('/api/analyze', { method: 'POST' });
   });
 
   // =========================================================================
-  // AC-3: scanning=true disables button and shows loading text
+  // AC-3: scanning disables the Scan button and shows loading text
   // =========================================================================
-  it('AC-3: scanning=true disables the Scan button and shows loading text', () => {
-    render(<GraphViewLayout {...createDefaultProps({ scanning: true })} />);
+  it('AC-3: clicking Scan disables button and shows scanning text', async () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
-    // The aria-label stays 'Scan' even when scanning=true, so we query by
-    // the stable accessible name then verify disabled state and visible text.
     const scanBtn = screen.getByRole('button', { name: 'Scan' });
-    expect(scanBtn).toBeDisabled();
-    expect(scanBtn).toHaveTextContent('Scanning...');
+    expect(scanBtn).toBeEnabled();
 
-    // The icon's parent span should have the 'spinning' class
-    const iconSpan = screen.getByTestId('scan-icon').parentElement;
-    expect(iconSpan).toHaveClass('spinning');
-  });
-
-  // =========================================================================
-  // AC-3: scanning transition adds spinning class
-  // =========================================================================
-  it('AC-3: scanning changes from false to true adds spinning class', () => {
-    const { rerender } = render(<GraphViewLayout {...createDefaultProps({ scanning: false })} />);
-
-    // Rerender with scanning=true
-    rerender(<GraphViewLayout {...createDefaultProps({ scanning: true })} />);
-
-    const iconSpan = screen.getByTestId('scan-icon').parentElement;
-    expect(iconSpan).toHaveClass('spinning');
-  });
-
-  // =========================================================================
-  // B-1: disabled button during scanning prevents repeated onScan calls
-  // =========================================================================
-  it('B-1: clicking Scan button while scanning=true does not call onScan again', () => {
-    const onScan = vi.fn();
-    const { rerender } = render(
-      <GraphViewLayout {...createDefaultProps({ onScan, scanning: false })} />,
-    );
-
-    // Click while enabled
-    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
-    expect(onScan).toHaveBeenCalledTimes(1);
-
-    // Rerender with scanning=true - button becomes disabled
-    rerender(<GraphViewLayout {...createDefaultProps({ onScan, scanning: true })} />);
-
-    // Button now shows loading text and is disabled
-    // (aria-label stays 'Scan' but the button text content changes)
-    const scanBtn = screen.getByRole('button', { name: 'Scan' });
-    expect(scanBtn).toBeDisabled();
-    expect(scanBtn).toHaveTextContent('Scanning...');
-
-    // Attempting to click disabled button should NOT call onScan again
     fireEvent.click(scanBtn);
-    expect(onScan).toHaveBeenCalledTimes(1); // Still 1, not 2
+
+    // After click, internal scanning becomes true -- button disabled
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
+    expect(scanBtn).toHaveTextContent('Scanning...');
+
+    // The icon's parent span (action bar Scan button, not ScanOverlay) should have the 'spinning' class
+    const scanIcons = screen.getAllByTestId('scan-icon');
+    const actionBarIcon = scanIcons[0]; // First icon is in the action bar
+    expect(actionBarIcon.parentElement).toHaveClass('spinning');
   });
 
   // =========================================================================
-  // B-2: scan completes without auto-refresh
+  // B-1: disabled button during scanning prevents further action
   // =========================================================================
-  it('B-2: after onScan completes, no auto-refresh/reload is triggered', () => {
-    const onScan = vi.fn();
+  it('B-1: clicking Scan while scanning does not trigger multiple scans', async () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
+
+    const scanBtn = screen.getByRole('button', { name: 'Scan' });
+    fireEvent.click(scanBtn);
+
+    // Wait for scanning state to be true
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
+
+    // fetch should have been called exactly once
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Clicking disabled button should not trigger another fetch
+    fireEvent.click(scanBtn);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  // =========================================================================
+  // B-2: scan completes triggers onRefresh (not a no-op)
+  // =========================================================================
+  it('B-2: on successful scan, onRefresh is called', async () => {
+    vi.useFakeTimers();
     const onRefresh = vi.fn();
-    const { rerender } = render(
-      <GraphViewLayout {...createDefaultProps({ onScan, onRefresh, scanning: false })} />,
-    );
 
-    // Simulate scan: scanning false -> true
-    rerender(<GraphViewLayout {...createDefaultProps({ onScan, onRefresh, scanning: true })} />);
+    // Mock fetch to resolve successfully
+    const okFetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    } as Response);
 
-    // Simulate scan complete: scanning true -> false
-    rerender(<GraphViewLayout {...createDefaultProps({ onScan, onRefresh, scanning: false })} />);
+    render(<GraphViewLayout {...createDefaultProps({ onRefresh })} />);
 
-    // onRefresh should NOT have been called -- no auto-refresh
-    expect(onRefresh).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
+
+    // Advance past the minDisplay 500ms and let promises resolve
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600);
+    });
+
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
+    okFetch.mockRestore();
   });
 
   // =========================================================================
   // B-19: loading (Refresh) and scanning are independent states
   // =========================================================================
-  it('B-19: loading and scanning are independent states', () => {
+  it('B-19: loading and scanning are independent states', async () => {
     const { rerender } = render(
       <GraphViewLayout
         {...createDefaultProps({
           loading: true,
-          scanning: true,
         })}
       />,
     );
 
-    // Both buttons disabled (Scan button accessed by stable label 'Scan')
+    // Refresh button disabled due to loading=true
     expect(screen.getByRole('button', { name: 'Refresh data' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
+    // Scan button not yet clicked -- enabled
+    expect(screen.getByRole('button', { name: 'Scan' })).toBeEnabled();
 
-    // Rerender: loading=false, scanning=true
+    // Click Scan to start internal scanning
+    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
+    });
+
+    // Rerender: loading=false, scanning still true internally
     rerender(
       <GraphViewLayout
         {...createDefaultProps({
           loading: false,
-          scanning: true,
         })}
       />,
     );
 
-    // Refresh enabled, Scan still disabled (independent)
+    // Refresh enabled, Scan still disabled (independent states)
     expect(screen.getByRole('button', { name: 'Refresh data' })).not.toBeDisabled();
     expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
   });

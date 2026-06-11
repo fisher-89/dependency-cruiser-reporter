@@ -8,9 +8,17 @@ interface GraphViewLayoutProps {
   loading: boolean;
   onRefresh: () => void;
   children: ReactNode;
+  stabilityHeatmap: boolean;
+  onStabilityHeatmapChange: (value: boolean) => void;
 }
 
-export function GraphViewLayout({ loading, onRefresh, children }: GraphViewLayoutProps) {
+export function GraphViewLayout({
+  loading,
+  onRefresh,
+  children,
+  stabilityHeatmap,
+  onStabilityHeatmapChange,
+}: GraphViewLayoutProps) {
   const { t } = useT();
 
   const [scanning, setScanning] = useState(false);
@@ -66,6 +74,19 @@ export function GraphViewLayout({ loading, onRefresh, children }: GraphViewLayou
         </button>
         <button
           type="button"
+          style={{
+            ...styles.actionBtn,
+            ...(stabilityHeatmap ? styles.actionBtnActive : {}),
+          }}
+          onClick={() => onStabilityHeatmapChange?.(!stabilityHeatmap)}
+          title={t('action.stabilityHeatmap')}
+          aria-label={t('action.stabilityHeatmap')}
+          aria-pressed={!!stabilityHeatmap}
+        >
+          {t('action.stabilityHeatmap')}
+        </button>
+        <button
+          type="button"
           style={styles.actionBtn}
           onClick={onRefresh}
           disabled={loading}
@@ -113,6 +134,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '6px',
     fontSize: '13px',
     color: 'var(--color-text-secondary)',
+  },
+  actionBtnActive: {
+    border: '1px solid var(--color-accent)',
+    background: 'var(--color-accent-bg)',
+    color: 'var(--color-accent)',
   },
   actionBtnIcon: {
     display: 'flex',

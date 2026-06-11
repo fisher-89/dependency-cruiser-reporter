@@ -36,6 +36,8 @@ pub struct GraphNode {
     pub combo: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub rect: Option<Rect>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub instability: Option<f32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Tsify)]
@@ -182,3 +184,7 @@ pub(super) struct RawViolation {
     #[serde(rename = "message", default)]
     pub message: Option<String>,
 }
+
+#[cfg(test)]
+#[path = "types_test.rs"]
+mod types_test;

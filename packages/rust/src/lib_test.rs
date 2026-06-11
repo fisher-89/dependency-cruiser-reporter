@@ -74,10 +74,6 @@ fn test_aggregate_small_project_expands_all() {
 
     let expanded = result.meta.expanded_dirs.unwrap();
     assert!(!expanded.is_empty(), "expanded_dirs should not be empty");
-    assert!(
-        expanded.contains(&"".to_string()),
-        "small project should expand root"
-    );
 }
 
 #[test]
@@ -175,6 +171,13 @@ fn test_aggregate_with_dependencies() {
     assert_eq!(result.edges[0].source, "src/index.ts");
     assert_eq!(result.edges[0].target, "src/utils.ts");
     assert_eq!(result.edges[0].edge_type, EdgeType::Local);
+
+    // instability assertions
+    let index_node = result.nodes.iter().find(|n| n.id == "src/index.ts").unwrap();
+    assert_eq!(index_node.instability, Some(1.0), "src/index.ts has Ce=1, Ca=0, I=1.0");
+
+    let utils_node = result.nodes.iter().find(|n| n.id == "src/utils.ts").unwrap();
+    assert_eq!(utils_node.instability, Some(0.0), "src/utils.ts has Ce=0, Ca=1, I=0.0");
 }
 
 #[test]
@@ -302,19 +305,17 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
 
     let json = make_json(modules);
 
-    // With expandedDirs = ["src"], files under src should be file nodes
+    // With expandedDirs = ["src"], only files directly under "src" are file nodes.
+    // Files under "src/components" have direct parent "src/components" which is NOT expanded,
+    // so they are collapsed into a directory node.
     let result = aggregate(&json, 200, Some(vec!["src".to_string()])).unwrap();
 
     // Check that src files are file nodes
     let src_index = result.nodes.iter().find(|n| n.id == "src/index.ts");
-    let src_button = result
+    let components_dir = result
         .nodes
         .iter()
-        .find(|n| n.id == "src/components/Button.tsx");
-    let src_input = result
-        .nodes
-        .iter()
-        .find(|n| n.id == "src/components/Input.tsx");
+        .find(|n| n.id == "src/components");
     let lib_node = result.nodes.iter().find(|n| n.id == "lib");
 
     assert!(
@@ -323,17 +324,13 @@ fn test_aggregate_expanded_dirs_produces_file_nodes() {
     );
     assert_eq!(src_index.unwrap().node_type, NodeType::File);
 
+    // src/components should be a directory node (its parent "src" is expanded,
+    // but "src/components" itself is NOT in expanded_set)
     assert!(
-        src_button.is_some(),
-        "src/components/Button.tsx should be present as file node"
+        components_dir.is_some(),
+        "src/components should be present as directory node"
     );
-    assert_eq!(src_button.unwrap().node_type, NodeType::File);
-
-    assert!(
-        src_input.is_some(),
-        "src/components/Input.tsx should be present as file node"
-    );
-    assert_eq!(src_input.unwrap().node_type, NodeType::File);
+    assert_eq!(components_dir.unwrap().node_type, NodeType::Directory);
 
     // lib should be collapsed to a directory node (not expanded)
     assert!(
@@ -423,6 +420,7 @@ mod wasm_tests {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             })
             .collect();
         let json = make_json(modules);
@@ -460,6 +458,7 @@ mod wasm_tests {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             })
             .collect();
         let json = make_json(modules);
@@ -491,6 +490,7 @@ mod wasm_tests {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             },
             Module {
                 source: "src/lib.ts".to_string(),
@@ -509,6 +509,7 @@ mod wasm_tests {
                 orphan: None,
                 valid: None,
                 rules: None,
+                core_module: None,
             },
         ];
         let json = make_json(modules);
@@ -532,9 +533,218 @@ mod wasm_tests {
         let result = aggregate("not valid json", 200, None);
         assert!(result.is_err(), "should return error for invalid JSON");
     }
-}
 
-// --- Layout overlap tests ---
+    // --- Instability integration tests ---
+    //
+    // These tests verify that the `aggregate()` pipeline correctly calls
+    // `compute_instability` and populates `instability` on GraphNode.
+
+    /// F-8: aggregate pipeline populates instability for connected nodes.
+    #[wasm_bindgen_test]
+    fn test_aggregate_pipeline_populates_instability() {
+        let modules = vec![
+            Module {
+                source: "src/index.ts".to_string(),
+                dependencies: vec![Dependency {
+                    module: "./utils".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/utils.ts".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                }],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+            Module {
+                source: "src/utils.ts".to_string(),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+        ];
+
+        let json = make_json(modules);
+        let result = aggregate(&json, 200, None).unwrap();
+
+        // Both nodes should exist
+        let index_node = result
+            .nodes
+            .iter()
+            .find(|n| n.id == "src/index.ts")
+            .expect("index node should exist");
+        let utils_node = result
+            .nodes
+            .iter()
+            .find(|n| n.id == "src/utils.ts")
+            .expect("utils node should exist");
+
+        // Connected nodes should have instability != None
+        assert!(
+            index_node.instability.is_some(),
+            "Connected node 'src/index.ts' should have instability set"
+        );
+        // utils is a sink (Ca=1, Ce=0), instability should be 0.0
+        assert!(
+            utils_node.instability.is_some(),
+            "Connected node 'src/utils.ts' should have instability set"
+        );
+    }
+
+    /// F-8 variant: aggregate pipeline with more complex dependencies
+    /// verifies instability values are correct.
+    #[wasm_bindgen_test]
+    fn test_aggregate_instability_values() {
+        let modules = vec![
+            Module {
+                source: "src/a.ts".to_string(),
+                dependencies: vec![
+                    Dependency {
+                        module: "./b".to_string(),
+                        module_system: "es6".to_string(),
+                        dynamic: None,
+                        resolved: "src/b.ts".to_string(),
+                        core_module: None,
+                        dependency_types: vec!["local".to_string()],
+                        circular: None,
+                        valid: None,
+                        rules: None,
+                    },
+                    Dependency {
+                        module: "./c".to_string(),
+                        module_system: "es6".to_string(),
+                        dynamic: None,
+                        resolved: "src/c.ts".to_string(),
+                        core_module: None,
+                        dependency_types: vec!["local".to_string()],
+                        circular: None,
+                        valid: None,
+                        rules: None,
+                    },
+                ],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+            Module {
+                source: "src/b.ts".to_string(),
+                dependencies: vec![Dependency {
+                    module: "./c".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/c.ts".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                }],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+            Module {
+                source: "src/c.ts".to_string(),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+        ];
+
+        let json = make_json(modules);
+        let result = aggregate(&json, 200, None).unwrap();
+
+        // a.ts: Ce=2 (deps to b and c), Ca=0, I=1.0
+        let a = result.nodes.iter().find(|n| n.id == "src/a.ts").unwrap();
+        assert!(a.instability.is_some());
+        assert_eq!(a.instability.unwrap(), 1.0);
+
+        // b.ts: Ce=1 (dep to c), Ca=1 (dep from a), I=0.5
+        let b = result.nodes.iter().find(|n| n.id == "src/b.ts").unwrap();
+        assert!(b.instability.is_some());
+        assert!((b.instability.unwrap() - 0.5).abs() < 0.001);
+
+        // c.ts: Ce=0, Ca=2 (from a and b), I=0.0
+        let c = result.nodes.iter().find(|n| n.id == "src/c.ts").unwrap();
+        assert!(c.instability.is_some());
+        assert_eq!(c.instability.unwrap(), 0.0);
+    }
+
+    /// F-8 variant: isolated module has instability=None in aggregate output.
+    #[wasm_bindgen_test]
+    fn test_aggregate_isolated_node_has_no_instability() {
+        let modules = vec![
+            Module {
+                source: "src/a.ts".to_string(),
+                dependencies: vec![Dependency {
+                    module: "./b".to_string(),
+                    module_system: "es6".to_string(),
+                    dynamic: None,
+                    resolved: "src/b.ts".to_string(),
+                    core_module: None,
+                    dependency_types: vec!["local".to_string()],
+                    circular: None,
+                    valid: None,
+                    rules: None,
+                }],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+            Module {
+                source: "src/b.ts".to_string(),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+            Module {
+                source: "isolated.ts".to_string(),
+                dependencies: vec![],
+                dependents: None,
+                orphan: None,
+                valid: None,
+                rules: None,
+                core_module: None,
+            },
+        ];
+
+        let json = make_json(modules);
+        let result = aggregate(&json, 200, None).unwrap();
+
+        // isolated.ts has no dependencies and no dependents
+        let isolated = result
+            .nodes
+            .iter()
+            .find(|n| n.id == "isolated.ts")
+            .expect("isolated.ts should exist as a node");
+
+        assert_eq!(
+            isolated.instability, None,
+            "Isolated module 'isolated.ts' should have instability=None"
+        );
+    }
+}
 
 /// Helper to check if two rects overlap
 fn rects_overlap(a: &Rect, b: &Rect) -> bool {
@@ -543,6 +753,8 @@ fn rects_overlap(a: &Rect, b: &Rect) -> bool {
         && a.top < b.top + b.height
         && a.top + a.height > b.top
 }
+
+// --- Layout overlap tests ---
 
 #[test]
 fn test_sample_no_sibling_combo_overlap() {

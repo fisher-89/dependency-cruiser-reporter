@@ -162,8 +162,9 @@ describe('Scan flow (Integration)', () => {
   // =========================================================================
   it('AC-1/AC-3: clicking Scan renders overlay with scanning UI (spinner, status text)', async () => {
     // Keep scan pending indefinitely to observe scanning state
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -173,8 +174,7 @@ describe('Scan flow (Integration)', () => {
           return new Promise(() => {});
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -200,8 +200,9 @@ describe('Scan flow (Integration)', () => {
   // AC-4: Successful scan closes overlay and calls refresh (POST /api/graph)
   // =========================================================================
   it('AC-4: successful scan closes overlay and calls POST /api/graph again', async () => {
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -210,15 +211,14 @@ describe('Scan flow (Integration)', () => {
           return { ok: true, json: async () => ({ output: 'output.json' }) } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
 
-    const initialGraphCalls = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/graph' && init?.method === 'POST',
-    ).length;
+    const initialGraphCalls = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/graph' && init?.method === 'POST').length;
 
     // Click Scan
     fireEvent.click(screen.getByRole('button', { name: 'action.scan' }));
@@ -235,9 +235,9 @@ describe('Scan flow (Integration)', () => {
     );
 
     // Verify POST /api/graph was called again (refresh after scan)
-    const graphCallsAfterScan = vi.mocked(globalThis.fetch).mock.calls.filter(
-      ([url, init]) => url === '/api/graph' && init?.method === 'POST',
-    );
+    const graphCallsAfterScan = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.filter(([url, init]) => url === '/api/graph' && init?.method === 'POST');
     expect(graphCallsAfterScan.length).toBeGreaterThan(initialGraphCalls);
   });
 
@@ -245,8 +245,9 @@ describe('Scan flow (Integration)', () => {
   // AC-5: After scan completes, navigation tabs are interactive
   // =========================================================================
   it('AC-5: after scan completes, navigation tabs work', async () => {
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -255,8 +256,7 @@ describe('Scan flow (Integration)', () => {
           return { ok: true, json: async () => ({ output: 'output.json' }) } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -287,8 +287,9 @@ describe('Scan flow (Integration)', () => {
   // AC-6: Error overlay on HTTP failure (500)
   // =========================================================================
   it('AC-6: scan returns 500, overlay shows error message and close button', async () => {
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -301,8 +302,7 @@ describe('Scan flow (Integration)', () => {
           } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -328,8 +328,9 @@ describe('Scan flow (Integration)', () => {
   // AC-7: Close button dismisses overlay and restores interaction
   // =========================================================================
   it('AC-7: clicking close on error overlay dismisses it and restores interaction', async () => {
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -342,8 +343,7 @@ describe('Scan flow (Integration)', () => {
           } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -376,8 +376,9 @@ describe('Scan flow (Integration)', () => {
   // AC-10: Network error (TypeError) shows error overlay
   // =========================================================================
   it('AC-10: network error during scan shows error overlay with close button', async () => {
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -386,8 +387,7 @@ describe('Scan flow (Integration)', () => {
           throw new TypeError('Failed to fetch');
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -412,8 +412,9 @@ describe('Scan flow (Integration)', () => {
   it('B-5: after dismissing error overlay, can trigger scan again', async () => {
     let scanAttempts = 0;
 
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           return { ok: true, json: async () => sampleGraphData } as unknown as Response;
@@ -427,8 +428,7 @@ describe('Scan flow (Integration)', () => {
           } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');
@@ -463,8 +463,9 @@ describe('Scan flow (Integration)', () => {
   it('B-8: scan succeeds but refresh fetch fails, overlay stays closed', async () => {
     let graphFetchCount = 0;
 
-    fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
-      async (input: RequestInfo | URL, init?: RequestInit) => {
+    fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
         const url = typeof input === 'string' ? input : '';
         if (url === '/api/graph' && init?.method === 'POST') {
           graphFetchCount++;
@@ -482,8 +483,7 @@ describe('Scan flow (Integration)', () => {
           return { ok: true, json: async () => ({ output: 'output.json' }) } as unknown as Response;
         }
         return new Response(null, { status: 404 });
-      },
-    );
+      });
 
     renderApp();
     await screen.findByTestId('graph-view');

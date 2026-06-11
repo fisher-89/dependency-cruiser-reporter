@@ -1,0 +1,66 @@
+{
+  "phase": "08-integration-test",
+  "command": "cd packages/frontend && pnpm test -- --run --reporter=verbose && cd packages/rust && cargo test && wasm-pack test --node && cd packages/e2e && node --test",
+  "timestamp": "2026-06-09T16:59:00.000Z",
+  "total": 231,
+  "passed": 231,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": 0,
+  "duration_ms": 30760,
+  "failures": [],
+  "summary": {
+    "frontend": {
+      "command": "pnpm test -- --run --reporter=verbose",
+      "test_files": 19,
+      "total": 148,
+      "passed": 148,
+      "failed": 0,
+      "duration_ms": 13750,
+      "integration_specific": {
+        "file": "src/__tests__/from-change/scan-flow.integration.test.tsx",
+        "tests": 8,
+        "status": "all passed"
+      },
+      "heatmap_specific": {
+        "files": [
+          "buildGraphData.test.ts",
+          "DependencyGraph.style.test.ts",
+          "DetailPanel.stability.test.ts",
+          "GraphViewLayout.heatmap.test.tsx",
+          "App.heatmap.test.tsx",
+          "i18n.heatmap.test.ts"
+        ],
+        "tests": 43,
+        "status": "all passed"
+      }
+    },
+    "rust_cargo": {
+      "command": "cargo test",
+      "total": 65,
+      "passed": 65,
+      "failed": 0,
+      "duration_ms": 1100,
+      "instability_tests": 16,
+      "types_tests": 7,
+      "aggregate_pipeline_tests": 8
+    },
+    "rust_wasm": {
+      "command": "wasm-pack test --node",
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "duration_ms": 40,
+      "instability_integration_tests": 3
+    },
+    "e2e": {
+      "command": "node --test",
+      "suites": 3,
+      "total": 9,
+      "passed": 9,
+      "failed": 0,
+      "duration_ms": 11891
+    }
+  },
+  "findings": "All 231 tests across all test suites pass. Frontend vitest suite (148 tests in 19 files) includes 8 integration tests in scan-flow.integration.test.tsx (AC-1/AC-3, AC-4, AC-5, AC-6, AC-7, AC-10, B-5, B-8) plus 43 heatmap-specific tests covering all acceptance criteria from test-design.md. Rust cargo test (65 tests) includes 16 instability unit tests (F-1-F-5, R-1-R-6, B-1-B-7), 7 types/serialization tests (F-6, F-7, R-7, B-9-B-11, round-trip), and 8 aggregate pipeline integration tests. Rust WASM integration tests (9 tests) include 3 instability aggregate pipeline tests (test_aggregate_pipeline_populates_instability=F-8, test_aggregate_instability_values, test_aggregate_isolated_node_has_no_instability=R-16). E2E tests (9 tests) cover CLI commands, WASM module, and dashboard command. Coverage is not configured (reported as 0)."
+}

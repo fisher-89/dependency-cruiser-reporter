@@ -4,22 +4,18 @@
  * Tests the change-related differences in GraphViewLayout:
  *   - scanError prop is still received but NO LONGER renders error text
  *   - Scan button disabled state, spinning class, and text changes (regression)
- *   - onScan undefined hides Scan button (backward compat regression)
  *
  * Coverage targets (from test-design.md):
  *   - scanError non-null: error text NOT rendered (core change)
  *   - Scan button disabled during scanning (regression)
  *   - Scan button spinning class during scanning (regression)
  *   - Scan button text change during scanning (regression)
- *   - onScan=undefined hides Scan button (backward compat)
  *
- * NOTE: The existing test file at `src/__tests__/unit/GraphViewLayout.test.tsx`
- * contains tests (AC-6) that verify error text IS rendered. After this change,
- * those tests must also be updated (see test-design.md Section 6).
- * This file covers the NEW expected behavior.
+ * NOTE: GraphViewLayout now manages scanning internally (no external onScan/scanning props).
+ * Tests verify the Scan button's built-in behavior via click + fetch mock.
  */
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { GraphViewLayout } from '@/components/GraphViewLayout';
@@ -46,6 +42,14 @@ vi.mock('@/i18n', () => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Mock theme (ScanOverlay uses useTheme internally)
+// ---------------------------------------------------------------------------
+vi.mock('@/theme', () => ({
+  useTheme: () => ({ theme: 'light', resolvedTheme: 'light', cycleTheme: vi.fn() }),
+  ThemeProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+// ---------------------------------------------------------------------------
 // Mock icon components
 // ---------------------------------------------------------------------------
 vi.mock('@/components/icons', () => ({
@@ -60,12 +64,16 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
   return {
     loading: false,
     onRefresh: vi.fn(),
-    onScan: vi.fn(),
-    scanning: false,
-    scanError: null as string | null,
     children: <div data-testid="child-content">Child content</div>,
     ...overrides,
   } as Parameters<typeof GraphViewLayout>[0];
+}
+
+// ---------------------------------------------------------------------------
+// Hanging fetch mock -- never resolves, keeps scanning=true
+// ---------------------------------------------------------------------------
+function mockFetchHanging() {
+  return vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise<Response>(() => {}));
 }
 
 // ---------------------------------------------------------------------------
@@ -73,12 +81,16 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
 // ---------------------------------------------------------------------------
 
 describe('GraphViewLayout -- scanError removal', () => {
+  let fetchMock: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
     tCalls.length = 0;
+    fetchMock = mockFetchHanging();
   });
 
   afterEach(() => {
+    fetchMock?.mockRestore();
     vi.restoreAllMocks();
   });
 
@@ -110,20 +122,16 @@ describe('GraphViewLayout -- scanError removal', () => {
   // Core change: scanError does not affect child content rendering
   // =========================================================================
   it('scanError non-null does not prevent child content from rendering', () => {
-    render(
-      <GraphViewLayout
-        {...createDefaultProps({ scanError: 'Some error' })}
-      />,
-    );
+    render(<GraphViewLayout {...createDefaultProps({ scanError: 'Some error' })} />);
 
     expect(screen.getByTestId('child-content')).toBeInTheDocument();
     expect(screen.getByTestId('child-content')).toHaveTextContent('Child content');
   });
 
   // =========================================================================
-  // Regression: Scan button renders and is enabled when scanning=false
+  // Regression: Scan button renders in action bar
   // =========================================================================
-  it('REGRESSION: Scan button renders in action bar when onScan is provided', () => {
+  it('REGRESSION: Scan button renders in action bar', () => {
     render(<GraphViewLayout {...createDefaultProps()} />);
 
     const scanBtn = screen.getByRole('button', { name: 'Scan' });
@@ -133,92 +141,107 @@ describe('GraphViewLayout -- scanError removal', () => {
   });
 
   // =========================================================================
-  // Regression: scanning=true disables Scan button and shows loading text
+  // Regression: clicking Scan triggers internal scanning (button disabled, text changes)
   // =========================================================================
-  it('REGRESSION: scanning=true disables Scan button and shows scanning text', () => {
-    render(<GraphViewLayout {...createDefaultProps({ scanning: true })} />);
+  it('REGRESSION: clicking Scan disables button and shows scanning text', async () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
     const scanBtn = screen.getByRole('button', { name: 'Scan' });
-    expect(scanBtn).toBeDisabled();
+    expect(scanBtn).toBeEnabled();
+
+    fireEvent.click(scanBtn);
+
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
     expect(scanBtn).toHaveTextContent('Scanning...');
 
-    // Icon container should have spinning class
-    const iconSpan = screen.getByTestId('scan-icon').parentElement;
-    expect(iconSpan).toHaveClass('spinning');
+    // Icon container should have spinning class (action bar icon, not ScanOverlay)
+    const scanIcons = screen.getAllByTestId('scan-icon');
+    const actionBarIcon = scanIcons[0]; // First icon is in the action bar
+    expect(actionBarIcon.parentElement).toHaveClass('spinning');
   });
 
   // =========================================================================
-  // Regression: clicking Scan button triggers onScan callback
+  // Regression: clicking Scan triggers fetch, not onScan callback
   // =========================================================================
-  it('REGRESSION: clicking enabled Scan button triggers onScan callback', () => {
-    const onScan = vi.fn();
-    render(<GraphViewLayout {...createDefaultProps({ onScan })} />);
+  it('REGRESSION: clicking Scan triggers fetch to /api/analyze', () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
-    expect(onScan).toHaveBeenCalledTimes(1);
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/analyze', { method: 'POST' });
   });
 
   // =========================================================================
-  // Regression: disabled Scan button does not call onScan
+  // Regression: disabled Scan button cannot trigger another fetch
   // =========================================================================
-  it('REGRESSION: clicking disabled Scan button (scanning=true) does not call onScan', () => {
-    const onScan = vi.fn();
-    const { rerender } = render(
-      <GraphViewLayout {...createDefaultProps({ onScan, scanning: false })} />,
-    );
+  it('REGRESSION: clicking disabled Scan button does not trigger duplicate fetch', async () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
-    // First click works
-    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
-    expect(onScan).toHaveBeenCalledTimes(1);
+    const scanBtn = screen.getByRole('button', { name: 'Scan' });
+    fireEvent.click(scanBtn);
 
-    // Rerender with scanning=true
-    rerender(<GraphViewLayout {...createDefaultProps({ onScan, scanning: true })} />);
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    // Click disabled button -- should not fire
-    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
-    expect(onScan).toHaveBeenCalledTimes(1); // Still 1, not 2
+    // Click disabled button -- should not fire another fetch
+    fireEvent.click(scanBtn);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   // =========================================================================
-  // Regression: onScan=undefined hides Scan button (backward compat)
+  // Regression: Scan button is always rendered (built-in)
   // =========================================================================
-  it('REGRESSION: onScan=undefined does NOT render Scan button (backward compat)', () => {
-    render(<GraphViewLayout {...createDefaultProps({ onScan: undefined })} />);
+  it('REGRESSION: Scan button is always rendered (built-in, not conditional)', () => {
+    render(<GraphViewLayout {...createDefaultProps()} />);
 
-    expect(screen.queryByRole('button', { name: 'Scan' })).not.toBeInTheDocument();
-
-    // Refresh button should still be present
+    // Scan button is built into GraphViewLayout -- always present
+    expect(screen.getByRole('button', { name: 'Scan' })).toBeInTheDocument();
+    // Refresh button should also be present
     expect(screen.getByRole('button', { name: 'Refresh data' })).toBeInTheDocument();
   });
 
   // =========================================================================
-  // Regression: loading and scanning are independent states
+  // Regression: loading and internal scanning are independent states
   // =========================================================================
-  it('REGRESSION: loading (Refresh) and scanning (Scan) are independent states', () => {
+  it('REGRESSION: loading (Refresh) and internal scanning (Scan) are independent states', async () => {
     const { rerender } = render(
       <GraphViewLayout
-        {...createDefaultProps({ loading: true, scanning: true })}
+        {...createDefaultProps({
+          loading: true,
+        })}
       />,
     );
 
-    // Both buttons disabled
+    // Refresh disabled due to loading, Scan enabled
     expect(screen.getByRole('button', { name: 'Refresh data' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Scan' })).toBeEnabled();
 
-    // Rerender: loading=false, scanning=true
+    // Click Scan to start internal scanning
+    fireEvent.click(screen.getByRole('button', { name: 'Scan' }));
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
+    });
+
+    // Rerender: loading=false, internal scanning still active
     rerender(
       <GraphViewLayout
-        {...createDefaultProps({ loading: false, scanning: true })}
+        {...createDefaultProps({
+          loading: false,
+        })}
       />,
     );
 
-    // Refresh enabled, Scan still disabled
+    // Refresh enabled, Scan still disabled (independent states)
     expect(screen.getByRole('button', { name: 'Refresh data' })).not.toBeDisabled();
     expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
   });
 
   // =========================================================================
-  // Regression: Refresh button behavior unchanged by scanError prop
+  // Regression: Refresh button behavior unaffected by scanError
   // =========================================================================
   it('REGRESSION: Refresh button is unaffected by scanError prop', () => {
     const onRefresh = vi.fn();
@@ -241,15 +264,18 @@ describe('GraphViewLayout -- scanError removal', () => {
   });
 
   // =========================================================================
-  // B-9: Scan button disabled during scanning, regardless of loading state
+  // B-9: Scan button click triggers disabled state regardless of loading
   // =========================================================================
-  it('B-9: scanning=true disables Scan button even when loading=false', () => {
-    render(
-      <GraphViewLayout
-        {...createDefaultProps({ scanning: true, loading: false })}
-      />,
-    );
+  it('B-9: clicking Scan disables button even when loading=false', async () => {
+    render(<GraphViewLayout {...createDefaultProps({ loading: false })} />);
 
-    expect(screen.getByRole('button', { name: 'Scan' })).toBeDisabled();
+    const scanBtn = screen.getByRole('button', { name: 'Scan' });
+    expect(scanBtn).toBeEnabled();
+
+    fireEvent.click(scanBtn);
+
+    await waitFor(() => {
+      expect(scanBtn).toBeDisabled();
+    });
   });
 });

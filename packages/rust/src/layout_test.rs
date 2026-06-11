@@ -23,6 +23,7 @@ fn test_single_node_in_root_combo() {
         children: None,
         combo: Some("combo:root".to_string()),
         rect: None,
+        instability: None,
     }];
     let mut combos = vec![GraphCombo {
         id: "combo:root".to_string(),
@@ -61,6 +62,7 @@ fn test_multiple_nodes_grid() {
             children: None,
             combo: Some("combo:root".to_string()),
             rect: None,
+            instability: None,
         })
         .collect();
     let mut combos = vec![GraphCombo {
@@ -114,6 +116,7 @@ fn test_nested_combos() {
         children: None,
         combo: Some("combo:src/inner".to_string()),
         rect: None,
+        instability: None,
     }];
     let mut combos = vec![
         GraphCombo {
@@ -177,6 +180,7 @@ fn test_top_level_combos_no_overlap() {
             children: None,
             combo: Some("combo:src".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "lib/b.ts".to_string(),
@@ -188,6 +192,7 @@ fn test_top_level_combos_no_overlap() {
             children: None,
             combo: Some("combo:lib".to_string()),
             rect: None,
+            instability: None,
         },
     ];
     let mut combos = vec![
@@ -240,6 +245,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:src".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/b.ts".to_string(),
@@ -251,6 +257,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:src".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/c.ts".to_string(),
@@ -262,6 +269,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:src".to_string()),
             rect: None,
+            instability: None,
         },
         // Combo lib: 1 node
         GraphNode {
@@ -274,6 +282,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:lib".to_string()),
             rect: None,
+            instability: None,
         },
         // Combo utils: 2 nodes
         GraphNode {
@@ -286,6 +295,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:utils".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "utils/f.ts".to_string(),
@@ -297,6 +307,7 @@ fn test_three_top_level_combos_large() {
             children: None,
             combo: Some("combo:utils".to_string()),
             rect: None,
+            instability: None,
         },
     ];
     let mut combos = vec![
@@ -385,6 +396,7 @@ fn test_four_top_level_combos_medium() {
                 children: None,
                 combo: Some(format!("combo:{}", combo_name)),
                 rect: None,
+                instability: None,
             });
         }
     }
@@ -446,6 +458,7 @@ fn test_deeply_nested_combos() {
         children: None,
         combo: Some("combo:src/components/ui".to_string()),
         rect: None,
+        instability: None,
     }];
 
     let mut combos = vec![
@@ -519,6 +532,7 @@ fn test_siblings_under_same_parent_no_overlap() {
             children: None,
             combo: Some("combo:src/components".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/components/B.tsx".to_string(),
@@ -530,6 +544,7 @@ fn test_siblings_under_same_parent_no_overlap() {
             children: None,
             combo: Some("combo:src/components".to_string()),
             rect: None,
+            instability: None,
         },
         // src/utils has 2 nodes
         GraphNode {
@@ -542,6 +557,7 @@ fn test_siblings_under_same_parent_no_overlap() {
             children: None,
             combo: Some("combo:src/utils".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/utils/format.ts".to_string(),
@@ -553,6 +569,7 @@ fn test_siblings_under_same_parent_no_overlap() {
             children: None,
             combo: Some("combo:src/utils".to_string()),
             rect: None,
+            instability: None,
         },
     ];
 
@@ -629,6 +646,7 @@ fn test_many_small_combos() {
             children: None,
             combo: Some(format!("combo:{}", name)),
             rect: None,
+            instability: None,
         });
         combos.push(GraphCombo {
             id: format!("combo:{}", name),
@@ -683,6 +701,7 @@ fn test_three_level_nested_siblings() {
             children: None,
             combo: Some("combo:src/components".to_string()),
             rect: None,
+            instability: None,
         });
     }
     for i in 0..2 {
@@ -696,6 +715,7 @@ fn test_three_level_nested_siblings() {
             children: None,
             combo: Some("combo:src/utils".to_string()),
             rect: None,
+            instability: None,
         });
     }
     for i in 0..2 {
@@ -709,6 +729,7 @@ fn test_three_level_nested_siblings() {
             children: None,
             combo: Some("combo:src/hooks".to_string()),
             rect: None,
+            instability: None,
         });
     }
 
@@ -781,6 +802,7 @@ fn test_four_level_deeply_nested_siblings() {
             children: None,
             combo: Some("combo:src/components/ui".to_string()),
             rect: None,
+            instability: None,
         });
     }
     for i in 0..2 {
@@ -794,6 +816,7 @@ fn test_four_level_deeply_nested_siblings() {
             children: None,
             combo: Some("combo:src/components/layout".to_string()),
             rect: None,
+            instability: None,
         });
     }
 
@@ -864,6 +887,7 @@ fn test_mixed_nodes_and_combos_nested() {
             children: None,
             combo: Some("combo:src".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/components/A.tsx".to_string(),
@@ -875,6 +899,7 @@ fn test_mixed_nodes_and_combos_nested() {
             children: None,
             combo: Some("combo:src/components".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/components/B.tsx".to_string(),
@@ -886,6 +911,7 @@ fn test_mixed_nodes_and_combos_nested() {
             children: None,
             combo: Some("combo:src/components".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/utils/helper.ts".to_string(),
@@ -897,6 +923,7 @@ fn test_mixed_nodes_and_combos_nested() {
             children: None,
             combo: Some("combo:src/utils".to_string()),
             rect: None,
+            instability: None,
         },
         GraphNode {
             id: "src/utils/format.ts".to_string(),
@@ -908,6 +935,7 @@ fn test_mixed_nodes_and_combos_nested() {
             children: None,
             combo: Some("combo:src/utils".to_string()),
             rect: None,
+            instability: None,
         },
     ];
 
@@ -1028,6 +1056,7 @@ fn test_child_combos_no_overlap_under_stress() {
                 children: None,
                 combo: Some(format!("combo:src/{}", combo_name)),
                 rect: None,
+                instability: None,
             });
         }
     }
@@ -1109,6 +1138,7 @@ fn test_demo_like_structure_7_combos_plus_direct_node() {
         children: None,
         combo: Some("combo:src".to_string()),
         rect: None,
+        instability: None,
     });
 
     // 7 child combos under src, each with 3 nodes
@@ -1124,6 +1154,7 @@ fn test_demo_like_structure_7_combos_plus_direct_node() {
                 children: None,
                 combo: Some(format!("combo:src/{}", combo_name)),
                 rect: None,
+                instability: None,
             });
         }
     }
