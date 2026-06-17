@@ -1,0 +1,9 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "tags": ["-lintignore"],
+  "entry": ["src/bin/cli.ts"],
+  "project": ["src/**/*.ts"],
+  "typescript": {
+    "config": ["tsconfig.json"]
+  }
+}

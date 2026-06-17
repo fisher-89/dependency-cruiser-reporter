@@ -62,5 +62,3 @@ export async function dashboard(options: DashboardOptions): Promise<void> {
     process.exit(0);
   });
 }
-
-export default dashboard;

@@ -85,5 +85,3 @@ export class DcrServer {
 export function createServer(options: ServerOptions): DcrServer {
   return new DcrServer(options);
 }
-
-export default DcrServer;

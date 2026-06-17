@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { program } from 'commander';
 
-import { analyze, archiToRules, dashboard } from '../commands/index.js';
+import { analyze, archiToRules, dashboard } from '../commands';
 
 program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
 

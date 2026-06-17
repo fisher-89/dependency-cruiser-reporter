@@ -124,5 +124,3 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
 
   return outputPath;
 }
-
-export default analyze;

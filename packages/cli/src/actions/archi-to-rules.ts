@@ -14,7 +14,7 @@ export interface ArchiToRulesOptions {
   output?: string;
 }
 
-export interface ForbiddenRule {
+interface ForbiddenRule {
   name: string;
   severity: 'error';
   comment?: string;
@@ -181,7 +181,7 @@ function collectAncestorDeps(
  *    - First segment is `package` kind: `packages/<name>/src/<rest>/` or `packages/<name>/`
  *    - Otherwise: `src/<segments>/`
  */
-export function resolveElementPath(
+function resolveElementPath(
   fqn: string,
   links: ReadonlyArray<C4Link> | null | undefined,
   allElements: Map<string, C4Element>,
@@ -281,7 +281,7 @@ function ruleNameFromFqn(fqn: string): string {
  * @param dependencyPaths - Resolved paths of all dependencies (deduplication handled internally)
  * @returns A ForbiddenRule object
  */
-export function buildForbiddenRule(
+function buildForbiddenRule(
   elementFqn: string,
   resolvedPath: string,
   dependencyPaths: string[],
@@ -317,7 +317,7 @@ export function buildForbiddenRule(
 /**
  * Build the complete rules file structure from processed elements.
  */
-export function buildRulesFile(
+function buildRulesFile(
   elements: Array<{
     elementFqn: string;
     resolvedPath: string;
@@ -348,7 +348,7 @@ export function buildRulesFile(
  * @param cwd - Absolute workspace root directory
  * @returns Array of [elementFqn, path] tuples for paths that do not exist
  */
-export function validatePaths(pathMap: Map<string, string>, cwd: string): Array<[string, string]> {
+function validatePaths(pathMap: Map<string, string>, cwd: string): Array<[string, string]> {
   const failed: Array<[string, string]> = [];
   for (const [elementFqn, path] of pathMap) {
     const absPath = resolve(cwd, path);
@@ -382,7 +382,7 @@ export function validatePaths(pathMap: Map<string, string>, cwd: string): Array<
  * @param extendsValue - The value to add to extends (e.g. ".dc-reporter/archi-rules.json")
  * @returns true if the file was modified, false otherwise
  */
-export function updateDependencyCruiserConfig(configPath: string, extendsValue: string): boolean {
+function updateDependencyCruiserConfig(configPath: string, extendsValue: string): boolean {
   if (!existsSync(configPath)) {
     return false;
   }
