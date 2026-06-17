@@ -19,8 +19,8 @@
     "archi-to-rules": "node packages/cli/bin/cli.js archi-to-rules",
     "demo": "pnpm run analyze -p demo && pnpm run dashboard -f demo-graph.json",
     "test": "pnpm run build:rust && pnpm -r test",
-    "check": "vp check",
-    "check:fix": "vp check --fix"
+    "check": "pnpm run build:rust && pnpm -r check",
+    "check:fix": "pnpm -r check --fix"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",
