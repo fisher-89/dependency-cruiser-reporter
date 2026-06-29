@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { EventEmitter, on, once } from "node:events";
 import { spawn } from "node:child_process";
 import * as sp from "node:path";
-import path, { basename, dirname, extname, join, relative, resolve, sep } from "node:path";
+import path, { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import * as fs$3 from "node:fs";
 import fs, { existsSync, mkdirSync, readFileSync, readdirSync, stat, statSync, unwatchFile, watch, watchFile, writeFileSync } from "node:fs";
 import process$1, { cwd } from "node:process";
@@ -106737,12 +106737,12 @@ function normalizeWindowsPath(input = "") {
 	if (!input) return input;
 	return input.replace(/\\/g, "/").replace(_DRIVE_LETTER_START_RE, (r) => r.toUpperCase());
 }
-var _DRIVE_LETTER_START_RE, _IS_ABSOLUTE_RE, _EXTNAME_RE, isAbsolute, extname$1;
+var _DRIVE_LETTER_START_RE, _IS_ABSOLUTE_RE, _EXTNAME_RE, isAbsolute$1, extname$1;
 var init_pathe_M_eThtNZ = __esmMin((() => {
 	_DRIVE_LETTER_START_RE = /^[A-Za-z]:\//;
 	_IS_ABSOLUTE_RE = /^[/\\](?![/\\])|^[/\\]{2}(?!\.)|^[A-Za-z]:[/\\]/;
 	_EXTNAME_RE = /.(\.[^./]+|\.)$/;
-	isAbsolute = function(p) {
+	isAbsolute$1 = function(p) {
 		return _IS_ABSOLUTE_RE.test(p);
 	};
 	extname$1 = function(p) {
@@ -112965,7 +112965,7 @@ var init_utils$2 = __esmMin((() => {
 					this.#n = void 0;
 					return;
 				}
-				let t = t$34(e, n$31(e$5), t$18((e) => (!isAbsolute(e) && !e.startsWith(`**`) && (e = joinURL(`**`, e)), e)));
+				let t = t$34(e, n$31(e$5), t$18((e) => (!isAbsolute$1(e) && !e.startsWith(`**`) && (e = joinURL(`**`, e)), e)));
 				if (!t$32(t, 1)) {
 					this.#n = void 0;
 					return;
@@ -152730,11 +152730,21 @@ var init_node = __esmMin((() => {
 //#endregion
 //#region packages/cli/bin/cli.js
 var import_express = /* @__PURE__ */ __toESM(require_express(), 1);
+/**
+* Parse the storage directory path.
+* - Absolute path: used directly, not resolved against absCwd
+* - Relative path: resolved against absCwd
+*/
+function parseStorageDir(storageDir, absCwd) {
+	if (isAbsolute(storageDir)) return storageDir;
+	return resolve(absCwd, storageDir);
+}
 async function analyze$1(options) {
 	const { path: analyzePath, output, config, cwd: workspaceRoot = "." } = options;
 	const absCwd = resolve(workspaceRoot);
+	const absStorageDir = parseStorageDir(options.storageDir || ".dc-reporter", absCwd);
 	const absAnalyzePath = resolve(absCwd, analyzePath);
-	const outputPath = output || resolve(absCwd, ".dc-reporter", "scans", `${basename(absAnalyzePath)}-graph.json`);
+	const outputPath = output || resolve(absStorageDir, "scans", `${basename(absAnalyzePath)}-graph.json`);
 	const parentDir = dirname(outputPath);
 	if (!existsSync(parentDir)) mkdirSync(parentDir, { recursive: true });
 	const CONFIG_NAMES = [
@@ -153064,9 +153074,9 @@ function updateDependencyCruiserConfig(configPath, extendsValue) {
 * Read .c4 files from the architecture directory, parse them with LikeC4,
 * and return the elements, relations, and an FQN-indexed element map.
 */
-async function loadC4Model(cwd) {
-	const archDir = join(resolve(cwd), ".dc-reporter", "architecture");
-	if (!existsSync(archDir)) throw new Error(`Architecture directory not found: ${archDir}. Create .c4 files in .dc-reporter/architecture/ to define your architecture.`);
+async function loadC4Model(cwd, storageDir) {
+	const archDir = join(resolve(cwd), storageDir, "architecture");
+	if (!existsSync(archDir)) throw new Error(`Architecture directory not found: ${archDir}. Create .c4 files in ${storageDir}/architecture/ to define your architecture.`);
 	const files = readdirSync(archDir).filter((f) => f.endsWith(".c4"));
 	if (files.length === 0) throw new Error(`No .c4 files found in ${archDir}`);
 	const sources = {};
@@ -153114,8 +153124,10 @@ function writeRulesFile(outputPath, data) {
 */
 async function archiToRules$1(options = {}) {
 	const absCwd = resolve(options.cwd ?? ".");
-	const outputPath = options.output ? resolve(absCwd, options.output) : resolve(absCwd, ".dc-reporter", "archi-rules.json");
-	const { elements, relations, elementMap } = await loadC4Model(absCwd);
+	const storageDir = options.storageDir || ".dc-reporter";
+	const absStorageDir = parseStorageDir(storageDir, absCwd);
+	const outputPath = options.output ? resolve(absCwd, options.output) : resolve(absStorageDir, "archi-rules.json");
+	const { elements, relations, elementMap } = await loadC4Model(absCwd, storageDir);
 	const validKinds = new Set(["package", "module"]);
 	const filteredElements = elements.filter((el) => validKinds.has(el.kind));
 	const validElementIds = new Set(filteredElements.map((el) => String(el.id)));
@@ -153179,10 +153191,13 @@ async function archiToRules$1(options = {}) {
 	console.log(`Architecture rules written to: ${outputPath}`);
 }
 var main_c4_default = "specification {\n  element outer {\n    description '[系统外实体（例：用户、其他服务）]'\n    style {\n      color muted\n      size small\n    }\n  }\n  element project {\n    description '[系统工程根目录]'\n    style {\n      shape browser\n    }\n  }\n  element package {\n    description '[包（可独立构建）]'\n  }\n  element module {\n    description '[模块/组件]'\n  }\n\n  relationship dependency { // 依赖\n    line solid\n  }\n}\nmodel {\n  ROOT = project {\n    link ../../\n    // 此处拆分packages 或 module, 代码量较大时使用多个文件\n    cli = package 'cli' '命令行终端' {\n      link ../../packages/cli // 模块路径\n    }\n  }\n  USER = outer {\n    -> ROOT 'use'\n  }\n}\n\nviews {\n  view all of ROOT {\n    title 'all'\n    include *, ROOT.**\n  }\n  view top {\n    title 'top-only'\n    include ROOT.*\n  }\n}\n";
-function setupArchitectureRoutes(app, cwd) {
+function setupArchitectureRoutes(app, cwd, storageDir) {
 	app.post("/api/archi-to-rules", async (_req, res) => {
 		try {
-			await archiToRules$1({ cwd });
+			await archiToRules$1({
+				cwd,
+				storageDir
+			});
 			res.json({ success: true });
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);
@@ -153193,7 +153208,7 @@ function setupArchitectureRoutes(app, cwd) {
 		}
 	});
 	app.get("/api/architecture/model", async (_req, res) => {
-		const archDir = join(resolve(cwd), ".dc-reporter", "architecture");
+		const archDir = join(resolve(cwd), storageDir, "architecture");
 		if (!existsSync(archDir)) {
 			res.status(404).json({ error: "Architecture directory not found" });
 			return;
@@ -153233,7 +153248,7 @@ function setupArchitectureRoutes(app, cwd) {
 		}
 	});
 	app.post("/api/architecture/generate", async (_req, res) => {
-		const archDir = join(resolve(cwd), ".dc-reporter", "architecture");
+		const archDir = join(resolve(cwd), storageDir, "architecture");
 		try {
 			if (!existsSync(archDir)) mkdirSync(archDir, { recursive: true });
 			writeFileSync(join(archDir, "main.c4"), main_c4_default, "utf-8");
@@ -153257,12 +153272,13 @@ function setupDashboardRoutes(app) {
 		else res.status(404).send(`Frontend not built. Run 'pnpm build' in packages/frontend.(PATH:${indexPath})`);
 	});
 }
-function setupAnalyzeDepRoute(app, { cwd }) {
+function setupAnalyzeDepRoute(app, { cwd, storageDir }) {
 	app.post("/api/analyze", async (_req, res) => {
 		try {
 			const output = await analyze$1({
 				path: ".",
-				cwd
+				cwd,
+				storageDir
 			});
 			res.json({ output });
 		} catch (error) {
@@ -153344,13 +153360,17 @@ var DcrServer = class {
 		this.graphFile = options.graphFile;
 		this.maxNodes = options.maxNodes ?? 200;
 		this.cwd = options.cwd ?? ".";
+		this.storageDir = options.storageDir ?? ".dc-reporter";
 		this.app = (0, import_express.default)();
 		this.app.use(import_express.json());
 		this.setupRoutes();
 	}
 	setupRoutes() {
-		setupArchitectureRoutes(this.app, this.cwd);
-		setupAnalyzeDepRoute(this.app, { cwd: this.cwd });
+		setupArchitectureRoutes(this.app, this.cwd, this.storageDir);
+		setupAnalyzeDepRoute(this.app, {
+			cwd: this.cwd,
+			storageDir: this.storageDir
+		});
 		setupGraphRoute(this.app, {
 			graphFile: this.graphFile,
 			maxNodes: this.maxNodes
@@ -153389,10 +153409,11 @@ const DEFAULT_MAX_NODES = 500;
 */
 async function dashboard(options) {
 	const { file, port = 3e3, host = "localhost", maxNodes = DEFAULT_MAX_NODES, cwd = "." } = options;
+	const storageDir = options.storageDir || ".dc-reporter";
 	let resolvedFile = file;
 	if (!resolvedFile) {
 		const absCwd = resolve(cwd);
-		const defaultFile = resolve(absCwd, ".dc-reporter", "scans", `${basename(absCwd)}-graph.json`);
+		const defaultFile = resolve(parseStorageDir(storageDir, absCwd), "scans", `${basename(absCwd)}-graph.json`);
 		if (existsSync(defaultFile)) {
 			resolvedFile = defaultFile;
 			console.log(`Using graph file: ${resolvedFile}`);
@@ -153403,7 +153424,8 @@ async function dashboard(options) {
 		host,
 		graphFile: resolvedFile,
 		maxNodes,
-		cwd
+		cwd,
+		storageDir
 	});
 	await server.start();
 	console.log(`Server running at http://${host}:${server.port}`);
@@ -153420,14 +153442,17 @@ async function archiToRules(options) {
 }
 program.name("dep-report").description("dependency-cruiser result visualizer").version("0.1.0");
 program.option("--cwd <path>", "Workspace root directory", ".");
+program.option("--storage-dir <path>", "Storage root directory", ".dc-reporter");
 program.command("analyze").description("Analyze a project directory and generate visualization").option("-p, --path <dir>", "Project directory to analyze", ".").option("-o, --output <path>", "Output graph JSON file").option("-c, --config <path>", "dependency-cruiser config file").action(async (options) => {
 	try {
 		const cwd = program.opts().cwd;
+		const storageDir = program.opts().storageDir;
 		const graphFile = await analyze({
 			path: options.path,
 			output: options.output,
 			config: options.config,
-			cwd
+			cwd,
+			storageDir
 		});
 		console.log(`\nTo view the result, run:\n  dep-report dashboard -f ${graphFile}`);
 	} catch (error) {
@@ -153437,19 +153462,23 @@ program.command("analyze").description("Analyze a project directory and generate
 });
 program.command("dashboard").description("Start dashboard web viewer with HTTP server").option("-f, --file <path>", "Pre-processed graph JSON to load").option("-p, --port <number>", "Server port", "3000").option("--host <host>", "Server host", "localhost").action(async (options) => {
 	const cwd = program.opts().cwd;
+	const storageDir = program.opts().storageDir;
 	await dashboard({
 		file: options.file,
 		port: Number.parseInt(options.port, 10),
 		host: options.host,
-		cwd
+		cwd,
+		storageDir
 	});
 });
 program.command("archi-to-rules").description("Convert C4 architecture model to dependency-cruiser rules").option("-o, --output <path>", "Output rules JSON file path").action(async (options) => {
 	try {
 		const cwd = program.opts().cwd;
+		const storageDir = program.opts().storageDir;
 		await archiToRules({
 			cwd,
-			output: options.output
+			output: options.output,
+			storageDir
 		});
 	} catch (error) {
 		console.error(error instanceof Error ? error.message : String(error));
