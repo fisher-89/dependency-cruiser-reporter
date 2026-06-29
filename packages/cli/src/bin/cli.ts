@@ -6,6 +6,7 @@ import { analyze, archiToRules, dashboard } from '../commands';
 program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
 
 program.option('--cwd <path>', 'Workspace root directory', '.');
+program.option('--storage-dir <path>', 'Storage root directory', '.dc-reporter');
 
 program
   .command('analyze')
@@ -16,11 +17,13 @@ program
   .action(async (options) => {
     try {
       const cwd = program.opts().cwd;
+      const storageDir = program.opts().storageDir;
       const graphFile = await analyze({
         path: options.path,
         output: options.output,
         config: options.config,
         cwd,
+        storageDir,
       });
       console.log(`\nTo view the result, run:\n  dep-report dashboard -f ${graphFile}`);
     } catch (error) {
@@ -37,11 +40,13 @@ program
   .option('--host <host>', 'Server host', 'localhost')
   .action(async (options) => {
     const cwd = program.opts().cwd;
+    const storageDir = program.opts().storageDir;
     await dashboard({
       file: options.file,
       port: Number.parseInt(options.port, 10),
       host: options.host,
       cwd,
+      storageDir,
     });
   });
 
@@ -52,9 +57,11 @@ program
   .action(async (options) => {
     try {
       const cwd = program.opts().cwd;
+      const storageDir = program.opts().storageDir;
       await archiToRules({
         cwd,
         output: options.output,
+        storageDir,
       });
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));

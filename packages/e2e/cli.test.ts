@@ -99,6 +99,83 @@ describe('CLI Integration Tests', () => {
 
     assert.notStrictEqual(result.status, 0);
   });
+
+  // ========================================================================
+  // F-1 (E2E): analyze --help shows --storage-dir option
+  // ========================================================================
+  test('F-1 (E2E): analyze --help shows --storage-dir option', () => {
+    const result = spawnSync('node', [cliBinary, 'analyze', '--help'], {
+      cwd: __dirname,
+      encoding: 'utf-8',
+    });
+
+    assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
+    assert.ok(result.stdout.includes('--storage-dir'));
+  });
+
+  // ========================================================================
+  // F-2 (E2E): analyze with --storage-dir creates output in custom dir
+  // ========================================================================
+  test('F-2 (E2E): analyze with --storage-dir creates output in custom dir', () => {
+    if (!wasmAvailable) {
+      console.log('Skipping: WASM module not available');
+      return;
+    }
+
+    const testStorageDir = resolve(__dirname, '.test-storage-e2e');
+    const result = spawnSync(
+      'node',
+      [cliBinary, 'analyze', '-p', sampleCruise, '--storage-dir', testStorageDir],
+      {
+        cwd: __dirname,
+        encoding: 'utf-8',
+      },
+    );
+
+    assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
+
+    // Verify the scans directory was created under the custom storage dir
+    const scansDir = resolve(testStorageDir, 'scans');
+    assert.ok(existsSync(scansDir), `Expected scans directory at: ${scansDir}`);
+
+    // Cleanup
+    if (existsSync(testStorageDir)) {
+      rmSync(testStorageDir, { recursive: true, force: true });
+    }
+  });
+
+  // ========================================================================
+  // F-4 (E2E): analyze with --cwd and --storage-dir combination
+  // ========================================================================
+  test('F-4 (E2E): analyze with --cwd and --storage-dir combination', () => {
+    if (!wasmAvailable) {
+      console.log('Skipping: WASM module not available');
+      return;
+    }
+
+    const testCwd = resolve(__dirname, 'fixtures');
+    const testStorageDir = '.test-cwd-storage';
+    const result = spawnSync(
+      'node',
+      [cliBinary, 'analyze', '-p', 'sample-cruise.json', '--cwd', testCwd, '--storage-dir', testStorageDir],
+      {
+        cwd: __dirname,
+        encoding: 'utf-8',
+      },
+    );
+
+    assert.strictEqual(result.status, 0, `stderr: ${result.stderr}`);
+
+    // Verify scans directory is under cwd + storageDir
+    const expectedScansDir = resolve(testCwd, testStorageDir, 'scans');
+    assert.ok(existsSync(expectedScansDir), `Expected scans directory at: ${expectedScansDir}`);
+
+    // Cleanup
+    const fullStoragePath = resolve(testCwd, testStorageDir);
+    if (existsSync(fullStoragePath)) {
+      rmSync(fullStoragePath, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('WASM Module Tests', () => {

@@ -11,6 +11,8 @@ export interface ServerOptions {
   graphFile?: string;
   maxNodes?: number;
   cwd?: string;
+  /** Storage root directory (default ".dc-reporter") */
+  storageDir?: string;
 }
 
 export class DcrServer {
@@ -20,6 +22,7 @@ export class DcrServer {
   private graphFile?: string;
   private maxNodes: number;
   private cwd: string;
+  private storageDir: string;
   private server?: ReturnType<typeof this.app.listen>;
 
   /** Get the actual port the server is listening on */
@@ -33,6 +36,7 @@ export class DcrServer {
     this.graphFile = options.graphFile;
     this.maxNodes = options.maxNodes ?? 200;
     this.cwd = options.cwd ?? '.';
+    this.storageDir = options.storageDir ?? '.dc-reporter';
 
     this.app = express();
     this.app.use(express.json());
@@ -41,10 +45,10 @@ export class DcrServer {
 
   private setupRoutes(): void {
     // Architecture routes (GET /api/architecture/model, POST /api/architecture/generate, POST /api/archi-to-rules)
-    setupArchitectureRoutes(this.app, this.cwd);
+    setupArchitectureRoutes(this.app, this.cwd, this.storageDir);
 
     // Dep analyze route (POST /api/analyze)
-    setupAnalyzeDepRoute(this.app, { cwd: this.cwd });
+    setupAnalyzeDepRoute(this.app, { cwd: this.cwd, storageDir: this.storageDir });
 
     // Dep graph route (POST /api/graph)
     setupGraphRoute(this.app, { graphFile: this.graphFile, maxNodes: this.maxNodes });

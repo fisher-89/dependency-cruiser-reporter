@@ -3,6 +3,8 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 
 import type { Element as C4Element, Link as C4Link } from '@likec4/core';
 
+import { parseStorageDir } from '../utils/storage.js';
+
 // ---------------------------------------------------------------------------
 // Public types
 // ---------------------------------------------------------------------------
@@ -12,6 +14,8 @@ export interface ArchiToRulesOptions {
   cwd?: string;
   /** Output path for rules file (default: .dc-reporter/archi-rules.json) */
   output?: string;
+  /** Storage root directory (default ".dc-reporter") */
+  storageDir?: string;
 }
 
 interface ForbiddenRule {
@@ -479,12 +483,12 @@ interface LoadedModel {
  * Read .c4 files from the architecture directory, parse them with LikeC4,
  * and return the elements, relations, and an FQN-indexed element map.
  */
-async function loadC4Model(cwd: string): Promise<LoadedModel> {
-  const archDir = join(resolve(cwd), '.dc-reporter', 'architecture');
+async function loadC4Model(cwd: string, storageDir: string): Promise<LoadedModel> {
+  const archDir = join(resolve(cwd), storageDir, 'architecture');
 
   if (!existsSync(archDir)) {
     throw new Error(
-      `Architecture directory not found: ${archDir}. Create .c4 files in .dc-reporter/architecture/ to define your architecture.`,
+      `Architecture directory not found: ${archDir}. Create .c4 files in ${storageDir}/architecture/ to define your architecture.`,
     );
   }
 
@@ -570,12 +574,15 @@ export async function archiToRules(options: ArchiToRulesOptions = {}): Promise<v
   const cwd = options.cwd ?? '.';
   const absCwd = resolve(cwd);
 
+  const storageDir = options.storageDir || '.dc-reporter';
+  const absStorageDir = parseStorageDir(storageDir, absCwd);
+
   const outputPath = options.output
     ? resolve(absCwd, options.output)
-    : resolve(absCwd, '.dc-reporter', 'archi-rules.json');
+    : resolve(absStorageDir, 'archi-rules.json');
 
   // Step 1: Load C4 model
-  const { elements, relations, elementMap } = await loadC4Model(absCwd);
+  const { elements, relations, elementMap } = await loadC4Model(absCwd, storageDir);
 
   // Step 2: Filter elements -- only package and module kinds
   const validKinds = new Set(['package', 'module']);

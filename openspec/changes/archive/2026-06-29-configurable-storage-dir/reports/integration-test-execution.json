@@ -1,0 +1,13 @@
+{
+  "phase": "integration-test",
+  "command": "pnpm vp test run __tests__/analyze-default-storage-dir/analyze-default-storage-dir.test.ts __tests__/analyze-custom-relative/analyze-custom-relative.test.ts __tests__/analyze-absolute-path/analyze-absolute-path.test.ts __tests__/dashboard-default/dashboard-default.test.ts __tests__/dashboard-custom/dashboard-custom.test.ts __tests__/archi-to-rules-default/archi-to-rules-default.test.ts __tests__/archi-to-rules-custom/archi-to-rules-custom.test.ts __tests__/storage-dir-with-cwd/storage-dir-with-cwd.test.ts __tests__/createserver-custom/createserver-custom.test.ts __tests__/backward-compatibility/backward-compatibility.test.ts __tests__/analyze-idempotency/analyze-idempotency.test.ts __tests__/archi-to-rules-idempotency/archi-to-rules-idempotency.test.ts __tests__/architecture-generate-idempotency/architecture-generate-idempotency.test.ts __tests__/dashboard-discovery-idempotency/dashboard-discovery-idempotency.test.ts __tests__/graph-source-meta/graph-source-meta.test.ts --reporter verbose",
+  "timestamp": "2026-06-29T18:03:26.000Z",
+  "total": 23,
+  "passed": 23,
+  "failed": 0,
+  "skipped": 0,
+  "coverage": 0,
+  "duration_ms": 2590,
+  "failures": [],
+  "findings": "All 23 integration tests passed across 15 test files. Coverage data was not collected (vitest configured without coverage reporter). Tests cover: analyze default/custom-relative/absolute-path storageDir, dashboard default/custom storageDir, archi-to-rules default/custom storageDir, --cwd and --storage-dir interaction, createServer custom storageDir, backward compatibility, analyze/archi-to-rules/generate/dashboard-discovery idempotency, and graph-source-meta meta.source field. No fix needed — all tests passed on first run."
+}

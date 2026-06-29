@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
 
 import { type ServerOptions, createServer } from '../../server/server.js';
+import { parseStorageDir } from '../../utils/storage.js';
 
 export interface DashboardOptions {
   file?: string;
@@ -11,6 +12,8 @@ export interface DashboardOptions {
   maxNodes?: number;
   /** Workspace root directory (default ".") */
   cwd?: string;
+  /** Storage root directory (default ".dc-reporter") */
+  storageDir?: string;
 }
 
 const DEFAULT_MAX_NODES = 500;
@@ -27,10 +30,13 @@ export async function dashboard(options: DashboardOptions): Promise<void> {
     cwd = '.',
   } = options;
 
+  const storageDir = options.storageDir || '.dc-reporter';
+
   let resolvedFile = file;
   if (!resolvedFile) {
     const absCwd = resolve(cwd);
-    const defaultFile = resolve(absCwd, '.dc-reporter', 'scans', `${basename(absCwd)}-graph.json`);
+    const absStorageDir = parseStorageDir(storageDir, absCwd);
+    const defaultFile = resolve(absStorageDir, 'scans', `${basename(absCwd)}-graph.json`);
     if (existsSync(defaultFile)) {
       resolvedFile = defaultFile;
       console.log(`Using graph file: ${resolvedFile}`);
@@ -43,6 +49,7 @@ export async function dashboard(options: DashboardOptions): Promise<void> {
     graphFile: resolvedFile,
     maxNodes,
     cwd,
+    storageDir,
   };
 
   const server = createServer(serverOptions);

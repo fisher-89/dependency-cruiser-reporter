@@ -5,22 +5,30 @@ import { cruise, type ICruiseOptions } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
 
+import { parseStorageDir } from '../utils/storage.js';
+
 export interface AnalyzeOptions {
   path: string;
   output?: string;
   config?: string;
   /** Workspace root directory (default ".") */
   cwd?: string;
+  /** Storage root directory (default ".dc-reporter") */
+  storageDir?: string;
 }
 
 export async function analyze(options: AnalyzeOptions): Promise<string> {
   const { path: analyzePath, output, config, cwd: workspaceRoot = '.' } = options;
   const absCwd = resolve(workspaceRoot);
 
+  // Resolve storage directory
+  const storageDir = options.storageDir || '.dc-reporter';
+  const absStorageDir = parseStorageDir(storageDir, absCwd);
+
   // Resolve absolute path
   const absAnalyzePath = resolve(absCwd, analyzePath);
   const outputPath =
-    output || resolve(absCwd, '.dc-reporter', 'scans', `${basename(absAnalyzePath)}-graph.json`);
+    output || resolve(absStorageDir, 'scans', `${basename(absAnalyzePath)}-graph.json`);
 
   // Ensure output directory exists
   const parentDir = dirname(outputPath);

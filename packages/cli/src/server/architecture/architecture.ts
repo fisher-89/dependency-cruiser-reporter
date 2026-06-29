@@ -6,11 +6,11 @@ import { type Express, type Request, type Response } from 'express';
 import { archiToRules } from '../../actions/archi-to-rules.js';
 import mainC4Template from './main.c4.template';
 
-export function setupArchitectureRoutes(app: Express, cwd: string): void {
+export function setupArchitectureRoutes(app: Express, cwd: string, storageDir: string): void {
   // API: Generate architecture rules from C4 model
   app.post('/api/archi-to-rules', async (_req: Request, res: Response) => {
     try {
-      await archiToRules({ cwd });
+      await archiToRules({ cwd, storageDir });
       res.json({ success: true });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -19,7 +19,7 @@ export function setupArchitectureRoutes(app: Express, cwd: string): void {
   });
   // API: Get architecture model (C4 parsing)
   app.get('/api/architecture/model', async (_req: Request, res: Response) => {
-    const archDir = join(resolve(cwd), '.dc-reporter', 'architecture');
+    const archDir = join(resolve(cwd), storageDir, 'architecture');
 
     if (!existsSync(archDir)) {
       res.status(404).json({ error: 'Architecture directory not found' });
@@ -64,7 +64,7 @@ export function setupArchitectureRoutes(app: Express, cwd: string): void {
 
   // API: Generate architecture model (create starter .c4 file)
   app.post('/api/architecture/generate', async (_req: Request, res: Response) => {
-    const archDir = join(resolve(cwd), '.dc-reporter', 'architecture');
+    const archDir = join(resolve(cwd), storageDir, 'architecture');
 
     try {
       if (!existsSync(archDir)) {
