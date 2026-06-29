@@ -129,6 +129,64 @@ export function ScanIcon() {
   );
 }
 
+export function ChevronRightIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-label="Expand"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
+export function ChevronDownIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-label="Collapse"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+export function SidebarToggleIcon({ direction }: { direction: 'left' | 'right' }) {
+  const points = direction === 'left' ? '15 18 9 12 15 6' : '9 18 15 12 9 6';
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      role="img"
+      aria-label={direction === 'left' ? 'Collapse sidebar' : 'Expand sidebar'}
+    >
+      <polyline points={points} />
+    </svg>
+  );
+}
+
 export function GenerateRulesIcon() {
   return (
     <svg

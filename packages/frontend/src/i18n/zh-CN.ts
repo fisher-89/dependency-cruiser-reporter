@@ -60,4 +60,10 @@ export default {
     generatingRules: '生成中...',
     generateRulesError: '生成规则失败',
   },
+  tree: {
+    title: '目录',
+    expand: '展开目录',
+    collapse: '折叠目录',
+    toggleSidebar: '切换侧边栏',
+  },
 } as const;

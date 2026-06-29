@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 
-import en from './en';
+import en from './en-US';
 import zhCN from './zh-CN';
 
 const translations = { en, 'zh-CN': zhCN } as const;

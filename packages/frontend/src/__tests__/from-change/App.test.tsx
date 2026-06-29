@@ -20,7 +20,7 @@
  *   - B-12: 204 No Content handling
  */
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
@@ -32,6 +32,10 @@ import App from '@/App';
 vi.mock('@/components/ArchitectureView', () => ({
   default: () => <div data-testid="architecture-view">ArchitectureView Mock</div>,
   ArchitectureView: () => <div data-testid="architecture-view">ArchitectureView Mock</div>,
+}));
+
+vi.mock('@/components/GraphView', () => ({
+  GraphView: () => <div data-testid="graph-view">GraphView Mock</div>,
 }));
 
 vi.mock('@/components/DependencyGraph/DependencyGraph', () => ({
@@ -111,13 +115,6 @@ function stubIntersectionObserver() {
       disconnect: vi.fn(),
     })),
   );
-}
-
-function mockFetchGraphData() {
-  return vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-    ok: true,
-    json: async () => sampleGraphData,
-  } as unknown as Response);
 }
 
 function renderApp() {
@@ -331,7 +328,7 @@ describe('App -- handleScan', () => {
   // B-2: Slow scan (> 500ms) no extra delay
   // =========================================================================
   it('B-2: slow scan (>= 500ms) does NOT add extra delay before closing', async () => {
-    let resolveScan: (value: unknown) => void;
+    let resolveScan: (value: unknown) => void = () => {};
     const scanPromise = new Promise((resolve) => {
       resolveScan = resolve;
     });
@@ -367,7 +364,7 @@ describe('App -- handleScan', () => {
     await new Promise((r) => setTimeout(r, 600));
 
     // Resolve the scan
-    resolveScan!({
+    resolveScan({
       ok: true,
       json: async () => ({ output: 'output.json' }),
     } as unknown as Response);

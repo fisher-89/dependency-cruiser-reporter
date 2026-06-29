@@ -57,9 +57,11 @@ function createDefaultProps(overrides: Record<string, unknown> = {}) {
   return {
     loading: false,
     onRefresh: vi.fn(),
+    stabilityHeatmap: false,
+    onStabilityHeatmapChange: vi.fn(),
     children: <div data-testid="child-content">Child content</div>,
     ...overrides,
-  } as Parameters<typeof GraphViewLayout>[0];
+  };
 }
 
 // ---------------------------------------------------------------------------

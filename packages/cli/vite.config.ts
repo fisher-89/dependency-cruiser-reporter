@@ -1,6 +1,11 @@
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+  test: {
+    environment: 'node',
+    globals: true,
+    include: ['src/**/*.test.{ts,tsx}', '__tests__/**/*.test.{ts,tsx}'],
+  },
   pack: {
     entry: ['./src/bin/cli.ts'],
     loader: {

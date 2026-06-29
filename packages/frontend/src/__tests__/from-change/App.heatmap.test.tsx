@@ -106,6 +106,7 @@ vi.mock('@/hooks/useGraphData', () => ({
     },
     loading: false,
     error: null,
+    expandedDirs: new Set<string>(),
     fetchGraph: vi.fn(),
     refresh: vi.fn(),
     toggleDir: vi.fn(),

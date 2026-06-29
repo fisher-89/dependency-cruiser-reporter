@@ -1,0 +1,2072 @@
+{
+  "phase": "06-unit-test",
+  "command": "vp test --coverage --coverage.reporter=json-summary",
+  "timestamp": "2026-06-25T04:58:17.540Z",
+  "total": 318,
+  "passed": 302,
+  "failed": 1,
+  "skipped": 15,
+  "duration_seconds": 15.5,
+  "coverage": {
+    "pass": false,
+    "measured": {
+      "lines": 84.94,
+      "branches": 72.17,
+      "functions": 72.35
+    },
+    "thresholds": {
+      "lines": 80,
+      "branches": 70,
+      "functions": 75
+    },
+    "by_framework": [
+      {
+        "framework": "vite-plus (frontend)",
+        "measured": {
+          "lines": 88.59,
+          "branches": 74.78,
+          "functions": 76.66
+        }
+      },
+      {
+        "framework": "vite-plus (cli)",
+        "measured": {
+          "lines": 57.57,
+          "branches": 52.63,
+          "functions": 40
+        }
+      },
+      {
+        "framework": "rust",
+        "measured": {
+          "lines": 0,
+          "branches": 0,
+          "functions": 0
+        }
+      }
+    ],
+    "overrides": [
+      {
+        "glob": "packages/frontend",
+        "thresholds": {
+          "lines": 80,
+          "branches": 70,
+          "functions": 75
+        },
+        "measured": {
+          "lines": 88.59,
+          "branches": 74.78,
+          "functions": 76.66
+        },
+        "pass": true
+      },
+      {
+        "glob": "packages/cli",
+        "thresholds": {
+          "lines": 80,
+          "branches": 70,
+          "functions": 75
+        },
+        "measured": {
+          "lines": 57.57,
+          "branches": 52.63,
+          "functions": 40
+        },
+        "pass": false
+      },
+      {
+        "glob": "packages/rust",
+        "thresholds": {
+          "lines": 80,
+          "branches": 70,
+          "functions": 75
+        },
+        "measured": {
+          "lines": 0,
+          "branches": 0,
+          "functions": 0
+        },
+        "pass": false
+      }
+    ]
+  },
+  "test_cases": [
+    {
+      "name": "App -- sidebarVisible 状态管理 F-32: 首次渲染时 sidebarVisible 默认为 true",
+      "file": "packages/frontend/src/App.test.tsx",
+      "duration_ms": 103.08,
+      "status": "passed"
+    },
+    {
+      "name": "App -- sidebarVisible 状态管理 F-33: 调用 onToggleSidebar 后 sidebarVisible 从 true 变为 false",
+      "file": "packages/frontend/src/App.test.tsx",
+      "duration_ms": 37.7,
+      "status": "passed"
+    },
+    {
+      "name": "App -- sidebarVisible 状态管理 F-34: GraphView 从 App 收到 sidebarVisible 和 onToggleSidebar props",
+      "file": "packages/frontend/src/App.test.tsx",
+      "duration_ms": 23.08,
+      "status": "passed"
+    },
+    {
+      "name": "App -- sidebarVisible 状态管理 F-35: /report 路由不渲染 GraphView（不涉及 DirTree 侧边栏）",
+      "file": "packages/frontend/src/App.test.tsx",
+      "duration_ms": 32.45,
+      "status": "passed"
+    },
+    {
+      "name": "App -- sidebarVisible 状态管理 R-11: sidebarVisible 在路由切换后保持状态",
+      "file": "packages/frontend/src/App.test.tsx",
+      "duration_ms": 30.37,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-1: 根级 combo 渲染为顶层目录项",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 94.66,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-2: 嵌套 combo 渲染为子目录",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 11.36,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-3: 文件节点渲染为叶子条目",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 14.26,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-4: combo 有子 combo 时显示展开图标（折叠状态）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 14.02,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-5: 文件节点最小化显示（仅标签，无额外前缀）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 16.95,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-6: 展开状态的目录显示折叠图标 (ChevronDownIcon)",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 15.26,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-7: 点击折叠图标调用 onToggleDir(comboId)",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 10.74,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-8: 折叠状态的目录显示展开图标 (ChevronRightIcon)",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 6.9,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-9: 同级目录条目在文件条目之前",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 11.59,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-10: 组内字母序排列（不区分大小写）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 9.18,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-11: 根级条目基础 paddingLeft 为 8px",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 108.74,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-12: 嵌套条目每层增加 16px paddingLeft",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 17.34,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-13: 侧边栏容器 width=260px, overflowY=auto, height=100%",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 7.79,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-13a: 侧边栏使用 CSS 变量颜色 (--color-surface 背景, --color-border 边框)",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 7.76,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-13b: 树条目悬停时背景使用 var(--color-accent-bg) 透明度 50%",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.67,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-13c: 树条目文字颜色 var(--color-text-secondary), 图标颜色 var(--color-text-muted)",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.51,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-14: 侧边栏展开时显示标题和折叠按钮",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.25,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-15: 侧边栏折叠时显示展开手柄（32px 宽）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.65,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 正向路径 F-16: 点击折叠按钮调用 onToggleSidebar",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.87,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-1: combos 为空列表时显示空状态",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.05,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-2: 引用不存在 combo 的节点不渲染",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.02,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-3: 无子目录的 combo 显示展开图标（折叠状态）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.36,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-4: 文件节点不显示展开/折叠图标",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.49,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-5: 点击目录条目标签文字不触发 onToggleDir",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.1,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 反向路径 R-6: sidebarVisible=false 时仅渲染折叠手柄",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.23,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-1: 5 层嵌套 combo 正确渲染，每层缩进 16px",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 10.24,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-2: 超长标签（>50字符）使用 text-overflow: ellipsis",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 12.12,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-3: data 引用变化后树内容刷新",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 11.32,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-4: expandedDirs 包含不存在路径时，不展开、不抛异常",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.2,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-5: expandedDirs 为空 Set 时所有目录显示折叠状态",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 3.41,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-6: 空子目录（无子节点）显示展开图标（折叠状态）",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 6.27,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-7: label 为 null 时不崩溃，使用空字符串渲染",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.75,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-8: 只有一个子目录，0 个文件 -- 仅显示目录",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.07,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-9: 只有一个文件节点 -- 仅显示文件",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 5.02,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-10: 大小写混合标签不区分大小写排序",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 6.69,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 组件 -- 边界情况 B-11: 标签含特殊字符时正常渲染",
+      "file": "packages/frontend/src/components/DirTree.test.tsx",
+      "duration_ms": 4.68,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-23: 渲染三栏 flex 布局，包含 DirTree/DependencyGraph/DetailPanel",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 44.99,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-24: sidebarVisible=true 时 DirTree 渲染",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 4.39,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-24a: sidebarVisible=false 时 DirTree 不渲染，显示窄手柄",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 5.12,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-25: DirTree 从 GraphView 收到正确的 props",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 3.02,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-26: DependencyGraph 收到正确的中转 props",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 3.35,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props F-27: DetailPanel 收到正确的 props",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 2.36,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props R-7: sidebarVisible 切换控制 DirTree DOM 存在性",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 6.58,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props B-12: data 为空图数据时不崩溃",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 3.24,
+      "status": "passed"
+    },
+    {
+      "name": "GraphView 组件 -- 三栏布局与 Props B-13: selectedNodeId=null 时 DetailPanel 收到 node=null",
+      "file": "packages/frontend/src/components/GraphView.test.tsx",
+      "duration_ms": 3.21,
+      "status": "passed"
+    },
+    {
+      "name": "icons 组件 -- 新增 SVG 图标 F-36: ChevronRightIcon 渲染 SVG， width=16, height=16, viewBox=\"0 0 24 24\"",
+      "file": "packages/frontend/src/components/icons.test.tsx",
+      "duration_ms": 25.2,
+      "status": "passed"
+    },
+    {
+      "name": "icons 组件 -- 新增 SVG 图标 F-37: ChevronDownIcon 渲染 SVG，与 ChevronRightIcon 使用相同尺寸",
+      "file": "packages/frontend/src/components/icons.test.tsx",
+      "duration_ms": 3.44,
+      "status": "passed"
+    },
+    {
+      "name": "icons 组件 -- 新增 SVG 图标 F-38: SidebarToggleIcon 接受 direction prop，渲染对应方向的 SVG",
+      "file": "packages/frontend/src/components/icons.test.tsx",
+      "duration_ms": 4.55,
+      "status": "passed"
+    },
+    {
+      "name": "icons 组件 -- 新增 SVG 图标 F-39: SVG 元素使用 stroke=\"currentColor\" 或 fill=\"currentColor\"",
+      "file": "packages/frontend/src/components/icons.test.tsx",
+      "duration_ms": 4.83,
+      "status": "passed"
+    },
+    {
+      "name": "MetricsView 组件 F-30: 渲染统计卡片（原始节点、聚合节点、依赖数、违规数）",
+      "file": "packages/frontend/src/components/MetricsView.test.tsx",
+      "duration_ms": 63.65,
+      "status": "passed"
+    },
+    {
+      "name": "MetricsView 组件 F-31: 渲染边类型分布",
+      "file": "packages/frontend/src/components/MetricsView.test.tsx",
+      "duration_ms": 11.51,
+      "status": "passed"
+    },
+    {
+      "name": "MetricsView 组件 F-31a: 组件包含 data-testid=\"metrics-view\"",
+      "file": "packages/frontend/src/components/MetricsView.test.tsx",
+      "duration_ms": 8.24,
+      "status": "passed"
+    },
+    {
+      "name": "MetricsView 组件 R-10: 空数据时各统计值显示 0",
+      "file": "packages/frontend/src/components/MetricsView.test.tsx",
+      "duration_ms": 15.43,
+      "status": "passed"
+    },
+    {
+      "name": "ReportView 组件 F-28: 渲染违规统计卡片（错误/警告/信息数量）",
+      "file": "packages/frontend/src/components/ReportView.test.tsx",
+      "duration_ms": 71.95,
+      "status": "passed"
+    },
+    {
+      "name": "ReportView 组件 F-29: 违规项逐行显示",
+      "file": "packages/frontend/src/components/ReportView.test.tsx",
+      "duration_ms": 15.23,
+      "status": "passed"
+    },
+    {
+      "name": "ReportView 组件 F-29a: 组件包含 data-testid=\"report-view\"",
+      "file": "packages/frontend/src/components/ReportView.test.tsx",
+      "duration_ms": 5.13,
+      "status": "passed"
+    },
+    {
+      "name": "ReportView 组件 R-8: violations 为空数组时显示无违规提示",
+      "file": "packages/frontend/src/components/ReportView.test.tsx",
+      "duration_ms": 5.56,
+      "status": "passed"
+    },
+    {
+      "name": "ReportView 组件 R-9: violations 未定义时不抛异常，显示空状态",
+      "file": "packages/frontend/src/components/ReportView.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "en.ts i18n -- tree 翻译键 F-40: en.ts tree.title 值为 \"Directories\"",
+      "file": "packages/frontend/src/i18n/en.test.ts",
+      "duration_ms": 1.33,
+      "status": "passed"
+    },
+    {
+      "name": "en.ts i18n -- tree 翻译键 F-41: en.ts tree.expand 值为 \"Expand directory\"",
+      "file": "packages/frontend/src/i18n/en.test.ts",
+      "duration_ms": 0.18,
+      "status": "passed"
+    },
+    {
+      "name": "en.ts i18n -- tree 翻译键 F-42: en.ts tree.collapse 值为 \"Collapse directory\"",
+      "file": "packages/frontend/src/i18n/en.test.ts",
+      "duration_ms": 0.14,
+      "status": "passed"
+    },
+    {
+      "name": "en.ts i18n -- tree 翻译键 F-43: en.ts tree.toggleSidebar 值为 \"Toggle sidebar\"",
+      "file": "packages/frontend/src/i18n/en.test.ts",
+      "duration_ms": 0.12,
+      "status": "passed"
+    },
+    {
+      "name": "zh-CN.ts i18n -- tree 翻译键 F-44: zh-CN.ts tree.title 值为 \"目录\"",
+      "file": "packages/frontend/src/i18n/zh-CN.test.ts",
+      "duration_ms": 1.4,
+      "status": "passed"
+    },
+    {
+      "name": "zh-CN.ts i18n -- tree 翻译键 F-45: zh-CN.ts tree.expand 值为 \"展开目录\"",
+      "file": "packages/frontend/src/i18n/zh-CN.test.ts",
+      "duration_ms": 0.19,
+      "status": "passed"
+    },
+    {
+      "name": "zh-CN.ts i18n -- tree 翻译键 F-46: zh-CN.ts tree.collapse 值为 \"折叠目录\"",
+      "file": "packages/frontend/src/i18n/zh-CN.test.ts",
+      "duration_ms": 0.14,
+      "status": "passed"
+    },
+    {
+      "name": "zh-CN.ts i18n -- tree 翻译键 F-47: zh-CN.ts tree.toggleSidebar 值为 \"切换侧边栏\"",
+      "file": "packages/frontend/src/i18n/zh-CN.test.ts",
+      "duration_ms": 0.13,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 F-17: 首次 fetch 前读取 dcr:source:{origin} 缓存",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 20.13,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 F-18: 响应后更新 dcr:source:{origin} 缓存",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 3.53,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 F-18a: 响应后更新 dcr:expanded:{source} 缓存",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 3.9,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 F-19: 不同 source 对应不同 dcr:source key",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 3.44,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 F-20: 冷缓存（无缓存）时 fetchGraph 请求体不含 expanded_dirs",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 4.3,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 R-15: 服务端返回的 expanded_dirs 覆写本地缓存",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 2.63,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 R-16: 旧缓存扩展目录在服务端返回后被校正",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 2.56,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 R-17: sidebarVisible 变化时更新 dcr:layout:graph:dir_tree",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 2.03,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 B-17: localStorage.setItem 抛异常时不崩溃，功能降级",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 5.2,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 B-18: localStorage 中损坏的 JSON 不崩溃，兜底为空数组",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 8.9,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 B-19: 首次使用无 origin 映射时 fetchGraph 以空参数调用",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 1.64,
+      "status": "passed"
+    },
+    {
+      "name": "useGraphData -- localStorage 持久化与缓存 B-20: 快速连续调用 toggleDir 每次触发 fetchGraph",
+      "file": "packages/frontend/src/hooks/useGraphData.test.ts",
+      "duration_ms": 2.84,
+      "status": "passed"
+    },
+    {
+      "name": "DirTree 交互集成测试 F-6 (E2E): 点击展开图标触发 fetchGraph，请求体包含对应目录 ID",
+      "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 交互集成测试 F-8 (E2E): 点击折叠图标收起目录，展开目录 ID 从请求中移除",
+      "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 交互集成测试 F-23 (E2E): 三栏布局（DirTree | DependencyGraph | DetailPanel）渲染",
+      "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 渲染集成测试 F-1 (E2E): 加载含目录层级数据后，DirTree 显示根级目录",
+      "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 渲染集成测试 F-4 (E2E): 同级目录在文件之前按字母序排列",
+      "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 渲染集成测试 F-11 (E2E): 深层目录正确缩进",
+      "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "DirTree 渲染集成测试 F-13 (E2E): 侧边栏宽度为 260px",
+      "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "侧边栏切换集成测试 F-14 (E2E): 侧边栏默认可见，DirTree 在 DOM 中渲染",
+      "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "侧边栏切换集成测试 F-14a (E2E): 点击折叠按钮后侧边栏折叠为窄手柄",
+      "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "侧边栏切换集成测试 F-16 (E2E): 点击手柄展开按钮后侧边栏恢复",
+      "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "状态持久化集成测试 F-17 (E2E): 展开目录后模拟页面刷新，状态恢复",
+      "file": "packages/frontend/__tests__/state-persistence/state-persistence.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "状态持久化集成测试 F-19 (E2E): 不同数据源使用独立 localStorage key",
+      "file": "packages/frontend/__tests__/state-persistence/state-persistence.test.tsx",
+      "status": "skipped"
+    },
+    {
+      "name": "App -- stabilityHeatmap 状态管理 F-12: stabilityHeatmap 初始值应为 false",
+      "file": "packages/frontend/src/__tests__/from-change/App.heatmap.test.tsx",
+      "duration_ms": 143.75,
+      "status": "passed"
+    },
+    {
+      "name": "App -- stabilityHeatmap 状态管理 R-14: stabilityHeatmap 状态在路由切换时应保持",
+      "file": "packages/frontend/src/__tests__/from-change/App.heatmap.test.tsx",
+      "duration_ms": 149.64,
+      "status": "passed"
+    },
+    {
+      "name": "App -- stabilityHeatmap 状态管理 stabilityHeatmap 属性应从 App 传递到 GraphViewLayout",
+      "file": "packages/frontend/src/__tests__/from-change/App.heatmap.test.tsx",
+      "duration_ms": 23.69,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan AC-4: successful scan sends POST /api/analyze then closes overlay and calls refresh (POST /api/graph)",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 820.31,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan AC-7: dismissing the error overlay calls handleDismissScan and clears scan state",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 131.55,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan AC-10: network error during scan sets scanError with error message",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 114.39,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-1: fast scan enforces 500ms minimum overlay display time",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 636.44,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-2: slow scan (>= 500ms) does NOT add extra delay before closing",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 711.98,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-3: scan response with non-JSON body uses res.statusText as scanError",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 53.24,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-4: response body \"details\" field takes priority over \"error\" field",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 48.55,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-12: scan response 204 No Content (ok=true, no body) does not crash",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 583.35,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan B-10: refresh() fails after setScanning(false) and overlay stays closed",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 718.43,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan scanOverlayStatus: scanning=true, scanError=null should derive status as \"scanning\"",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 49.17,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan scanOverlayStatus: scanning=true, scanError=\"...\" should derive status as \"error\"",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 75.37,
+      "status": "passed"
+    },
+    {
+      "name": "App -- handleScan scanOverlayStatus: scanning=false does not render ScanOverlay",
+      "file": "packages/frontend/src/__tests__/from-change/App.test.tsx",
+      "duration_ms": 42.85,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 F-9: 应转发 instability=0.2941 从 GraphNode 到 G6NodeData",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 1.36,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 F-10: undefined instability 应转发为 undefined",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 0.27,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 B-12: 应转发 instability=0.0 精确值",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 0.17,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 B-13: instability 为 undefined 时 G6NodeData.instability 应为 undefined",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 0.13,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 B-14: 应转发 instability=1.0 精确值",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 0.15,
+      "status": "passed"
+    },
+    {
+      "name": "buildGraphData -- instability 转发 B-extra: 应正确处理混合节点（部分有 instability，部分无）",
+      "file": "packages/frontend/src/__tests__/from-change/buildGraphData.test.ts",
+      "duration_ms": 0.16,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 F-13: 热力图关闭时不应返回阴影属性",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 2.4,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 F-14: 热力图开启时，instability=0.85 应返回阴影样式",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.65,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 F-18: 关闭热力图后阴影样式应消失",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.39,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 F-19: 热力图开启前后节点 fill 和 stroke 应保持不变",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.24,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 R-10: 热力图开启但 instability 为 undefined 时不应渲染阴影",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.29,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 R-10 变体: 热力图开启但 instability 为 null 时不应渲染阴影",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.16,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 R-11: instability=0.0 时 haloLineWidth 应为 2",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.2,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 R-15: 所有节点类型（file/directory/package）的填充和描边颜色应不受热力图影响",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.24,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-19: instability=0.0 且热力图开启时 shadowBlur 应为 0",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.18,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-20: instability=0.4999 时 shadowBlur 应为 8",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.4,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-21: instability=0.5 时 shadowBlur 应为 8",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.2,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-22: instability=0.9999 时 shadowBlur 应为 16",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.16,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-23: instability=1.0 时 shadowBlur 应为 16",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.12,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-24: instability 为 undefined 时不应渲染阴影",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.21,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-25: 所有节点类型的 fill/stroke 应与常量一致",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.22,
+      "status": "passed"
+    },
+    {
+      "name": "DependencyGraph -- 节点阴影样式 B-26: 热力图关闭时，不同 instability 值应返回完全相同的样式",
+      "file": "packages/frontend/src/__tests__/from-change/DependencyGraph.style.test.ts",
+      "duration_ms": 0.83,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation F-11: should use edge.weight for weighted Ce/Ca stability calculation",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 2.19,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation R-8: isolated node (no edges) should return null",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.34,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation R-9: null node should return null",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.21,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation B-15: all edges weight=1 falls back to simple counting",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.24,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation B-16: only incoming edges should produce I=0.0",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.23,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation B-17: only outgoing edges should produce I=1.0",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.22,
+      "status": "passed"
+    },
+    {
+      "name": "DetailPanel -- stability weighted calculation B-18: null node and a single edge should return null",
+      "file": "packages/frontend/src/__tests__/from-change/DetailPanel.stability.test.ts",
+      "duration_ms": 0.14,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 F-15: 应渲染热力图切换按钮，显示 i18n 文本 \"Heatmap\"",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 182.2,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 F-16: 热力图开启时按钮应有激活样式，关闭时为默认样式",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 43.63,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 F-17: 点击切换按钮应调用 onStabilityHeatmapChange 并传入相反值",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 42.54,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 R-12: 扫描状态不应影响热力图切换按钮（仍可点击）",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 36.7,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 R-13: onStabilityHeatmapChange 为 undefined 时不崩溃",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 16.26,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 B-27: stabilityHeatmap 为 undefined 时应视为关闭状态",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 16.43,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- 热力图切换按钮 B-29: 热力图状态应在扫描状态切换时保持不变",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.heatmap.test.tsx",
+      "duration_ms": 35.16,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal scanError non-null does NOT render error text in GraphViewLayout (removed in this change)",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 62.21,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal scanError=null does not show error text (unchanged behavior)",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 10.45,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal scanError non-null does not prevent child content from rendering",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 15.08,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: Scan button renders in action bar",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 131.44,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: clicking Scan disables button and shows scanning text",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 55.66,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: clicking Scan triggers fetch to /api/analyze",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 26,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: clicking disabled Scan button does not trigger duplicate fetch",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 29.77,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: Scan button is always rendered (built-in, not conditional)",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 29.59,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: loading (Refresh) and internal scanning (Scan) are independent states",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 37.86,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal REGRESSION: Refresh button is unaffected by scanError prop",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 10.13,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removal B-9: clicking Scan disables button even when loading=false",
+      "file": "packages/frontend/src/__tests__/from-change/GraphViewLayout.test.tsx",
+      "duration_ms": 23.79,
+      "status": "passed"
+    },
+    {
+      "name": "i18n -- action.stabilityHeatmap F-20: en.ts action.stabilityHeatmap 应为 \"Heatmap\"",
+      "file": "packages/frontend/src/__tests__/from-change/i18n.heatmap.test.ts",
+      "duration_ms": 2.45,
+      "status": "passed"
+    },
+    {
+      "name": "i18n -- action.stabilityHeatmap F-21: zh-CN.ts action.stabilityHeatmap 应为 \"稳定性热力图\"",
+      "file": "packages/frontend/src/__tests__/from-change/i18n.heatmap.test.ts",
+      "duration_ms": 0.31,
+      "status": "passed"
+    },
+    {
+      "name": "i18n -- action.scanOverlayClose en.ts: action.scanOverlayClose exists and is a non-empty string",
+      "file": "packages/frontend/src/__tests__/from-change/i18n.test.ts",
+      "duration_ms": 1.23,
+      "status": "passed"
+    },
+    {
+      "name": "i18n -- action.scanOverlayClose zh-CN.ts: action.scanOverlayClose exists and is a non-empty string",
+      "file": "packages/frontend/src/__tests__/from-change/i18n.test.ts",
+      "duration_ms": 0.19,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-1/AC-3: clicking Scan renders overlay with scanning UI (spinner, status text)",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 261.13,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-4: successful scan closes overlay and calls POST /api/graph again",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 607.98,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-5: after scan completes, navigation tabs work",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 649.58,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-6: scan returns 500, overlay shows error message and close button",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 86.57,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-7: clicking close on error overlay dismisses it and restores interaction",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 81.08,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) AC-10: network error during scan shows error overlay with close button",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 60.96,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) B-5: after dismissing error overlay, can trigger scan again",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 106.56,
+      "status": "passed"
+    },
+    {
+      "name": "Scan flow (Integration) B-8: scan succeeds but refresh fetch fails, overlay stays closed",
+      "file": "packages/frontend/src/__tests__/from-change/scan-flow.integration.test.tsx",
+      "duration_ms": 598.56,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-1: does NOT render anything when visible=false",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 15.94,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-1: visible=true, status=scanning renders overlay with position fixed and z-index 9999",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 59.82,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-2: overlay has default pointer-events behavior (auto)",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 6.08,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-2: overlay has tabIndex={0} to capture keyboard event focus",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 4.68,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-3: status=scanning renders loading spinner and scanning status text",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 11.59,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-3: status=scanning does NOT render a close/dismiss button",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 8.76,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-6: status=error renders error message text and close button",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 159.56,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-6: clicking close button fires onDismiss callback",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 28.27,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-6: status=error does NOT render loading spinner",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 8.08,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-8: card background uses CSS variable var(--color-surface)",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 5.89,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay AC-9: loading spinner has animation style for spin keyframes",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 16.7,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay B-6: status=error with errorMessage=null shows fallback/empty error area",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 11.99,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay B-6: status=error with errorMessage=\"\" displays empty error area with close button",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 13.78,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay B-7: overlay zIndex is 9999 to cover all content including navigation",
+      "file": "packages/frontend/src/__tests__/from-change/ScanOverlay.test.tsx",
+      "duration_ms": 3.13,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) renders upload area on initial load when data is null (no data fetched yet)",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 103.41,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) after fetch resolves with data, graph view becomes visible at /graph",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 58.3,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) can navigate to /report after data is loaded and see violation list",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 85.66,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) can navigate to /metrics after data is loaded and see metrics cards",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 94.61,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) can navigate to /architecture after data is loaded and see architecture area",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 373.11,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) B-9: loading state persists when user switches route during fetchGraph",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 13.78,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) B-10: error state persists when user navigates to /metrics after fetch failure",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 36.6,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) after data loaded via fetch, can switch to /metrics and see edge-type cards",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 48.09,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) after navigating to /report after fetch, ReportView shows violation entries",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 55.01,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) scan overlay appears when Scan button is clicked and shows error on failure",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 173.62,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) scan overlay closes automatically on successful scan",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 604.8,
+      "status": "passed"
+    },
+    {
+      "name": "AppRouting (Integration) settings dropdown contains language and theme options",
+      "file": "packages/frontend/src/__tests__/integration/AppRouting.test.tsx",
+      "duration_ms": 82.35,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-4: ready state renders Generate Rules button in action bar",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 232.56,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-4: ready state shows Generate Rules button before Refresh button in action bar",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 58.01,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-4: empty state does NOT render Generate Rules button",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 29.34,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-4: error state does NOT render Generate Rules button",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 17,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button B-5: empty state shows Generate Architecture Model button, not Generate Rules",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 23.56,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button B-6: error state shows error message and Retry button, not Generate Rules",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 14.87,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-5: clicking Generate Rules sends POST /api/archi-to-rules request",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 31.18,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button B-4: generating=true disables Generate Rules button and shows loading text",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 31.81,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-6: Generate Rules API returns 500, sets generateError and shows error",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 33.49,
+      "status": "passed"
+    },
+    {
+      "name": "ArchitectureView -- Generate Rules button AC-6: Generate Rules network error shows error message",
+      "file": "packages/frontend/src/__tests__/unit/ArchitectureView.test.tsx",
+      "duration_ms": 16.6,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removed AC-6: does NOT render inline error text when scanError is set",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.noScanError.test.tsx",
+      "duration_ms": 61.51,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removed Scan button state is unaffected when scanError is passed",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.noScanError.test.tsx",
+      "duration_ms": 160.72,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removed scanError does not affect disabled state when scanning internally",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.noScanError.test.tsx",
+      "duration_ms": 39.28,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removed renders normally when scanError is null",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.noScanError.test.tsx",
+      "duration_ms": 26.14,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- scanError removed renders normally when scanError is undefined",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.noScanError.test.tsx",
+      "duration_ms": 21.67,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-1: renders Scan button in action bar alongside children",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 197.45,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-1: renders Scan button alongside graph view children",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 21.42,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-1: renders Scan button alongside report/metrics view content",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 17.98,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-1: renders Scan button by default (no onScan prop)",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 15.84,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-2: clicking Scan button triggers fetch to /api/analyze",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 29.35,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button AC-3: clicking Scan disables button and shows scanning text",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 29.12,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button B-1: clicking Scan while scanning does not trigger multiple scans",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 28.18,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button B-2: on successful scan, onRefresh is called",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 19.84,
+      "status": "passed"
+    },
+    {
+      "name": "GraphViewLayout -- Scan button B-19: loading and scanning are independent states",
+      "file": "packages/frontend/src/__tests__/unit/GraphViewLayout.test.tsx",
+      "duration_ms": 34.17,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay minimum display time keeps overlay visible for at least 500ms on fast scan",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.minDisplayTime.test.tsx",
+      "duration_ms": 820.5,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay minimum display time closes overlay without extra delay on slow scan",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.minDisplayTime.test.tsx",
+      "duration_ms": 614.75,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay returns null when visible is false",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 20.27,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay renders overlay with data-testid=\"scan-overlay\" when visible is true",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 54.19,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay renders spinning ScanIcon and scanning text when status is scanning",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 17.14,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay renders loading spinner when status is scanning",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 4.95,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay renders error message and Close button when status is error",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 144.73,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay calls onDismiss when Close button is clicked",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 26.97,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay has position: fixed and inset: 0 styles",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 11.21,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay has z-index 9999",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 7.88,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay does not show spinner or ScanIcon in error state",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 5.75,
+      "status": "passed"
+    },
+    {
+      "name": "ScanOverlay does not render Close button when onDismiss is undefined",
+      "file": "packages/frontend/src/__tests__/unit/ScanOverlay.test.tsx",
+      "duration_ms": 5.79,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects AC-4: visiting \"/\" redirects to \"/graph\" and graph-view is visible via Navigate replace",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 124.67,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects AC-5: visiting \"/invalid\" redirects to \"/graph\" and graph-view is visible",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 57.54,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects B-7: visiting \"/Report\" matches \"/report\" route (case-insensitive by default)",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 52.08,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects B-7: visiting \"/REPORT\" (uppercase) matches \"/report\" route (case-insensitive)",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 33.29,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects B-8: visiting \"/report/\" (trailing slash) — app does not crash, renders content",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 12.92,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRedirects B-2: visiting \"/settings/unknown\" redirects to \"/graph\"",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRedirects.test.tsx",
+      "duration_ms": 38.23,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting AC-1: visiting /report renders ReportView and nav-report is present",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 133.23,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting AC-2: visiting /metrics renders MetricsView and nav-metrics is highlighted (aria-current)",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 70.78,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting AC-3: visiting /architecture renders ArchitectureView (or Suspense fallback)",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 344.25,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting AC-3 (mock): ArchitectureView mock renders instead of lazy fallback when vi.mock is active",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 16,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting /graph: visiting /graph renders graph-view data-testid when data is present",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 19.19,
+      "status": "passed"
+    },
+    {
+      "name": "SyncUrlRouting NavLink: only the matching NavLink receives aria-current=\"page\"",
+      "file": "packages/frontend/src/__tests__/unit/SyncUrlRouting.test.tsx",
+      "duration_ms": 25.45,
+      "status": "passed"
+    },
+    {
+      "name": "CLI 集成测试 -- POST /api/graph meta.source F-21 (E2E): POST /api/graph 响应 meta 包含 source 字段",
+      "file": "packages/cli/__tests__/graph-source-meta/graph-source-meta.test.ts",
+      "status": "skipped"
+    },
+    {
+      "name": "CLI 集成测试 -- POST /api/graph meta.source F-22 (E2E): meta.source 值与传入的 graphFile 参数一致",
+      "file": "packages/cli/__tests__/graph-source-meta/graph-source-meta.test.ts",
+      "status": "skipped"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source F-21: POST /api/graph 返回的 meta 中包含 source 字段",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 49.14,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source F-22: source 字段值为 graphFile 的绝对路径",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 19.61,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source R-12: graphFile 未定义时返回 404 且 meta 不包含 source",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 3.79,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source R-13: graphFile 指向不存在的文件时返回 404",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 3.51,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source R-14: JSON 内容不含 modules 数组时返回 400",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 3.75,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source B-14: graphFile 路径包含空格和特殊字符时保持原样",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 5.33,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source B-15: convert 抛异常时返回 500 且 meta.source 不存在",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 3.6,
+      "status": "passed"
+    },
+    {
+      "name": "graph.ts -- POST /api/graph meta.source B-16: expanded_dirs 参数不影响 meta.source",
+      "file": "packages/cli/src/server/dep/graph.test.ts",
+      "duration_ms": 6.08,
+      "status": "passed"
+    },
+    {
+      "name": "test_edge_type_detection",
+      "file": "packages/rust/src/aggregate/edges_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_compute_auto_expanded_dirs_empty",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_compute_auto_expanded_dirs_small_project",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_smart_expansion_prioritizes_violations",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_is_path_expanded",
+      "file": "packages/rust/src/aggregate/hybrid_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_build_hybrid_nodes_with_expanded_dirs",
+      "file": "packages/rust/src/aggregate/hybrid_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_is_path_expanded_ancestor",
+      "file": "packages/rust/src/aggregate/hybrid_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_is_path_expanded_root",
+      "file": "packages/rust/src/aggregate/hybrid_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b1_single_node_no_edges",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b2_weight_zero_no_contribution",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b3_self_loop",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b4_empty_nodes_no_panic",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b5_empty_edges_all_none",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b6_f32_precision_4dp",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b7_node_not_in_edges",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f1_basic_weighted_instability",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f2_only_outgoing_edges",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f3_only_incoming_edges",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f4_precision_rounding",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f5_multiple_edge_weight_accumulation",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r1_isolated_node_returns_none",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r2_empty_edges_list",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r3_empty_nodes_list",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r4_zero_weight_edges",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r5_self_loop_edge",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r6_large_values_no_overflow",
+      "file": "packages/rust/src/aggregate/instability_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_circle_layout_no_initial_overlap_equal_sizes",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_deeply_nested_combos",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_empty_layout",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_nested_combos",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_single_node_in_root_combo",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_four_level_deeply_nested_siblings",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_empty_modules_returns_empty_expanded_dirs",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_multiple_nodes_grid",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_top_level_combos_no_overlap",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_mixed_nodes_and_combos_nested",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_siblings_under_same_parent_no_overlap",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_expanded_dirs_nested",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_many_small_combos",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_expanded_dirs_produces_file_nodes",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_four_top_level_combos_medium",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_three_top_level_combos_large",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_with_dependencies",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_three_level_nested_siblings",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b10_instability_one_serializes",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b11_minimal_json_deserialization",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_b9_instability_zero_serializes",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f6_serialization_includes_instability",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_f7_serialization_skips_none",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_r7_deserialization_missing_field_is_none",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_round_trip_instability_preserved",
+      "file": "packages/rust/src/types_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_sample_no_sibling_combo_overlap",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_small_project_expands_all",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_demo_like_structure_7_combos_plus_direct_node",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_with_explicit_expanded_dirs",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_larger_project_no_overlap",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_real_world_scale",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "failed",
+      "line": 254,
+      "error_type": "panic",
+      "error_message": "src has 412 descendants, too many to expand within budget 200",
+      "stack_trace": "panicked at src/aggregate/expand_test.rs:254:5"
+    },
+    {
+      "name": "test_child_combos_no_overlap_under_stress",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_relative_path_with_single_top_level_dir",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_large_project_has_expanded_dirs",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_aggregate_returns_non_empty_expanded_dirs",
+      "file": "packages/rust/src/lib_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_smart_expansion_respects_budget",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_smart_expansion_expands_small_dirs",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_smart_expansion_respects_direct_children_limit",
+      "file": "packages/rust/src/aggregate/expand_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    },
+    {
+      "name": "test_four_top_level_combos_medium",
+      "file": "packages/rust/src/layout_test.rs",
+      "duration_ms": 0.5,
+      "status": "passed"
+    }
+  ],
+  "integration_test": {
+    "total": 14,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 14,
+    "duration_ms": 0,
+    "test_cases": [
+      {
+        "name": "DirTree 交互集成测试 F-6 (E2E): 点击展开图标触发 fetchGraph，请求体包含对应目录 ID",
+        "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 交互集成测试 F-8 (E2E): 点击折叠图标收起目录，展开目录 ID 从请求中移除",
+        "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 交互集成测试 F-23 (E2E): 三栏布局（DirTree | DependencyGraph | DetailPanel）渲染",
+        "file": "packages/frontend/__tests__/dir-tree-interaction/dir-tree-interaction.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 渲染集成测试 F-1 (E2E): 加载含目录层级数据后，DirTree 显示根级目录",
+        "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 渲染集成测试 F-4 (E2E): 同级目录在文件之前按字母序排列",
+        "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 渲染集成测试 F-11 (E2E): 深层目录正确缩进",
+        "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "DirTree 渲染集成测试 F-13 (E2E): 侧边栏宽度为 260px",
+        "file": "packages/frontend/__tests__/dir-tree-rendering/dir-tree-rendering.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "侧边栏切换集成测试 F-14 (E2E): 侧边栏默认可见，DirTree 在 DOM 中渲染",
+        "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "侧边栏切换集成测试 F-14a (E2E): 点击折叠按钮后侧边栏折叠为窄手柄",
+        "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "侧边栏切换集成测试 F-16 (E2E): 点击手柄展开按钮后侧边栏恢复",
+        "file": "packages/frontend/__tests__/sidebar-toggle/sidebar-toggle.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "状态持久化集成测试 F-17 (E2E): 展开目录后模拟页面刷新，状态恢复",
+        "file": "packages/frontend/__tests__/state-persistence/state-persistence.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "状态持久化集成测试 F-19 (E2E): 不同数据源使用独立 localStorage key",
+        "file": "packages/frontend/__tests__/state-persistence/state-persistence.test.tsx",
+        "status": "skipped"
+      },
+      {
+        "name": "CLI 集成测试 -- POST /api/graph meta.source F-21 (E2E): POST /api/graph 响应 meta 包含 source 字段",
+        "file": "packages/cli/__tests__/graph-source-meta/graph-source-meta.test.ts",
+        "status": "skipped"
+      },
+      {
+        "name": "CLI 集成测试 -- POST /api/graph meta.source F-22 (E2E): meta.source 值与传入的 graphFile 参数一致",
+        "file": "packages/cli/__tests__/graph-source-meta/graph-source-meta.test.ts",
+        "status": "skipped"
+      }
+    ]
+  },
+  "findings": "Rust cargo llvm-cov not installed - coverage data unavailable for Rust package. Rust test: 64 passed, 1 failed (test_real_world_scale - pre-existing: src has 412 descendants exceeds budget 200). All 14 change-specific integration tests are it.skip (pending implementation)."
+}

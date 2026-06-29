@@ -10,7 +10,7 @@
     "lint": "vp check",
     "lint:fix": "vp check --fix",
     "knip": "knip",
-    "check": "pnpm run lint && pnpm run knip"
+    "check": "pnpm run lint:fix && pnpm run knip"
   },
   "dependencies": {
     "@dcr-reporter/wasm": "workspace:*",

@@ -28,7 +28,7 @@ export function setupGraphRoute(
 
       if (parsed.modules && Array.isArray(parsed.modules)) {
         const graph = await convert(content, maxNodes, expandedDirs);
-        res.json(graph);
+        res.json({ ...graph, meta: { ...graph.meta, source: graphFile } });
         return;
       }
 

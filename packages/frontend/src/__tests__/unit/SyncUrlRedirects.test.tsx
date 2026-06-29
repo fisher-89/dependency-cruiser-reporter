@@ -27,6 +27,10 @@ vi.mock('@/components/ArchitectureView', () => ({
   ArchitectureView: () => <div data-testid="architecture-view">ArchitectureView Mock</div>,
 }));
 
+vi.mock('@/components/GraphView', () => ({
+  GraphView: () => <div data-testid="graph-view">GraphView Mock</div>,
+}));
+
 vi.mock('@/components/DependencyGraph/DependencyGraph', () => ({
   DependencyGraph: () => <div>DependencyGraph Mock</div>,
 }));

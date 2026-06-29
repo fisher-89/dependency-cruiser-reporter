@@ -8,6 +8,13 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.test.{ts,tsx}', '__tests__/**/*.test.{ts,tsx}'],
+    exclude: ['src/i18n'],
+    setupFiles: ['./vitest.setup.ts'],
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,

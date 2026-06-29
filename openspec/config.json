@@ -1,5 +1,5 @@
 {
-  "static_analysis": "pnpm run check",
+  "static_analysis": "pnpm run check:fix",
   "test": {
     "overrides": [
       { "file": "packages/frontend", "framework": "vite-plus" },

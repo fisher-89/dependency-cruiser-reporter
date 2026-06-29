@@ -62,4 +62,10 @@ export default {
     generatingRules: 'Generating...',
     generateRulesError: 'Failed to generate rules',
   },
+  tree: {
+    title: 'Directories',
+    expand: 'Expand directory',
+    collapse: 'Collapse directory',
+    toggleSidebar: 'Toggle sidebar',
+  },
 } as const;

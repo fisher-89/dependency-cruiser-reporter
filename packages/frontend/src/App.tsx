@@ -1,13 +1,14 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 
-import { DependencyGraph } from './components/DependencyGraph/DependencyGraph';
-import { DetailPanel } from './components/DetailPanel';
+import { GraphView } from './components/GraphView';
 import { GraphViewLayout } from './components/GraphViewLayout';
+import { MetricsView } from './components/MetricsView';
+import { ReportView } from './components/ReportView';
 import { SettingsDropdown } from './components/settings';
 import { useGraphData } from './hooks/useGraphData';
 import { type TKey, useT } from './i18n';
-import type { GraphNode, ProcessedGraph, ViolationInfo } from './types';
+import type { GraphNode, ProcessedGraph } from './types';
 
 const ArchitectureView = lazy(() => import('./components/ArchitectureView'));
 
@@ -53,7 +54,17 @@ const GRAPH_ROUTES = new Set(['/graph', '/report', '/metrics']);
 function App() {
   const { t } = useT();
   const location = useLocation();
-  const { data, loading, error, fetchGraph, refresh, toggleDir } = useGraphData();
+  const {
+    data,
+    loading,
+    error,
+    fetchGraph,
+    refresh,
+    toggleDir,
+    expandedDirs,
+    sidebarVisible,
+    setSidebarVisible,
+  } = useGraphData();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [stabilityHeatmap, setStabilityHeatmap] = useState(false);
 
@@ -75,14 +86,13 @@ function App() {
     setSelectedNodeId(nodeId);
   }, []);
 
+  const handleToggleSidebar = useCallback(() => {
+    setSidebarVisible((prev) => !prev);
+  }, [setSidebarVisible]);
+
   const handleStabilityHeatmapChange = useCallback((value: boolean) => {
     setStabilityHeatmap(value);
   }, []);
-
-  const selectedNode = useMemo(() => {
-    if (!data || !selectedNodeId) return null;
-    return data.nodes.find((n) => n.id === selectedNodeId) ?? null;
-  }, [data, selectedNodeId]);
 
   const nodeMap = useMemo(() => {
     if (!data) return new Map<string, GraphNode>();
@@ -130,21 +140,17 @@ function App() {
             stabilityHeatmap={stabilityHeatmap}
             onStabilityHeatmapChange={handleStabilityHeatmapChange}
           >
-            <div style={styles.graphSplitLayout} data-testid="graph-view">
-              <DependencyGraph
-                data={data}
-                onToggleDir={toggleDir}
-                onNodeSelect={handleNodeSelect}
-                selectedNodeId={selectedNodeId}
-                stabilityHeatmap={stabilityHeatmap}
-              />
-              <DetailPanel
-                node={selectedNode}
-                edges={data.edges}
-                violations={data.violations}
-                nodeMap={nodeMap}
-              />
-            </div>
+            <GraphView
+              data={data}
+              expandedDirs={expandedDirs}
+              onToggleDir={toggleDir}
+              selectedNodeId={selectedNodeId}
+              onNodeSelect={handleNodeSelect}
+              stabilityHeatmap={stabilityHeatmap}
+              nodeMap={nodeMap}
+              sidebarVisible={sidebarVisible}
+              onToggleSidebar={handleToggleSidebar}
+            />
           </GraphViewLayout>
         );
       case '/report':
@@ -211,105 +217,6 @@ function App() {
   );
 }
 
-function ReportView({ violations }: { violations: ViolationInfo[] }) {
-  const { t } = useT();
-  const errors = violations.filter((v) => v.severity === 'error');
-  const warnings = violations.filter((v) => v.severity === 'warn');
-  const infos = violations.filter((v) => v.severity === 'info');
-
-  return (
-    <div style={styles.reportContainer} data-testid="report-view">
-      <div style={styles.summary}>
-        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-error)' }}>
-          <div style={styles.summaryNum}>{errors.length}</div>
-          <div>{t('report.errors')}</div>
-        </div>
-        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-warning)' }}>
-          <div style={styles.summaryNum}>{warnings.length}</div>
-          <div>{t('report.warnings')}</div>
-        </div>
-        <div style={{ ...styles.summaryCard, borderColor: 'var(--color-info)' }}>
-          <div style={styles.summaryNum}>{infos.length}</div>
-          <div>{t('report.info')}</div>
-        </div>
-      </div>
-      <div style={styles.violationList} data-testid="violation-list">
-        {violations.length === 0 ? (
-          <div style={styles.emptyState}>{t('report.noViolations')}</div>
-        ) : (
-          violations.map((v, i) => (
-            <div
-              key={`${v.from}-${v.to}-${i}`}
-              style={{
-                ...styles.violationItem,
-                borderLeftColor:
-                  v.severity === 'error'
-                    ? 'var(--color-error)'
-                    : v.severity === 'warn'
-                      ? 'var(--color-warning)'
-                      : 'var(--color-info)',
-              }}
-              data-testid={`violation-${i}`}
-            >
-              <div style={styles.violationRule}>
-                <span style={styles.violationSeverity}>{t(`severity.${v.severity}`)}</span>
-                {v.rule}
-              </div>
-              <div style={styles.violationFrom}>
-                {v.from} → {v.to}
-              </div>
-              {v.message && <div style={styles.violationMsg}>{v.message}</div>}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-function MetricsView({ data }: { data: ProcessedGraph }) {
-  const { t } = useT();
-  const edgeTypes = data.edges.reduce(
-    (acc, e) => {
-      acc[e.edge_type] = (acc[e.edge_type] || 0) + 1;
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
-
-  return (
-    <div style={styles.metricsContainer} data-testid="metrics-view">
-      <div style={styles.metricsGrid}>
-        <div style={styles.metricCard}>
-          <div style={styles.metricValue}>{data.meta.original_node_count}</div>
-          <div style={styles.metricLabel}>{t('metrics.originalNodes')}</div>
-        </div>
-        <div style={styles.metricCard}>
-          <div style={styles.metricValue}>{data.meta.aggregated_node_count}</div>
-          <div style={styles.metricLabel}>{t('metrics.aggregatedNodes')}</div>
-        </div>
-        <div style={styles.metricCard}>
-          <div style={styles.metricValue}>{data.edges.length}</div>
-          <div style={styles.metricLabel}>{t('metrics.dependencies')}</div>
-        </div>
-        <div style={styles.metricCard}>
-          <div style={styles.metricValue}>{data.meta.total_violations}</div>
-          <div style={styles.metricLabel}>{t('metrics.violations')}</div>
-        </div>
-      </div>
-      <div style={styles.edgeTypes}>
-        <h3 style={styles.edgeTypesTitle}>{t('metrics.edgeTypes')}</h3>
-        {Object.entries(edgeTypes).map(([type, count]) => (
-          <div key={type} style={styles.edgeTypeItem} data-testid={`edge-type-${type}`}>
-            <span>{type}</span>
-            <span>{count}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const styles: Record<string, React.CSSProperties> = {
   container: {
     height: '100vh',
@@ -368,117 +275,6 @@ const styles: Record<string, React.CSSProperties> = {
   error: {
     color: 'var(--color-error)',
     marginTop: '16px',
-  },
-  graphSplitLayout: {
-    display: 'flex',
-    gap: 16,
-    flex: 1,
-    minHeight: 0,
-  },
-  reportContainer: {
-    background: 'var(--color-surface)',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  summary: {
-    display: 'flex',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  summaryCard: {
-    flex: 1,
-    padding: '16px',
-    borderRadius: '8px',
-    borderLeft: '4px solid',
-    background: 'var(--color-bg)',
-    textAlign: 'center',
-  },
-  summaryNum: {
-    fontSize: '32px',
-    fontWeight: 700,
-  },
-  violationList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    maxHeight: '600px',
-    overflow: 'auto',
-  },
-  violationItem: {
-    padding: '12px 16px',
-    borderRadius: '8px',
-    borderLeft: '4px solid',
-    background: 'var(--color-bg)',
-  },
-  violationRule: {
-    fontWeight: 600,
-    fontSize: '14px',
-    marginBottom: '4px',
-  },
-  violationSeverity: {
-    marginRight: '8px',
-    padding: '2px 6px',
-    borderRadius: '4px',
-    fontSize: '10px',
-    fontWeight: 700,
-  },
-  violationFrom: {
-    fontSize: '12px',
-    color: 'var(--color-text-secondary)',
-  },
-  violationMsg: {
-    fontSize: '12px',
-    color: 'var(--color-text-muted)',
-    marginTop: '4px',
-  },
-  emptyState: {
-    textAlign: 'center',
-    color: 'var(--color-text-muted)',
-    padding: '32px',
-  },
-  metricsContainer: {
-    background: 'var(--color-surface)',
-    borderRadius: '12px',
-    padding: '24px',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-  },
-  metricsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '16px',
-    marginBottom: '24px',
-  },
-  metricCard: {
-    padding: '24px',
-    borderRadius: '8px',
-    background: 'var(--color-bg)',
-    textAlign: 'center',
-  },
-  metricValue: {
-    fontSize: '36px',
-    fontWeight: 700,
-    color: 'var(--color-text-primary)',
-  },
-  metricLabel: {
-    fontSize: '14px',
-    color: 'var(--color-text-secondary)',
-    marginTop: '4px',
-  },
-  edgeTypes: {
-    marginTop: '16px',
-  },
-  edgeTypesTitle: {
-    fontSize: '16px',
-    marginBottom: '12px',
-  },
-  edgeTypeItem: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '8px 12px',
-    borderRadius: '6px',
-    background: 'var(--color-bg)',
-    marginBottom: '8px',
   },
   suspenseFallback: {
     display: 'flex',
