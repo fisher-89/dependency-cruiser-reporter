@@ -26,7 +26,7 @@
 main.tsx
 └── <ThemeProvider>
     └── <I18nProvider>
-        └── App (root, state: data, viewMode, loading, error, selectedNodeId, scanning, scanError)
+        └── App (root, state: data, viewMode, loading, error, selectedNodeId, scanning, scanError, sidebarVisible)
             ├── <ScanOverlay> (full-screen, conditionally rendered when scanning)
             ├── Header
             │   ├── Title
@@ -36,7 +36,8 @@ main.tsx
             ├── DirectoryPicker (when no .dc-reporter found)
             ├── UploadArea (drag-and-drop + file input, fallback)
             ├── ArchitectureView (lazy-loaded, ReactLikeC4 + LikeC4ModelProvider)
-            ├── GraphView (flex container: canvas + detail panel)
+            ├── GraphView (flex container: dir tree | canvas | detail panel)
+            │   ├── DirTree (directory tree sidebar, collapsible)
             │   ├── DependencyGraph (G6 comboCombined layout)
             │   └── DetailPanel (node metadata, stability, deps, violations)
             ├── ReportView (violations by severity)
@@ -114,8 +115,9 @@ main.tsx
 | `selectedNodeId` | `string \| null` | App |
 | `scanning` | `boolean` | App |
 | `scanError` | `string \| null` | App |
+| `sidebarVisible` | `boolean` | App |
 
-主题和语言状态 SHALL 由各自 Provider 管理（非 App 本地状态）。
+主题和语言状态 SHALL 由各自 Provider 管理（非 App 本地状态）。`sidebarVisible` 状态 SHALL 由 App 管理，通过 props 传递给 `GraphViewLayout` 和 `DirTree`。
 
 #### Scenario: 状态转换
 
@@ -240,19 +242,31 @@ Error → Loading (重试)
 
 ### Requirement: Graph view split layout
 
-系统 SHALL 在 graph 视图使用 flex 分割布局：左侧为 G6 画布（flex: 1），右侧为 DetailPanel（固定宽度 320px）。
+系统 SHALL 在 graph 视图使用 flex 三栏分割布局：左侧为 DirTree（固定宽度 260px，可折叠），中间为 G6 画布（flex: 1），右侧为 DetailPanel（固定宽度 320px）。
 
-#### Scenario: 分割布局渲染
+#### Scenario: 三栏布局渲染
 
 - **WHEN** graph 视图处于活动状态
-- **THEN** G6 画布和 DetailPanel 并排渲染
-- **AND** 面板宽度固定为 320px
-- **AND** 画布填充剩余空间
+- **THEN** DirTree 侧边栏、G6 画布和 DetailPanel 从左到右依次渲染
+- **AND** DirTree 宽度固定为 260px
+- **AND** DetailPanel 宽度固定为 320px
+- **AND** G6 画布填充剩余空间
+
+#### Scenario: 侧边栏折叠时的布局
+
+- **WHEN** 侧边栏处于折叠状态（sidebarVisible 为 false）
+- **THEN** DirTree 显示为 32px 宽的窄手柄
+- **AND** G6 画布填充原 DirTree 占用的空间
 
 #### Scenario: 面板出现时 G6 调整大小
 
 - **WHEN** 面板从占位符过渡到内容（首次选择节点时高度可能变化）
 - **THEN** G6 画布调用 `graph.resize()` 以适应其容器
+
+#### Scenario: 侧边栏切换时 G6 调整大小
+
+- **WHEN** 用户切换侧边栏可见性（折叠或展开）
+- **THEN** G6 画布调用 `graph.resize()` 以适应新的容器尺寸
 
 ### Requirement: Node click-to-select behavior
 
@@ -378,6 +392,7 @@ packages/frontend/
 │       ├── ArchitectureView.tsx  # C4 架构图组件（NEW）
 │       ├── DependencyGraph.tsx  # G6 图形组件
 │       ├── DetailPanel.tsx      # 节点详情面板
+│       ├── DirTree.tsx          # 目录树侧边栏（NEW）
 │       ├── buildGraphData.ts    # G6 数据转换
 │       └── icons.tsx            # 内联 SVG 图标
 ├── index.html
@@ -474,6 +489,43 @@ C4 架构模型 SHALL 在 `frontend.c4` 中定义 `types` 模块，正确反映 
 - **THEN** `types` 模块不声明任何对其他模块的 dependency 关系
 - **AND** 对应 `types.ts` 为纯类型定义文件，不依赖前端其他模块
 
+### Requirement: GraphViewLayout renders DirTree
+
+`GraphViewLayout` SHALL render the `DirTree` component as part of the graph view content. The `DirTree` SHALL receive `data`, `expandedDirs`, and `onToggleDir` from the `useGraphData` hook, forwarded through `GraphViewLayout` props.
+
+#### Scenario: GraphViewLayout props include DirTree data
+
+- **WHEN** `GraphViewLayout` renders the graph view content
+- **THEN** `GraphViewLayout` SHALL receive `data`, `expandedDirs`, `onToggleDir`, `sidebarVisible`, and `onToggleSidebar` props
+- **AND** `GraphViewLayout` SHALL render `<DirTree>` to the left of the G6 canvas
+- **AND** the DirTree props SHALL be forwarded from the `GraphViewLayout` props
+
+### Requirement: three-column layout in App
+
+The `App` component SHALL render the graph view route (`/graph`) with a three-column flex layout containing DirTree, DependencyGraph, and DetailPanel.
+
+#### Scenario: Graph route renders DirTree
+
+- **WHEN** the route is `/graph` and data is loaded
+- **THEN** the content SHALL be a flex container with three children
+- **AND** the first child SHALL be `DirTree` (when `sidebarVisible` is true) or the collapsed sidebar handle
+- **AND** the second child SHALL be `DependencyGraph`
+- **AND** the third child SHALL be `DetailPanel`
+- **AND** the container SHALL use `display: flex; gap: 0; flex: 1; min-height: 0`
+
+#### Scenario: DirTree not rendered for non-graph routes
+
+- **WHEN** the route is `/report`, `/metrics`, or `/architecture`
+- **THEN** DirTree SHALL NOT be rendered
+- **AND** the layout SHALL NOT allocate space for the sidebar
+
+#### Scenario: App manages sidebarVisible state
+
+- **WHEN** `App` renders the graph view
+- **THEN** `sidebarVisible` state SHALL default to `true`
+- **AND** when the user toggles the sidebar, the `onToggleSidebar` callback SHALL flip the state
+- **AND** the state SHALL be passed to `GraphViewLayout` as a prop
+
 ## Module Contract
 
 ### Component: App (modified)
@@ -482,6 +534,7 @@ C4 架构模型 SHALL 在 `frontend.c4` 中定义 `types` 模块，正确反映 
 |-------|------|-------------|
 | `scanning` | `boolean` | Drives `ScanOverlay` visibility. No longer used solely for button disabled state. |
 | `scanError` | `string \| null` | Stores scan error message. Read by `ScanOverlay` when `status === 'error'`. |
+| `sidebarVisible` | `boolean` | ADDED — controls DirTree sidebar visibility |
 
 ### Function: handleScan (modified)
 
@@ -490,6 +543,26 @@ C4 架构模型 SHALL 在 `frontend.c4` 中定义 `types` 模块，正确反映 
 | Before change | Only sets `scanning` states and captures errors. No auto-refresh on success. Error displayed inline in action bar. |
 | After change | On success: calls `refresh()` after `setScanning(false)`. On failure: keeps `scanning = true` until user dismisses overlay. |
 
+### Component: GraphViewLayout (modified)
+
+| Prop | Type | Change |
+|------|------|--------|
+| `data` | `ProcessedGraph` | ADDED — forwarded to DirTree for tree building |
+| `expandedDirs` | `Set<string>` | ADDED — forwarded to DirTree for expand/collapse state |
+| `onToggleDir` | `(dir: string) => void` | ADDED — forwarded to DirTree for expand/collapse actions |
+| `sidebarVisible` | `boolean` | ADDED — controls DirTree visibility |
+| `onToggleSidebar` | `() => void` | ADDED — callback when user toggles sidebar |
+
+### Component: DirTree (added)
+
+| Prop | Type |
+|------|------|
+| `data` | `ProcessedGraph` |
+| `expandedDirs` | `Set<string>` |
+| `onToggleDir` | `(dir: string) => void` |
+| `sidebarVisible` | `boolean` |
+| `onToggleSidebar` | `() => void` |
+
 ### i18n keys (added)
 
 | Key | English | Chinese |
@@ -497,8 +570,17 @@ C4 架构模型 SHALL 在 `frontend.c4` 中定义 `types` 模块，正确反映 
 | `action.scanning` | Scanning... | 扫描中... |
 | `action.scanError` | Scan failed | 扫描失败 |
 | `action.scanOverlayClose` | Close | 关闭 |
+| `tree.title` | Directories | 目录 |
+| `tree.expand` | Expand directory | 展开目录 |
+| `tree.collapse` | Collapse directory | 折叠目录 |
+| `tree.toggleSidebar` | Toggle sidebar | 切换侧边栏 |
 
 ## References
 
 - 前端源码：`packages/frontend/src/`
 - 类型定义：`packages/frontend/src/types.ts`
+- GraphViewLayout: `packages/frontend/src/components/GraphViewLayout.tsx`
+- DirTree: `packages/frontend/src/components/DirTree.tsx` (NEW)
+- App: `packages/frontend/src/App.tsx`
+- i18n en: `packages/frontend/src/i18n/en.ts`
+- i18n zh-CN: `packages/frontend/src/i18n/zh-CN.ts`
