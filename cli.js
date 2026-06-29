@@ -153178,7 +153178,7 @@ async function archiToRules$1(options = {}) {
 	}
 	console.log(`Architecture rules written to: ${outputPath}`);
 }
-var main_c4_default = "specification {\n  element outer {\n    description '[系统外实体（例：用户、其他服务）]'\n    style {\n      color muted\n      size small\n    }\n  }\n  element project {\n    description '[系统工程根目录]'\n    style {\n      shape browser\n    }\n  }\n  element package {\n    description '[包（可独立构建）]'\n  }\n  element module {\n    description '[模块/组件]'\n  }\n\n  relationship dependency { // 依赖\n    line solid\n  }\n}\nmodel {\n  ROOT = project {\n    link ../../\n    // 此处拆分packages 或 module\n  }\n  USER = outer {\n    -> ROOT 'use'\n  }\n}\n\nviews {\n  view all of ROOT {\n    title 'all'\n    include *, ROOT.**\n  }\n  view top {\n    title 'top-only'\n    include ROOT.*\n  }\n}\n";
+var main_c4_default = "specification {\n  element outer {\n    description '[系统外实体（例：用户、其他服务）]'\n    style {\n      color muted\n      size small\n    }\n  }\n  element project {\n    description '[系统工程根目录]'\n    style {\n      shape browser\n    }\n  }\n  element package {\n    description '[包（可独立构建）]'\n  }\n  element module {\n    description '[模块/组件]'\n  }\n\n  relationship dependency { // 依赖\n    line solid\n  }\n}\nmodel {\n  ROOT = project {\n    link ../../\n    // 此处拆分packages 或 module, 代码量较大时使用多个文件\n    cli = package 'cli' '命令行终端' {\n      link ../../packages/cli // 模块路径\n    }\n  }\n  USER = outer {\n    -> ROOT 'use'\n  }\n}\n\nviews {\n  view all of ROOT {\n    title 'all'\n    include *, ROOT.**\n  }\n  view top {\n    title 'top-only'\n    include ROOT.*\n  }\n}\n";
 function setupArchitectureRoutes(app, cwd) {
 	app.post("/api/archi-to-rules", async (_req, res) => {
 		try {
@@ -153315,7 +153315,13 @@ function setupGraphRoute(app, { graphFile, maxNodes }) {
 			const expandedDirs = req.body?.expanded_dirs?.length ? req.body.expanded_dirs : void 0;
 			if (parsed.modules && Array.isArray(parsed.modules)) {
 				const graph = await convert(content, maxNodes, expandedDirs);
-				res.json(graph);
+				res.json({
+					...graph,
+					meta: {
+						...graph.meta,
+						source: graphFile
+					}
+				});
 				return;
 			}
 			res.status(400).json({ error: "Unrecognized graph file format" });
