@@ -152800,7 +152800,8 @@ async function analyze$1(options) {
 	}
 	console.log(`Analyzing: ${absAnalyzePath}`);
 	const startAt = Date.now();
-	const cruiseResult = await cruise([relative(String(cruiseOptions.baseDir ?? process.cwd()), absAnalyzePath)], cruiseOptions, void 0, transpilerOptions);
+	const relativeAnalyzePath = relative(String(cruiseOptions.baseDir ?? process.cwd()), absAnalyzePath);
+	const cruiseResult = await cruise([statSync(absAnalyzePath).isDirectory() ? join(relativeAnalyzePath, "*") : relativeAnalyzePath], cruiseOptions, void 0, transpilerOptions);
 	if (!cruiseResult.output) throw new Error("dependency-cruiser did not produce output");
 	writeFileSync(outputPath, typeof cruiseResult.output === "string" ? cruiseResult.output : JSON.stringify(cruiseResult.output, null, 2));
 	const duration = Math.round((Date.now() - startAt) / 1e3);
