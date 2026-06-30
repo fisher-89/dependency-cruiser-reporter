@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { basename, dirname, relative, resolve } from 'node:path';
 
-import { cruise, type ICruiseOptions } from 'dependency-cruiser';
+import { cruise, type ITranspileOptions, type ICruiseOptions } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
 import extractTSConfig from 'dependency-cruiser/config-utl/extract-ts-config';
 
@@ -92,7 +92,7 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
   const tsConfigPath = cruiseOptions.tsConfig?.fileName
     ? cruiseOptions.tsConfig.fileName
     : resolve(absAnalyzePath, 'tsconfig.json');
-  const transpilerOptions: { tsConfig?: object } = {};
+  const transpilerOptions: ITranspileOptions = {};
 
   if (existsSync(tsConfigPath)) {
     console.log(`Using tsconfig: ${tsConfigPath}`);

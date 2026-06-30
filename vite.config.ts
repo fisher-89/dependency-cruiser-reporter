@@ -38,6 +38,7 @@ export default defineConfig(
                 bin: { 'dep-report': './cli.js' },
                 dependencies: {
                   'dependency-cruiser':cliPkg.dependencies['dependency-cruiser'],
+                  'typescript': 'latest'
                 }
               },
               null,
