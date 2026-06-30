@@ -1,10 +1,11 @@
 {
   "name": "dependency-cruiser-reporter",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "bin": {
     "dep-report": "./cli.js"
   },
   "dependencies": {
-    "dependency-cruiser": "^17.3.0"
+    "dependency-cruiser": "^17.3.0",
+    "typescript": "latest"
   }
 }

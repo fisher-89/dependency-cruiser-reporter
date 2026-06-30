@@ -152730,7 +152730,7 @@ var init_node = __esmMin((() => {
 //#endregion
 //#region packages/cli/bin/cli.js
 var import_express = /* @__PURE__ */ __toESM(require_express(), 1);
-var version = "0.2.11";
+var version = "0.2.12";
 /**
 * Parse the storage directory path.
 * - Absolute path: used directly, not resolved against absCwd
