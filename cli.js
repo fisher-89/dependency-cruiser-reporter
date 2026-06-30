@@ -75254,9 +75254,9 @@ var init_doc = __esmMin((() => {
 }));
 //#endregion
 //#region node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/core/versions.js
-var version;
+var version$1;
 var init_versions = __esmMin((() => {
-	version = {
+	version$1 = {
 		major: 4,
 		minor: 4,
 		patch: 3
@@ -75618,7 +75618,7 @@ var init_schemas$1 = __esmMin((() => {
 		inst ?? (inst = {});
 		inst._zod.def = def;
 		inst._zod.bag = inst._zod.bag || {};
-		inst._zod.version = version;
+		inst._zod.version = version$1;
 		const checks = [...inst._zod.def.checks ?? []];
 		if (inst._zod.traits.has("$ZodCheck")) checks.unshift(inst);
 		for (const ch of checks) for (const fn of ch._zod.onattach) fn(inst);
@@ -85258,7 +85258,7 @@ var core_exports = /* @__PURE__ */ __exportAll({
 	toJSONSchema: () => toJSONSchema,
 	treeifyError: () => treeifyError,
 	util: () => util_exports,
-	version: () => version
+	version: () => version$1
 });
 var init_core$1 = __esmMin((() => {
 	init_core$2();
@@ -152730,6 +152730,7 @@ var init_node = __esmMin((() => {
 //#endregion
 //#region packages/cli/bin/cli.js
 var import_express = /* @__PURE__ */ __toESM(require_express(), 1);
+var version = "0.2.9";
 /**
 * Parse the storage directory path.
 * - Absolute path: used directly, not resolved against absCwd
@@ -152800,8 +152801,7 @@ async function analyze$1(options) {
 	}
 	console.log(`Analyzing: ${absAnalyzePath}`);
 	const startAt = Date.now();
-	const relativeAnalyzePath = relative(String(cruiseOptions.baseDir ?? process.cwd()), absAnalyzePath);
-	const cruiseResult = await cruise([statSync(absAnalyzePath).isDirectory() ? join(relativeAnalyzePath, "*") : relativeAnalyzePath], cruiseOptions, void 0, transpilerOptions);
+	const cruiseResult = await cruise([relative(String(cruiseOptions.baseDir ?? process.cwd()), absAnalyzePath)], cruiseOptions, void 0, transpilerOptions);
 	if (!cruiseResult.output) throw new Error("dependency-cruiser did not produce output");
 	writeFileSync(outputPath, typeof cruiseResult.output === "string" ? cruiseResult.output : JSON.stringify(cruiseResult.output, null, 2));
 	const duration = Math.round((Date.now() - startAt) / 1e3);
@@ -153441,7 +153441,7 @@ async function dashboard(options) {
 async function archiToRules(options) {
 	return archiToRules$1(options);
 }
-program.name("dep-report").description("dependency-cruiser result visualizer").version("0.1.0");
+program.name("dep-report").description("dependency-cruiser result visualizer").version(version);
 program.option("--cwd <path>", "Workspace root directory", ".");
 program.option("--storage-dir <path>", "Storage root directory", ".dc-reporter");
 program.command("analyze").description("Analyze a project directory and generate visualization").option("-p, --path <dir>", "Project directory to analyze", ".").option("-o, --output <path>", "Output graph JSON file").option("-c, --config <path>", "dependency-cruiser config file").action(async (options) => {
