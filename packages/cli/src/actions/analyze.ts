@@ -1,5 +1,5 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { basename, dirname, relative, resolve } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync, statSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 
 import { cruise, type ICruiseOptions } from 'dependency-cruiser';
 import extractDepcruiseOptions from 'dependency-cruiser/config-utl/extract-depcruise-options';
@@ -108,9 +108,10 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
     String(cruiseOptions.baseDir ?? process.cwd()),
     absAnalyzePath,
   );
+
   // Run dependency-cruiser via API
   const cruiseResult = await cruise(
-    [relativeAnalyzePath],
+    [statSync(absAnalyzePath).isDirectory() ? join(relativeAnalyzePath, '*') : relativeAnalyzePath],
     cruiseOptions,
     undefined, // resolveOptions (webpack)
     transpilerOptions,
