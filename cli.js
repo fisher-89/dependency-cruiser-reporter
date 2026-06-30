@@ -152730,7 +152730,7 @@ var init_node = __esmMin((() => {
 //#endregion
 //#region packages/cli/bin/cli.js
 var import_express = /* @__PURE__ */ __toESM(require_express(), 1);
-var version = "0.2.10";
+var version = "0.2.11";
 /**
 * Parse the storage directory path.
 * - Absolute path: used directly, not resolved against absCwd
@@ -152772,18 +152772,17 @@ async function analyze$1(options) {
 			}
 		}
 	}
-	let cruiseOptions = {
-		outputType: "json",
-		baseDir: absCwd,
-		skipAnalysisNotInRules: false
-	};
+	let cruiseOptions = { baseDir: absCwd };
 	if (configPath && existsSync(configPath)) {
 		console.log(`Using config: ${configPath}`);
 		try {
+			const extractedOptions = await extractDepcruiseOptions(configPath);
 			cruiseOptions = {
-				...await extractDepcruiseOptions(configPath),
-				...cruiseOptions
+				...cruiseOptions,
+				...extractedOptions
 			};
+			cruiseOptions.outputType = "json";
+			cruiseOptions.skipAnalysisNotInRules = false;
 		} catch (e) {
 			console.warn(`Failed to extract config from ${configPath}:`, e);
 		}
