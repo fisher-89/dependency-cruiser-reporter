@@ -111,7 +111,7 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
 
   // Run dependency-cruiser via API
   const cruiseResult = await cruise(
-    [statSync(absAnalyzePath).isDirectory() ? join(relativeAnalyzePath, '*') : relativeAnalyzePath],
+    [relativeAnalyzePath],
     cruiseOptions,
     undefined, // resolveOptions (webpack)
     transpilerOptions,

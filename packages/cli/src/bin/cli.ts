@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { program } from 'commander';
 
+import { version } from '../../../../package.json';
 import { analyze, archiToRules, dashboard } from '../commands';
 
-program.name('dep-report').description('dependency-cruiser result visualizer').version('0.1.0');
+program.name('dep-report').description('dependency-cruiser result visualizer').version(version);
 
 program.option('--cwd <path>', 'Workspace root directory', '.');
 program.option('--storage-dir <path>', 'Storage root directory', '.dc-reporter');
