@@ -67,16 +67,17 @@ export async function analyze(options: AnalyzeOptions): Promise<string> {
 
   // Extract cruise options from config
   let cruiseOptions: ICruiseOptions = {
-    outputType: 'json',
     baseDir: absCwd,
-    skipAnalysisNotInRules: false,
   };
 
   if (configPath && existsSync(configPath)) {
     console.log(`Using config: ${configPath}`);
     try {
       const extractedOptions = await extractDepcruiseOptions(configPath);
-      cruiseOptions = { ...extractedOptions, ...cruiseOptions };
+      cruiseOptions = { ...cruiseOptions, ...extractedOptions };
+      // force overrides
+      cruiseOptions.outputType = 'json';
+      cruiseOptions.skipAnalysisNotInRules = false;
     } catch (e) {
       console.warn(`Failed to extract config from ${configPath}:`, e);
     }
